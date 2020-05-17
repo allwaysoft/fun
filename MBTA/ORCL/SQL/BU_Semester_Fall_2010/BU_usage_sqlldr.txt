@@ -1,0 +1,5 @@
+cd C:\MISC\SQL\BU_Semester_Fall_2010
+
+sqlldr userid=mbta@nwcdprod control= "C:\MISC\SQL\BU_Semester_Fall_2010\BU_usage.ctl
+
+Check the log file if all the data is imported into table.

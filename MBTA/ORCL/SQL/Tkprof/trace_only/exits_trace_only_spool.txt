@@ -1,0 +1,68 @@
+
+3843 rows selected.
+
+Elapsed: 00:13:38.07
+
+Execution Plan
+----------------------------------------------------------                      
+   0      SELECT STATEMENT Optimizer=CHOOSE (Cost=89205 Card=32 Bytes=          
+          3264)                                                                 
+                                                                                
+   1    0   SORT* (GROUP BY) (Cost=89205 Card=32 Bytes=3264)           :Q474005 
+   2    1     HASH JOIN* (Cost=89201 Card=32 Bytes=3264)               :Q474004 
+   3    2       HASH JOIN* (OUTER) (Cost=89199 Card=32 Bytes=2688)     :Q474004 
+   4    3         HASH JOIN* (Cost=89188 Card=32 Bytes=2080)           :Q474004 
+   5    4           HASH JOIN* (Cost=89187 Card=89 Bytes=4183)         :Q474004 
+   6    5             INDEX* (FULL SCAN) OF 'XIE2TVMTABLE' (NON-UNIQUE :Q474000 
+          ) (Cost=12 Card=1343 Bytes=22831)                                     
+                                                                                
+   7    5             PARTITION RANGE* (ITERATOR)                      :Q474004 
+   8    7               TABLE ACCESS* (FULL) OF 'SHIFTEVENT' (Cost=891 :Q474004 
+          84 Card=2468 Bytes=74040)                                             
+                                                                                
+   9    4           INLIST ITERATOR*                                   :Q474001 
+  10    9             TABLE ACCESS (BY INDEX ROWID) OF 'ROUTES' (Cost=          
+          1 Card=5 Bytes=90)                                                    
+                                                                                
+  11   10               INDEX (RANGE SCAN) OF 'XPKROUTES' (UNIQUE) (Co          
+          st=1 Card=1)                                                          
+                                                                                
+  12    3         TABLE ACCESS* (FULL) OF 'MBTA_WEEKEND_SERVICE' (Cost :Q474002 
+          =11 Card=23 Bytes=437)                                                
+                                                                                
+  13    2       TABLE ACCESS* (FULL) OF 'TVMSTATION' (Cost=2 Card=129  :Q474003 
+          Bytes=2322)                                                           
+                                                                                
+
+
+   1 PARALLEL_TO_SERIAL            SELECT A1.C0,A1.C1,A1.C2,A1.C3,A1.C4,A1.C5,A 
+                                   1.C6,SUM(A1.C7),SUM(A1.C8),SUM(A1.C9         
+                                                                                
+   2 PARALLEL_TO_PARALLEL          SELECT /*+ ORDERED NO_EXPAND USE_HASH(A2) */ 
+                                    A1.C6 C0,A2.C1 C1,A2.C0 C2,A1.C11 C         
+                                                                                
+   3 PARALLEL_COMBINED_WITH_PARENT                                              
+   4 PARALLEL_COMBINED_WITH_PARENT                                              
+   5 PARALLEL_COMBINED_WITH_PARENT                                              
+   6 PARALLEL_FROM_SERIAL                                                       
+   7 PARALLEL_COMBINED_WITH_PARENT                                              
+   8 PARALLEL_COMBINED_WITH_PARENT                                              
+   9 PARALLEL_FROM_SERIAL                                                       
+  12 PARALLEL_FROM_SERIAL                                                       
+  13 PARALLEL_FROM_SERIAL                                                       
+
+
+Statistics
+----------------------------------------------------------                      
+       3215  recursive calls                                                    
+          3  db block gets                                                      
+    1398650  consistent gets                                                    
+    1588689  physical reads                                                     
+        872  redo size                                                          
+     281698  bytes sent via SQL*Net to client                                   
+       7006  bytes received via SQL*Net from client                             
+        258  SQL*Net roundtrips to/from client                                  
+         44  sorts (memory)                                                     
+          0  sorts (disk)                                                       
+       3843  rows processed                                                     
+

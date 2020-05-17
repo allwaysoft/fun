@@ -1,0 +1,101 @@
+SQL> 
+SQL> 
+SQL> CONNECT mviewadmin/mviewadmin@mvdb
+Connected.
+SQL> 
+SQL> -- Drop database link to master site replication administrator
+SQL> -- ===========================================================================
+SQL> 
+SQL> DROP DATABASE LINK nwcd.mbta.com;
+
+Database link dropped.
+
+SQL> 
+SQL> 
+SQL> CONNECT SYSTEM/manager@mvdb
+Connected.
+SQL> 
+SQL> DROP PUBLIC DATABASE LINK nwcd.masterdb;
+DROP PUBLIC DATABASE LINK nwcd.masterdb
+                          *
+ERROR at line 1:
+ORA-02024: database link not found 
+
+
+SQL> 
+SQL> DROP PUBLIC DATABASE LINK nwcd.mbta.com;
+
+Database link dropped.
+
+SQL> 
+SQL> -- Revoke appropriate privileges from materialized view administrator
+SQL> -- =====================================================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_REPCAT_ADMIN.REVOKE_ADMIN_ANY_SCHEMA (
+  3  	   username => 'mviewadmin');
+  4  END;
+  5  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- Unregister propagating the deferred transactions
+SQL> -- ===================================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_DEFER_SYS.UNREGISTER_PROPAGATOR (
+  3  	   username => 'mviewadmin');
+  4  END;
+  5  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- drop materialized View administrator for replication
+SQL> -- =========================================================
+SQL> 
+SQL> Drop user MVIEWADMIN cascade;
+
+User dropped.
+
+SQL> 
+SQL> 
+SQL> CONNECT mbta/hallo@mvdb
+Connected.
+SQL> 
+SQL> 
+SQL> -- Drop database link to master site replication administrator
+SQL> -- ===========================================================================
+SQL> 
+SQL> drop database link nwcd.mbta.com;
+
+Database link dropped.
+
+SQL> 
+SQL> -- Connect as materialized view administrator
+SQL> -- ==============================================
+SQL> 
+SQL> CONNECT mviewadmin/mviewadmin@mvdb
+ERROR:
+ORA-01017: invalid username/password; logon denied 
+
+
+Warning: You are no longer connected to ORACLE.
+SQL> 
+SQL> 
+SQL> -- Drop the materialized view replication group
+SQL> -- ================================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_REPCAT.DROP_MVIEW_REPGROUP (
+  3  	   gname => 'mbta_repg1',
+  4  	   drop_contents => true,
+  5  	   gowner => 'PUBLIC');
+  6  END;
+  7  /
+SP2-0640: Not connected
+SQL> 
+SQL> 
+SQL> spool off

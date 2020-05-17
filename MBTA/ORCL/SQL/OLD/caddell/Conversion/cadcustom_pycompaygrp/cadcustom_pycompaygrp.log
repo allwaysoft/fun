@@ -1,0 +1,67 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Fri Jul 10 13:24:12 2009
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+Control File:   cadcustom_pycompaygrp.ctl
+Data File:      D:\table_exports\PYCOMPAYGRP.txt
+  Bad File:     PYCOMPAYGRP.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 2
+Errors allowed: 50
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table DA.PYCOMPAYGRP, loaded from every logical record.
+Insert option in effect for this table: APPEND
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+PYG_COMP_CODE                       FIRST     *   ,  O(") CHARACTER            
+PYG_CODE                             NEXT     *   ,  O(") CHARACTER            
+PYG_DESCRIPTION                      NEXT     *   ,  O(") CHARACTER            
+PYG_SHORT_DESC                       NEXT     *   ,  O(") CHARACTER            
+PYG_BANK_CODE                        NEXT     *   ,  O(") CHARACTER            
+PYG_BRANCH_CODE                      NEXT     *   ,  O(") CHARACTER            
+PYG_BANK_ACC_NUMBER                  NEXT     *   ,  O(") CHARACTER            
+PYG_CR_ACC_CODE                      NEXT     *   ,  O(") CHARACTER            
+PYG_USER                             NEXT     *   ,  O(") CHARACTER            
+PYG_LAST_UPD_DATE                    NEXT     *   ,  O(") CHARACTER            
+PYG_DEPT_CODE                        NEXT     *   ,  O(") CHARACTER            
+PYG_SIGN_FILE1                       NEXT     *   ,  O(") CHARACTER            
+PYG_SIGN_FILE2                       NEXT     *   ,  O(") CHARACTER            
+PYG_COMPANY_LOGO_FILE                NEXT     *   ,  O(") CHARACTER            
+PYG_PRINT_ADDRESS_FLAG               NEXT     *   ,  O(") CHARACTER            
+PYG_SECURE_FLAG                      NEXT     *   ,  O(") CHARACTER            
+PYG_AMT_FOR_MANUAL_SIGN              NEXT     *   ,  O(") CHARACTER            
+PYG_AMT_FOR_TWO_SIGN                 NEXT     *   ,  O(") CHARACTER            
+PYG_MESSAGE                          NEXT     *   ,  O(") CHARACTER            
+
+value used for ROWS parameter changed from 64 to 52
+
+Table DA.PYCOMPAYGRP:
+  3 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 254904 bytes(52 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          2
+Total logical records read:             3
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Fri Jul 10 13:24:12 2009
+Run ended on Fri Jul 10 13:24:13 2009
+
+Elapsed time was:     00:00:00.06
+CPU time was:         00:00:00.01

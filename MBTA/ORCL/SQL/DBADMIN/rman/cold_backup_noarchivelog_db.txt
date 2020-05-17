@@ -1,0 +1,78 @@
+SHUTDOWN IMMEDIATE;
+STARTUP pfile = 'D:\NWCD\Scripte\initNWCD.ora' FORCE DBA;
+SHUTDOWN IMMEDIATE;
+STARTUP pfile = 'D:\NWCD\Scripte\initNWCD.ora' MOUNT;
+
+
+run {
+allocate channel backup_disk1 type disk ;
+backup database format 'H:\oracle_backup\oracle_db_backup\nwcd_DB_%U'  tag 'data files';
+release channel backup_disk1;
+}
+
+ALTER DATABASE OPEN;
+
+backup current controlfile format '+fra/emgcr/backupset/ctl_%d_%T_%s_%p' tag 'cold_cntl';
+
+
+
+
+
+************--------------------
+
+Backup
+------
+Login into unix machine, as the database installation owner or privileged user.
+Define environment variables. For example:
+export ORACLE_HOME=/opt/app/oracle/11.1.0/db_1
+export ORACLE_SID=CSWDB
+Start RMAN client
+$ORACLE_HOME/bin/rman
+Connect to the target database.
+RMAN> connect target /
+Shutdown the target database.
+RMAN> shutdown immediate
+Startup mount the database
+RMAN> startup mount
+Perform the backup (specify a tag for easiness of management)
+RMAN> run {
+2> backup full tag=' 090815'
+3> (database format='/external_data/backups/ CSWDB /rman/%U' include current controlfile);
+4> }
+Perform the backup
+RMAN> sql ‘alter database open’;
+Delete obsolete backups
+RMAN> delete obsolete;
+Exit the client
+RMAN> exit;
+
+
+Restore
+-------
+Login into unix machine, as the database installation owner or privileged user.
+Define environment variables. For example:
+export ORACLE_HOME=/opt/app/oracle/11.1.0/db_1
+export ORACLE_SID=CSWDB
+Start RMAN client
+$ORACLE_HOME/bin/rman
+Connect to the target database.
+RMAN> connect target /
+Shutdown the database
+RMAN> shutdown immediate
+Set the DBID number, available on the backup log.
+RMAN> SET DBID 237331179
+Startup the database in force nomount mode (it will use a dummy init file):
+RMAN> STARTUP FORCE NOMOUNT
+Restore the spfile. The example below will query for a backup within 180 days:
+RMAN> RESTORE SPFILE FROM AUTOBACKUP MAXSEQ 100 MAXDAYS 180;
+Restore the control file. The example below will restore a specific auto backed up control file:
+RMAN> restore controlfile from '/external_data/backups/rman/c-237331179-20090116-00';
+Mount the database using restored control file and spfile:
+RMAN> ALTER DATABASE MOUNT;
+Restore the database:
+RMAN> RESTORE DATABASE;
+Recover the database:
+RMAN> RECOVER DATABASE;
+And if no errors occurred:
+RMAN> ALTER DATABASE OPEN RESETLOGS;
+Shutdown immediate and startup the database for concluding.

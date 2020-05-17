@@ -1,0 +1,21 @@
+/* This Sample Code is provided for the purpose of illustration only and is not intended 
+to be used in a production environment.  THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE 
+PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR 
+PURPOSE.  We grant You a nonexclusive, royalty-free right to use and modify the Sample Code
+and to reproduce and distribute the object code form of the Sample Code, provided that You 
+agree: (i) to not use Our name, logo, or trademarks to market Your software product in which
+the Sample Code is embedded; (ii) to include a valid copyright notice on Your software product
+in which the Sample Code is embedded; and (iii) to indemnify, hold harmless, and defend Us and
+Our suppliers from and against any claims or lawsuits, including attorneys’ fees, that arise or 
+result from the use or distribution of the Sample Code.
+*/
+-- Signal vs. Resource Waits.sql
+---- Signal waits are the time spent in the runnable queue waiting for CPU
+---- Resource waits are the time spent waiting for the resource = wait_time_ms - signal_wait_time_ms
+---- Total waits are wait_time_ms
+Select signal_wait_time_ms=sum(signal_wait_time_ms)
+			,'%signal waits' = cast(100.0 * sum(signal_wait_time_ms) / sum (wait_time_ms) as numeric(20,2))
+			,resource_wait_time_ms=sum(wait_time_ms - signal_wait_time_ms)
+			,'%resource waits'= cast(100.0 * sum(wait_time_ms - signal_wait_time_ms) / sum (wait_time_ms) as numeric(20,2))
+From sys.dm_os_wait_stats

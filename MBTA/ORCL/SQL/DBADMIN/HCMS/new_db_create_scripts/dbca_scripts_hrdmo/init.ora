@@ -1,0 +1,60 @@
+##############################################################################
+# Copyright (c) 1991, 2001, 2002 by Oracle Corporation
+##############################################################################
+ 
+###########################################
+# Cache and I/O
+###########################################
+db_block_size=8192
+ 
+###########################################
+# Cursors and Library Cache
+###########################################
+open_cursors=300
+ 
+###########################################
+# Database Identification
+###########################################
+db_domain=mbta.com
+db_name="hrtrn"
+ 
+###########################################
+# File Configuration
+###########################################
+db_create_file_dest="+HRTRNDATA"
+db_create_online_log_dest_1=+HRTRNDATA
+db_create_online_log_dest_2=+HRTRNFRA
+db_recovery_file_dest="+HRTRNFRA"
+db_recovery_file_dest_size=20G
+ 
+###########################################
+# Miscellaneous
+###########################################
+compatible=11.2.0.0.0
+diagnostic_dest=/u01/app/oracle
+memory_target=1073741824
+ 
+###########################################
+# Processes and Sessions
+###########################################
+processes=200
+sessions=225
+ 
+###########################################
+# Security and Auditing
+###########################################
+audit_file_dest="/u01/app/oracle/admin/hrtrn/adump"
+audit_trail=db
+remote_login_passwordfile=EXCLUSIVE
+ 
+###########################################
+# Shared Server
+###########################################
+dispatchers="(PROTOCOL=TCP) (SERVICE=hrtrnXDB)"
+ 
+###########################################
+# System Managed Undo and Rollback Segments
+###########################################
+undo_tablespace=UNDOTBS1
+ 
+ 

@@ -1,0 +1,74 @@
+http://www.oracle-base.com/articles/8i/TKPROFAndOracleTrace.php
+
+--Set trace for other sessions. Use cautioin when changing the trace levels. identify trace file in user dump dest
+http://www.oracle-base.com/articles/10g/sql-trace-10046-trcsess-and-tkprof-10g.php --this has more info than below
+http://www.orafaq.com/wiki/SQL_Trace#Tracing_other_user.27s_sessions
+
+-- how to use and understand tkprof
+http://www.dbasupport.com/forums/showthread.php?t=10940  
+
+
+TKPROF And Oracle Trace
+The TKPROF program converts Oracle trace files into a more readable form. If you have a problem query you can user TKPROF to get more information. To get the most out of the utility you must enable timed statistics by setting the init.ora parameter or performing the following command:
+
+ALTER SYSTEM SET TIMED_STATISTICS = TRUE;If a suitable plan table is not present one can be created by doing the fooling as the SYS user:
+
+@$ORACLE_HOME/rdbms/admin/utlxplan.sql
+CREATE PUBLIC SYNONYM PLAN_TABLE FOR SYS.PLAN_TABLE;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SYS.PLAN_TABLE TO PUBLIC; --With this done we can trace a statement:
+
+You can also set the TRACEFILE_IDENTIFIER initialization parameter to specify a custom identifier that becomes part of the trace file name. For example, you can add my_trace_id to subsequent trace file names for easy identification with the following:
+
+ALTER SESSION SET TRACEFILE_IDENTIFIER = 'my_trace_id';
+
+
+ALTER SESSION SET SQL_TRACE = TRUE;
+
+SELECT COUNT(*)
+FROM   dual;
+
+ALTER SESSION SET SQL_TRACE = FALSE;
+
+The resulting trace file will be located in the USER_DUMP_DEST directory. This can then be interpreted using TKPROF at the commmand prompt as follows:
+
+tkprof <trace-file> <output-file> explain=user/password@service table=sys.plan_table        
+-- this is case sensitive use tkprof not TKPROF  depending on the tkprof utility name in $ORACLE_HOME/bin
+
+The resulting output file contains the following type of information for all SQL statements processed, including the ALTER SESSION commands:
+
+********************************************************************************
+count    = number of times OCI procedure was executed
+cpu      = cpu time in seconds executing 
+elapsed  = elapsed time in seconds executing
+disk     = number of physical reads of buffers from disk
+query    = number of buffers gotten for consistent read
+current  = number of buffers gotten in current mode (usually for update)
+rows     = number of rows processed by the fetch or execute call
+********************************************************************************
+
+ SELECT COUNT(*)
+ FROM   dual
+
+call    count    cpu elapsed    disk   query current     rows
+------- -----  ----- ------- ------- ------- -------  -------
+Parse       1   0.02    0.02       0       0       0        0
+Execute     1   0.00    0.00       0       0       0        0
+Fetch       2   0.00    0.00       0       1       4        1
+------- -----  ----- ------- ------- ------- -------  -------
+total       4   0.02    0.02       0       1       4        1
+
+Misses in library cache during parse: 1
+Optimizer goal: CHOOSE
+Parsing user id: 121  
+
+Rows     Row Source Operation
+-------  ---------------------------------------------------
+      1  SORT AGGREGATE 
+      1   TABLE ACCESS FULL DUALThings to look out for in the trace include:
+
+•When tracing lots of statements at once, such as batch processes, you can quickly discard those statements which have an acceptable cpu times. It's often better to focus on those statements that are taking most of the cpu time. 
+•Inefficient statements are mostly associated with a high number of block visits. The query column indicates block visits for read consistency, including all query and subquery processing. The current column indicates visits not related to read consistency, including segment headers and blocks that are going to be updated. 
+•The number of blocks read from disk is shown in the disk column. Since disk reads are slower than memory reads you would expect this value to be significantly lower than the sum of the query and current columns. If it is not you may have an issue with your buffer cache. 
+•Locking problems and inefficient PL/SQL loops may lead to high cpu/elapsed values even when block visits are low. 
+•Multiple parse calls for a single statement imply a library cache issue. 
+•Once you've identified your problem statements you can check the execution plan to see why the statement is performing badly. 

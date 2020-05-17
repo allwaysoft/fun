@@ -1,0 +1,49 @@
+
+SQL*Loader: Release 9.2.0.1.0 - Production on Mon Dec 13 14:00:34 2010
+
+Copyright (c) 1982, 2002, Oracle Corporation.  All rights reserved.
+
+Control File:   C:\MISC\SQL\BU_Semester_Fall_2010\BU_usage.ctl
+Data File:      C:\MISC\SQL\BU_Semester_Fall_2010\BU_usage.txt
+  Bad File:     C:\MISC\SQL\BU_Semester_Fall_2010\BU_usage.txt
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table MBTA.MBTA_TEMP_BU_USAGE, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+BU_SEQUENCENO                       FIRST     *   ,  O(") CHARACTER            
+BU_SERIALNO                          NEXT     *   ,  O(") CHARACTER            
+
+
+Table MBTA.MBTA_TEMP_BU_USAGE:
+  1391 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                  33024 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:          1391
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Mon Dec 13 14:00:34 2010
+Run ended on Mon Dec 13 14:00:41 2010
+
+Elapsed time was:     00:00:07.09
+CPU time was:         00:00:00.08

@@ -1,0 +1,49 @@
+
+SQL*Loader: Release 11.2.0.2.0 - Production on Mon Dec 10 12:33:53 2012
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Control File:   C:\MISC\ORACLE\SQL\charlie_cards_expiring\charlie_card_expiry.ctl
+Data File:      C:\MISC\oracle\data\charlie_cards_expiring\input\CharlieCards_Active-20121210095057.csv
+  Bad File:     C:\MISC\oracle\SQL\charlie_cards_expiring\CharlieCards_Active-20121210095057.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table MBTA_TEMP_CARDS_EXPIRING, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+CHARLIE_CARD_NO                     FIRST     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(:CHARLIE_CARD_NO))"
+
+
+Table MBTA_TEMP_CARDS_EXPIRING:
+  85619 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                  16512 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:         85619
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Mon Dec 10 12:33:53 2012
+Run ended on Mon Dec 10 12:34:34 2012
+
+Elapsed time was:     00:00:23.82
+CPU time was:         00:00:00.46

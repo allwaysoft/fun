@@ -1,0 +1,17 @@
+PYJA_COMP_CODE|NULL('PYJA_COMP_CODE')
+PYJA_COMP_CODE|APK_GL_COMPANY('CHK','IS_ON_FILE,IS_NOT_NULL','PYJA_COMP_CODE')
+
+PYJA_JOB_CODE|NULL('PYJA_JOB_CODE')
+PYJA_JOB_CODE|WHERE('PYJA_JOB_CODE','PYJA_JOB_CODE NOT IN (select \'ALL\' from dual union all select \'ALLBID\' from dual union all select job_code from da.jcjob_table where job_comp_code = PYJA_COMP_CODE)','Not a valid PYJA_JOB_CODE value')
+
+PYJA_TYPE_CODE|NULL('PYJA_TYPE_CODE')
+PYJA_TYPE_CODE|NULL_FLAGS('PYJA_TYPE_CODE','BN,TX,DE,WC,PL')
+
+PYJA_CODE|NULL('PYJA_CODE')
+PYJA_CODE|WHERE('PYJA_CODE','PYJA_CODE NOT IN (select \'ALL\' from dual union select ben_code from da.pybenefit where ben_job_allocation = \'Y\' and PYJA_TYPE_CODE = \'BN\' union select ded_code from da.pydeduction where ded_job_allocation = \'Y\' and ded_emplr_contr = \'Y\' and PYJA_TYPE_CODE = \'DE\' union select tax_code from da.pytax where tax_job_allocation = \'Y\' and PYJA_TYPE_CODE = \'TX\' union select wcc_wcb_code from da.pywcbcode where wcc_job_allocation = \'Y\' and PYJA_TYPE_CODE = \'WC\' union select plc_code from da.pyplcode where plc_job_allocation = \'Y\' and PYJA_TYPE_CODE = \'PL\')','Not a valid PYJA_CODE value')
+
+PYJA_CAT_CODE|NULL('PYJA_CAT_CODE')
+PYJA_CAT_CODE|WHERE('PYJA_CAT_CODE','PYJA_CAT_CODE NOT IN (select cat_code from da.jccat where cat_comp_code = PYJA_COMP_CODE and nvl(cat_active_flag, \'Y\') = \'Y\')','Not a valid PYJA_CAT_CODE value')
+
+PYJA_PHS_CODE|VALIDATE_NOT_EXISTS('PYJA_PHS_CODE','JCJOBCAT','PYJA_COMP_CODE,PYJA_JOB_CODE,PYJA_PHS_CODE,PYJA_CAT_CODE','JCAT_COMP_CODE,JCAT_JOB_CODE,JCAT_PHS_CODE,JCAT_CODE','Y')
+

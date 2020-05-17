@@ -1,0 +1,7 @@
+VBGROUP 5.0
+Project=a\Attend2A.vbp
+StartupProject=batch\A2Batch.vbp
+Project=t\A2TestProj.vbp
+Project=batch\A2BatchDispatch.vbp
+Project=a\MaximusLogonProxy.vbp
+Project=t\LogonTestProj.vbp

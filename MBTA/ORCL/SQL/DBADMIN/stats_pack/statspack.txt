@@ -1,0 +1,9 @@
+http://docs.oracle.com/cd/B10500_01/server.920/a96533/statspac.htm
+
+http://rpelletier.wordpress.com/2010/03/11/how-to-set-up-statspack-on-oracle-9i-10g-or-even-11g/
+
+http://kerryosborne.oracle-guy.com/2008/11/statspack-still-works-in-10g-and-11g/
+
+http://www.akadia.com/services/ora_statspack_survival_guide.html    --simple explanation
+
+

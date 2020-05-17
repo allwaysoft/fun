@@ -1,0 +1,144 @@
+--Start .CommandText = "eAlerts_SubwayAlertSummary"
+
+select route, 
+            (
+			select count(*) from 
+			thetweb.dbo.servicealerts s2
+			where s2.mode = 'Subway'  
+			and s2.route=servicealerts.route
+			and s2.isclosed=0
+			) cnt,
+			(
+			select count(*) from 
+			thetweb.dbo.servicealerts s1
+			where s1.mode = 'Subway'
+			and s1.route=servicealerts.route
+			and s1.Delay='Advisory'
+			and s1.isclosed=1
+			and dateexpired is not null
+			and dateexpired > getDate()
+			) advisories, 
+			mode
+from thetweb.dbo.servicealerts
+where mode = 'Subway'
+group by route, mode
+
+replace the above query with below.
+
+select route, sum(case 
+                      when isclosed = 0 then 1
+                      else 0 
+                    end
+                  ) cnt,
+              sum(case when delay = 'Advisory' then
+                    case when isclosed = 1 then
+                      case when dateexpired > getdate() then 1
+                      else 0
+                      end
+                    else 0
+                    end
+                  else 0
+                  end
+                 ) advisories, 
+			  mode
+            from thetweb.dbo.servicealerts
+			where mode = 'Subway' 
+group by route, mode
+
+
+-- End .CommandText = "eAlerts_SubwayAlertSummary"
+
+-- Start .CommandText = "eAlerts_CRAlertSummary"
+
+
+
+-- End .CommandText = "eAlerts_CRAlertSummary"
+
+
+
+
+select route, sum(case when mode = 'subway' then 
+                    case when isclosed = 0 then 1
+                      else 0 
+                    end
+                  else 0
+                  end
+                  ) subway_cnt,
+              sum(case when mode = 'subway' then 
+                    case when delay = 'Advisory' then
+                      case when isclosed = 1 then
+                        case when dateexpired > getdate() then 1
+                        else 0
+                        end
+                      else 0
+                      end
+                    else 0
+                    end
+                  else 0
+                  end
+                 ) subway_advisories,
+           
+              sum(case when mode = 'Boat' then 
+                    case when isclosed = 0 then
+                      case when delay = 'Delay' then 1
+                      else 0 
+                      end
+                    else 0
+                    end
+                  else 0
+                  end
+                  ) boat_cnt,
+              sum(case when mode = 'Boat' then 
+                    case when delay = 'Advisory' then
+                      --case when isclosed = 1 then
+                        case when dateexpired > getdate() then 1
+                        else 0
+                        end
+                      --else 0
+                      --end
+                    else 0
+                    end
+                  else 0
+                  end
+                 ) boat_advisories,
+
+
+			  sum(case when mode = 'Commuter Rail' then 
+                    case when isclosed = 0 then 1
+                      else 0 
+                    end
+                  else 0
+                  end
+                  ) commuter_cnt,
+              sum(case when mode = 'Commuter Rail'then 
+                    case when delay = 'Advisory' then
+                      case when isclosed = 1 then
+                        case when dateexpired > getdate() then 1
+                        else 0
+                        end
+                      else 0
+                      end
+                    else 0
+                    end
+                  else 0
+                  end
+                 ) commuter_advisories,
+
+              sum(case when mode = 'Silver Line' then 
+                    case when delay = 'Advisory' then
+                      case when isclosed = 1 then
+                        case when dateexpired > getdate() then 1
+                        else 0
+                        end
+                      else 0
+                      end
+                    else 0
+                    end
+                  else 0
+                  end
+                 ) silver_advisories,
+
+			  mode
+            from thetweb.dbo.servicealerts
+			where mode in ('Subway', 'Boat', 'Commuter Rail', 'Silver Line')
+group by route, mode

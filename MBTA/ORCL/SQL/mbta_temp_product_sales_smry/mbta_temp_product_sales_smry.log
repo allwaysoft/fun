@@ -1,0 +1,51 @@
+
+SQL*Loader: Release 9.2.0.1.0 - Production on Thu Nov 18 10:32:28 2010
+
+Copyright (c) 1982, 2002, Oracle Corporation.  All rights reserved.
+
+Control File:   C:\MISC\SQL\mbta_temp_product_sales_smry\mbta_temp_product_sales_smry.ctl
+Data File:      C:\MISC\SQL\mbta_temp_product_sales_smry\mbta_temp_product_sales_smry.csv
+  Bad File:     C:\MISC\SQL\mbta_temp_product_sales_smry\mbta_temp_product_sales_smry_bad.txt
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table MBTA_TEMP_PRODUCT_SALES_SMRY, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+DEVICECLASSID                       FIRST     *   ,  O(") CHARACTER            
+DEVICEID                             NEXT     *   ,  O(") CHARACTER            
+UNIQUEMSID                           NEXT     *   ,  O(") CHARACTER            
+SALESTRANSACTIONNO                   NEXT     *   ,  O(") CHARACTER            
+
+
+Table MBTA_TEMP_PRODUCT_SALES_SMRY:
+  5821 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                  66048 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:          5821
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Thu Nov 18 10:32:28 2010
+Run ended on Thu Nov 18 10:32:31 2010
+
+Elapsed time was:     00:00:03.37
+CPU time was:         00:00:00.04

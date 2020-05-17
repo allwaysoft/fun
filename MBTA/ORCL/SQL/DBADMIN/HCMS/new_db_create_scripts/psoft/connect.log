@@ -1,0 +1,29 @@
+SQL> 
+SQL> REMARK -- drop user people cascade;
+SQL> 
+SQL> REMARK create user PEOPLE identified by PEOP1E default tablespace PSDEFAULT
+SQL> REMARK temporary tablespace PSTEMP;
+SQL> 
+SQL> REMARK GRANT CREATE SESSION to PEOPLE;
+SQL> 
+SQL> drop user MBTACON cascade;
+drop user MBTACON cascade
+          *
+ERROR at line 1:
+ORA-01918: user 'MBTACON' does not exist
+
+
+SQL> 
+SQL> --MBTA Custom changed from PSTEMP to TEMP
+SQL> create user MBTACON identified by MBTACON1 default tablespace PSDEFAULT
+  2  temporary tablespace TEMP;
+
+User created.
+
+SQL> 
+SQL> GRANT CREATE SESSION to MBTACON;
+
+Grant succeeded.
+
+SQL> 
+SQL> spool off

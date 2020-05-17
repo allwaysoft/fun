@@ -1,0 +1,59 @@
+
+SQL*Loader: Release 9.2.0.1.0 - Production on Mon Mar 7 17:17:47 2011
+
+Copyright (c) 1982, 2002, Oracle Corporation.  All rights reserved.
+
+Control File:   C:\MISC\SQL\tride_clients\tride.ctl
+Data File:      C:\MISC\SQL\tride_clients\input\tride.csv
+  Bad File:     C:\MISC\SQL\tride_clients\tride.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table MBTA.MBTA_TEMP_TRIDE, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+CLIENTID                            FIRST     *   ,  O(") CHARACTER            
+LASTNAME                             NEXT     *   ,  O(") CHARACTER            
+FIRSTNAME                            NEXT     *   ,  O(") CHARACTER            
+MIDDLEINITIAL                        NEXT     *   ,  O(") CHARACTER            
+EMAIL                                NEXT     *   ,  O(") CHARACTER            
+HOUSENO                              NEXT     *   ,  O(") CHARACTER            
+ADDRESS1                             NEXT     *   ,  O(") CHARACTER            
+ADDRESS2                             NEXT     *   ,  O(") CHARACTER            
+CITY                                 NEXT     *   ,  O(") CHARACTER            
+STATE                                NEXT     *   ,  O(") CHARACTER            
+ZIPCODE                              NEXT     *   ,  O(") CHARACTER            
+UDF                                  NEXT     *   ,  O(") CHARACTER            
+
+
+Table MBTA.MBTA_TEMP_TRIDE:
+  1083 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 198144 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:          1083
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Mon Mar 07 17:17:47 2011
+Run ended on Mon Mar 07 17:17:50 2011
+
+Elapsed time was:     00:00:03.81
+CPU time was:         00:00:00.06

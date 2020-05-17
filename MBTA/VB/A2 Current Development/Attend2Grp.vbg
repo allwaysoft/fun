@@ -1,0 +1,7 @@
+VBGROUP 5.0
+Project=c\Attend2Proj.vbp
+Project=a\Attend2A.vbp
+Project=s\A2SQLDS.vbp
+StartupProject=t\A2TestProj.vbp
+Project=tp\TestProjForGrp.vbp
+Project=batch\A2Batch.vbp

@@ -1,0 +1,19 @@
+connect system/manager@mvdb
+
+drop PUBLIC DATABASE LINK nwcd.mbta.com;
+
+CREATE PUBLIC DATABASE LINK nwcd.mbta.com USING 'masterdb';
+
+connect mviewadmin/mviewadmin@mvdb
+
+DROP DATABASE LINK nwcd.mbta.com;
+
+create database link nwcd.mbta.com connect to repadmin identified by rep51705;
+
+connect mbta/hallo@mvdb
+
+drop database link nwcd.mbta.com;
+DROP DATABASE LINK nwcd.masterdb;
+
+create database link nwcd.mbta.com connect to repadmin identified by rep51705;
+create DATABASE LINK nwcd.masterdb connect to repadmin identified by rep51705;

@@ -1,0 +1,36 @@
+Hi Tom, 
+
+The version of Oracle we have is 9.2.0.8.0 I am having a situation where I have to fetch data from 10 different tables.Out of these tables 4 tables are partitioned on month basis. Each of these 4 tables has data for 15 months, so there are 15 partitions and the data in each table is approximately 250 million to 300 million, divided evenly in all partitions. The sql I am using always retrives data from the begning of the partition to the ending of the partition, i.e month begning of the month to the ending of the month but not from some day of the month to some day of another month. In the where claus of the query, I am using the partition date of a table >= beginofmonth and partition date of a table <= endofmonth, and I am using this partition date to join with other tables. My question is will there be any performance improvement if I add all the partition date fields of other big tables tables to in the where with the begin and end of month condition. Please see below code. 
+
+What I am using now.
+    AND T2.partitondate = T1.Partitondate
+    AND T3.partitondate = T2.Partitondate
+    AND T4.partitondate = T3.Partitondate
+
+    AND    T1.PartitioningDate    >= to_date('2009-07-01-03-00-00','YYYY-MM-DD-HH24-MI-SS')
+    AND    T1.PartitioningDate    <  to_date('2009-09-01-00-00-00','YYYY-MM-DD-HH24-MI-SS')
+
+What I want to know if it will improve the performance.
+
+    AND T2.partitondate = T1.Partitondate
+    AND T3.partitondate = T2.Partitondate
+    AND T4.partitondate = T3.Partitondate
+
+    AND    T1.PartitioningDate    >= to_date('2009-07-01-03-00-00','YYYY-MM-DD-HH24-MI-SS')
+    AND    T1.PartitioningDate    <  to_date('2009-09-01-00-00-00','YYYY-MM-DD-HH24-MI-SS')
+
+    AND T2.PartitioningDate >= to_date('2009-07-01-03-00-00','YYYY-MM-DD-HH24-MI-SS')
+    AND T2.PartitioningDate < to_date('2009-09-01-00-00-00','YYYY-MM-DD-HH24-MI-SS')
+    
+    AND  T3.PartitioningDate >= to_date('2009-07-01-03-00-00','YYYY-MM-DD-HH24-MI-SS')
+    AND  T3.PartitioningDate < to_date('2009-09-01-00-00-00','YYYY-MM-DD-HH24-MI-SS')
+    
+    AND T4.EndCreaDate >= to_date('2009-07-01-03-00-00','YYYY-MM-DD-HH24-MI-SS')
+    AND T4.EndCreaDate <= to_date('2009-09-01-00-00-00','YYYY-MM-DD-HH24-MI-SS')
+
+
+
+
+Also can you please let me know, what are the different hints I can consider while running this query. Right now I am using ORDERED, PARALLEL, FULL, USE_HASH on the big tables. These are used by the queries which were written back in 2008 by some other developers and I am looking to improve them. There is an Index on the partitioning date on all table but the performance degraded with use of the INDEX hint. 
+
+Thanks. 

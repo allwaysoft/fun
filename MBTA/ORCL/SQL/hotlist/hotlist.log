@@ -1,0 +1,70 @@
+
+SQL*Loader: Release 9.2.0.1.0 - Production on Wed Jul 6 13:09:45 2011
+
+Copyright (c) 1982, 2002, Oracle Corporation.  All rights reserved.
+
+Control File:   C:\MISC\SQL\hotlist\hotlist.ctl
+Data File:      C:\MISC\data\hotlist\input\hotlist_StudentIds_withjuly_iusage_and_valid_dates.csv
+  Bad File:     C:\MISC\SQL\hotlist\hotlist_StudentIds_withjuly_iusage_and_valid_dates.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table MBTA.HOTLIST, loaded from every logical record.
+Insert option in effect for this table: APPEND
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+MEDIATYPE                           FIRST     *   ,  O(") CHARACTER            
+SERIALNUMBER                         NEXT     *   ,  O(") CHARACTER            
+XVALIDFROM                           NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "to_date(:XVALIDFROM,'MM/DD/YYYY')"
+SERIALNUMBERUB                       NEXT     *   ,  O(") CHARACTER            
+SREASON                              NEXT     *   ,  O(") CHARACTER            
+XVALIDUNTIL                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "to_date(:XVALIDUNTIL ,'MM/DD/YYYY')"
+STATUS                               NEXT     *   ,  O(") CHARACTER            
+USERNEW                              NEXT     *   ,  O(") CHARACTER            
+TIMENEW                              NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "to_date(:TIMENEW,'MM/DD/YYYY HH:MI')"
+USERCHANGE                           NEXT     *   ,  O(") CHARACTER            
+TIMECHANGE                           NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "to_date(:TIMECHANGE,'MM/DD/YYYY HH:MI')"
+
+Record 1: Rejected - Error on table MBTA.HOTLIST.
+ORA-00001: unique constraint (MBTA.XPKHOTLIST) violated
+
+Record 211: Rejected - Error on table MBTA.HOTLIST.
+ORA-00001: unique constraint (MBTA.XPKHOTLIST) violated
+
+
+MAXIMUM ERROR COUNT EXCEEDED - Above statistics reflect partial run.
+
+Table MBTA.HOTLIST:
+  191 Rows successfully loaded.
+  2 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 181632 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:           256
+Total logical records rejected:         2
+Total logical records discarded:        0
+
+Run began on Wed Jul 06 13:09:45 2011
+Run ended on Wed Jul 06 13:09:48 2011
+
+Elapsed time was:     00:00:03.17
+CPU time was:         00:00:00.04

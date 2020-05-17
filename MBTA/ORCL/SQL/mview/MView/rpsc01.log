@@ -1,0 +1,712 @@
+SQL> 
+SQL> 
+SQL> -- Connect as materialized view administrator
+SQL> -- =============================================
+SQL> 
+SQL> CONNECT mviewadmin/mviewadmin@mvdb
+Connected.
+SQL> 
+SQL> -- Remove all Objects from Refresh Group
+SQL> -- =============================================
+SQL> -- #1 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."MULTIMEDIAGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ACCESSLEVEL"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ALARMACTION"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ALARMEVENT"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #5 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ALARMSERVERCONFIG"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ALARMSERVERGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ALARMSERVERGROUP_ALARMEVENT"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ARTICLE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ARTICLE_RELEASE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #10 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."BALANCEGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."CASHTYPE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."COMPANY"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."CURRENCIES"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."DBCONNECTPARAMETER"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #15 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."DEFAULTSTATIONGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."DEVICECLASS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."DEVICECLASS_VERSIONS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."DEVICECONFIG"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."EVENT"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #20 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."EVENTGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."FEPDATA"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."FUNCTION"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."FUNCTIONGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."GRAPHICMAP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #25 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."GRAPHICPROPERTY"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."HARDWARECOMPONENTS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."JOBTABLE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."LOCKDEPENDENCIES"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."MASTERASSEMBLY"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #30 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."MENUTREE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ORAERR"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."PAYMENTCASHTYPE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."PAYMENTOPDATA"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."PERMDETAIL"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #35 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."PERMISSION"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."PREVIOUSPASSWORD"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."PREVIOUSPIN"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."RELEASE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."RELEASE_VERSIONS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #40 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."ROUTES"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."SCHEDULEELEMENT"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."SCHEDULEGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."SCHEDULEGROUPELEMENTS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."SCTVMRELATION"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #45 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."SDRELEASE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."SDRELEASE_RELEASE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."STATIONCONTROLLER"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."STATUSOPTIONS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TABLEINFO"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #50 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TARIFFVERSIONS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMFEPGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMNETCONFGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMSCHEDULEGROUPELEMENT"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #55 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMSCHEDULEGROUPELEMENTS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMSTATION"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMTABLE"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."TVMVERSIONGROUP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."UNIQUENUMBERS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #60 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."USERDATA"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."USERGROUPS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."VERSIONGROUPLIST"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."VERSIONS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."WORKSTATIONGRP"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> -- #65 ------------------------------------------
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."WORKSTATIONS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> BEGIN
+  2  	DBMS_REFRESH.SUBTRACT(
+  3  	  name => '"MVIEWADMIN"."MBTA_REFG1"',
+  4  	  list => '"MBTA"."WSGRPCONTENTS"',
+  5  	  lax => TRUE);
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> -- Remove Refresh Group
+SQL> -- =============================================
+SQL> BEGIN
+  2  	DBMS_REFRESH.DESTROY(name => '"MVIEWADMIN"."MBTA_REFG1"');
+  3  END;
+  4  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> spool off

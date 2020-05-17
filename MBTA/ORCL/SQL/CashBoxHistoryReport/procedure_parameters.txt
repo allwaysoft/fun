@@ -1,0 +1,27 @@
+  SP_CHR_2004(:P_QueryID, 
+			  :P_DateFirst, 
+			  :P_DateLast, 
+  			  :P_DateFirstPulled, 
+			  :P_DateLastPulled, 
+  			  :P_BusNo, 
+			  :P_Cashbox, 
+			  :P_Employee, 
+  			  :P_FareboxFrom, 
+			  :P_FareboxInto, 
+              :P_Garage, 
+			  :P_MobileVault, 
+			  :P_ReceiverVault);
+						
+  NQUERYID :=1;
+  DDATEFIRST := to_Date('2007-11-13-03-00-00','yyyy-mm-dd-hh24-mi-ss');
+  DDATELAST := to_Date('2007-11-25-02-59-59','yyyy-mm-dd-hh24-mi-ss');
+  DDATEFIRSTPULLED := to_Date('1970-01-01-00-00-00','yyyy-mm-dd-hh24-mi-ss');
+  DDATELASTPULLED := to_Date('3000-12-31-23-59-59','yyyy-mm-dd-hh24-mi-ss');
+  VBUSNO := 'All';
+  VCASHBOX := 'All';
+  VEMPLOYEE := 'All';
+  VFAREBOXFROM := 'in List-99990';
+  VFAREBOXINTO := 'All';
+  VGARAGE := 'in List-99990';
+  VMOBILEVAULT := 'All';
+  VRECEIVERVAULT := 'All';		

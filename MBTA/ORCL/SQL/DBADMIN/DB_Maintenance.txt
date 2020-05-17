@@ -1,0 +1,11 @@
+1. Purge Audit Trail. Do this on a scheduled basis to purge the audit rail to save space. Also check in the Docs section under Oracle on my machine for a PDF on AUDIT Trail maintenance.
+
+https://forums.oracle.com/forums/thread.jspa?threadID=2168439
+http://www.oracle-base.com/articles/11g/auditing-enhancements-11gr2.php
+
+BEGIN
+DBMS_AUDIT_MGMT.INIT_CLEANUP(
+AUDIT_TRAIL_TYPE => DBMS_AUDIT_MGMT.AUDIT_TRAIL_ALL,
+DEFAULT_CLEANUP_INTERVAL => 12 );
+END;
+/

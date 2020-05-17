@@ -1,0 +1,60 @@
+
+
+***********************************************************************
+Fatal NI connect error 12571, connecting to:
+ (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=172.17.0.4)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=NWCD.MBTA.COM)(CID=(PROGRAM=C:\Program Files\Business Objects\Crystal Reports 11\crw32.exe)(HOST=CCS-WS-089)(USER=kvc5391))))
+
+  VERSION INFORMATION:
+	TNS for 32-bit Windows: Version 9.2.0.1.0 - Production
+	Windows NT TCP/IP NT Protocol Adapter for 32-bit Windows: Version 9.2.0.1.0 - Production
+  Time: 09-OCT-2009 14:18:34
+  Tracing not turned on.
+  Tns error struct:
+    nr err code: 0
+    ns main err code: 12571
+    TNS-12571: TNS:packet writer failure
+    ns secondary err code: 12560
+    nt main err code: 530
+    TNS-00530: Protocol adapter error
+    nt secondary err code: 54
+    nt OS err code: 0
+
+
+***********************************************************************
+Fatal NI connect error 12571, connecting to:
+ (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=172.17.0.4)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=NWCD.MBTA.COM)(CID=(PROGRAM=C:\Program Files\Business Objects\Crystal Reports 11\crw32.exe)(HOST=CCS-WS-089)(USER=kvc5391))))
+
+  VERSION INFORMATION:
+	TNS for 32-bit Windows: Version 9.2.0.1.0 - Production
+	Windows NT TCP/IP NT Protocol Adapter for 32-bit Windows: Version 9.2.0.1.0 - Production
+  Time: 09-OCT-2009 14:18:37
+  Tracing not turned on.
+  Tns error struct:
+    nr err code: 0
+    ns main err code: 12571
+    TNS-12571: TNS:packet writer failure
+    ns secondary err code: 12560
+    nt main err code: 530
+    TNS-00530: Protocol adapter error
+    nt secondary err code: 54
+    nt OS err code: 0
+
+
+***********************************************************************
+Fatal NI connect error 12571, connecting to:
+ (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=172.17.0.4)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=NWCD.MBTA.COM)(CID=(PROGRAM=C:\Program Files\Business Objects\Crystal Reports 11\crw32.exe)(HOST=CCS-WS-089)(USER=kvc5391))))
+
+  VERSION INFORMATION:
+	TNS for 32-bit Windows: Version 9.2.0.1.0 - Production
+	Windows NT TCP/IP NT Protocol Adapter for 32-bit Windows: Version 9.2.0.1.0 - Production
+  Time: 09-OCT-2009 14:18:44
+  Tracing not turned on.
+  Tns error struct:
+    nr err code: 0
+    ns main err code: 12571
+    TNS-12571: TNS:packet writer failure
+    ns secondary err code: 12560
+    nt main err code: 530
+    TNS-00530: Protocol adapter error
+    nt secondary err code: 54
+    nt OS err code: 0

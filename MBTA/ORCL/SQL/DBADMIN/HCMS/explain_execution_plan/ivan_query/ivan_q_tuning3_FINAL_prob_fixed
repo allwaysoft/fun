@@ -1,0 +1,231 @@
+/* Formatted on 8/2/2012 5:15:43 PM (QP5 v5.185.11230.41888) */
+-- Below query is 20x faster than the original query.
+SELECT DISTINCT B.BUSINESS_UNIT,
+                B.DEPTID,
+                A4.EMPLID,
+                A4.NAME_PSFORMAT,
+                A4.SEX,
+                TO_CHAR (A4.BIRTHDATE, 'YYYY-MM-DD'),
+                A4.EMPL_STATUS,
+                A4.STEP,
+                A4.HOURLY_RT,
+                A4.COMP_FREQUENCY,
+                A4.COMPRATE,
+                A4.ANNL_BENEF_BASE_RT,
+                A4.POSITION_NBR,
+                B.EFF_STATUS,
+                B.DESCR,
+                B.JOBCODE,
+                E.DESCR,
+                B.POSN_STATUS,
+                B.BUDGETED_POSN,
+                B.MAX_HEAD_COUNT,
+                B.REPORTS_TO,
+                B.STD_HOURS,
+                B.UNION_CD,
+                G.DESCRSHORT,
+                B.REG_TEMP,
+                B.FULL_PART_TIME,
+                B.FTE,
+                B.BENEFIT_PROGRAM,
+                B.REPORT_DOTTED_LINE,
+                B.PHONE,
+                B.MB_SAFETY_SENSITIV,
+                E.EFF_STATUS,
+                E.SAL_ADMIN_PLAN,
+                E.GRADE,
+                E.MANAGER_LEVEL,
+                E.JOB_FAMILY,
+                E.MED_CHKUP_REQ,
+                E.FLSA_STATUS,
+                E.EEO4CODE,
+                E.JOB_FUNCTION,
+                A4.ADDRESS1,
+                A4.CITY,
+                A4.STATE,
+                A4.POSTAL,
+                F.MIN_RT_ANNUAL,
+                F.MAX_RT_ANNUAL,
+                H.BENEFIT_PROGRAM,
+                A4.ACTION,
+                TO_CHAR (A4.ACTION_DT, 'YYYY-MM-DD'),
+                A4.ACTION_REASON,
+                TO_CHAR (A4.JOB_ENTRY_DT, 'YYYY-MM-DD'),
+                E.EEO_JOB_GROUP,
+                TO_CHAR (A4.HIRE_DT, 'YYYY-MM-DD'),
+                A4.ETHNIC_GRP_CD,
+                B.LOCATION,
+                TO_CHAR (A4.EFFDT, 'YYYY-MM-DD'),
+                A4.EFFSEQ,
+                A4.GL_PAY_TYPE,
+                A4.ADDRESS2,
+                TO_CHAR (SYSDATE, 'YYYY-MM-DD'),
+                B.POSITION_NBR,
+                TO_CHAR (B.EFFDT, 'YYYY-MM-DD'),
+                E.SETID,
+                E.JOBCODE,
+                TO_CHAR (E.EFFDT, 'YYYY-MM-DD'),
+                G.UNION_CD,
+                TO_CHAR (G.EFFDT, 'YYYY-MM-DD')
+  FROM (SELECT A3.EMPLID,
+               A3.ACTION,
+               ACTION_DT ACTION_DT,
+               A3.ACTION_REASON,
+               JOB_ENTRY_DT JOB_ENTRY_DT,
+               A3.EMPL_STATUS,
+               A3.STEP,
+               A3.HOURLY_RT,
+               A3.COMP_FREQUENCY,
+               A3.COMPRATE,
+               A3.ANNL_BENEF_BASE_RT,
+               A3.POSITION_NBR,
+               A3.EFFSEQ,
+               A3.GL_PAY_TYPE,
+               D.NAME_PSFORMAT,
+               D.SEX,
+               D.BIRTHDATE BIRTHDATE,
+               D.ADDRESS1,
+               D.CITY,
+               D.STATE,
+               D.POSTAL,
+               D.ADDRESS2,
+               I.HIRE_DT HIRE_DT,
+               J.ETHNIC_GRP_CD,
+               A3.EFFDT,
+               A3.EMPL_RCD,
+               A3.GRADE,
+               A3.SAL_ADMIN_PLAN,
+               A3.JOBCODE
+          --
+          FROM (SELECT A.EMPLID,
+                       A.ACTION,
+                       A.ACTION_DT ACTION_DT,
+                       A.ACTION_REASON,
+                       A.JOB_ENTRY_DT JOB_ENTRY_DT,
+                       A.EMPL_STATUS,
+                       A.STEP,
+                       A.HOURLY_RT,
+                       A.COMP_FREQUENCY,
+                       A.COMPRATE,
+                       A.ANNL_BENEF_BASE_RT,
+                       A.POSITION_NBR,
+                       A.EFFSEQ,
+                       A.GL_PAY_TYPE,
+                       A.EFFDT,
+                       A.EMPL_RCD,
+                       A.GRADE,
+                       A.SAL_ADMIN_PLAN,
+                       A.JOBCODE
+                  --
+                  FROM PS_MB_JOB_VW A,
+                       (  SELECT MAX (A_ES.EFFSEQ) EFFSEQ,
+                                 A_ES.EMPLID EMPLID,
+                                 A_ES.EMPL_RCD EMPL_RCD,
+                                 A_ES.EFFDT EFFDT
+                            FROM PS_MB_JOB_VW A_ES,
+                                 (  SELECT MAX (A_ED.EFFDT) MAX_EFFDT,
+                                           A_ED.EMPLID EMPLID,
+                                           A_ED.EMPL_RCD EMPL_RCD
+                                      FROM PS_MB_JOB_VW A_ED
+                                     WHERE     1 = 1
+                                           AND A_ED.EFFDT <=
+                                                  TO_DATE ('2012-07-01', 'YYYY-MM-DD')
+                                  GROUP BY A_ED.EMPLID, A_ED.EMPL_RCD) A1
+                           WHERE     A1.EMPLID = A_ES.EMPLID
+                                 AND A1.EMPL_RCD = A_ES.EMPL_RCD
+                                 AND A1.MAX_EFFDT = A_ES.EFFDT
+                        GROUP BY A_ES.EFFDT, A_ES.EMPLID, A_ES.EMPL_RCD) A2
+                 WHERE     A.EMPLID = A2.EMPLID
+                       AND A.EMPL_RCD = A2.EMPL_RCD
+                       AND A.EFFDT = A2.EFFDT
+                       AND A.EFFSEQ = A2.EFFSEQ
+                       AND A.JOBCODE <> '200300'
+                       AND A.EMPL_STATUS IN ('A', 'L', 'P')) A3,
+               PS_MB_PERSONAL_VW D,
+               PS_EMPLOYMENT I,
+               PS_DIVERS_ETHNIC J
+         WHERE     1 = 1
+               AND A3.EMPLID = D.EMPLID
+               AND D.EMPLID = I.EMPLID
+               AND D.EMPLID = J.EMPLID) A4,
+       PS_POSITION_DATA B                              --, PS_MB_PERSONAL_VW D
+                         ,
+       PS_JOBCODE_TBL E,
+       PS_SAL_GRADE_TBL F,
+       PS_UNION_TBL G,
+       PS_BEN_PROG_PARTIC H
+ --, PS_EMPLOYMENT I
+ --, PS_DIVERS_ETHNIC J
+ WHERE     G.UNION_CD = B.UNION_CD
+       AND A4.EMPL_STATUS IN ('A', 'L', 'P')
+       AND A4.EFFDT =
+              (SELECT MAX (A_ED.EFFDT)
+                 FROM PS_MB_JOB_VW A_ED
+                WHERE     A4.EMPLID = A_ED.EMPLID
+                      AND A4.EMPL_RCD = A_ED.EMPL_RCD
+                      AND A_ED.EFFDT <= TO_DATE ('2012-07-01', 'YYYY-MM-DD'))
+       AND A4.EFFSEQ =
+              (SELECT MAX (A_ES.EFFSEQ)
+                 FROM PS_MB_JOB_VW A_ES
+                WHERE     A4.EMPLID = A_ES.EMPLID
+                      AND A4.EMPL_RCD = A_ES.EMPL_RCD
+                      AND A4.EFFDT = A_ES.EFFDT)
+       AND A4.POSITION_NBR = B.POSITION_NBR
+       AND B.EFFDT =
+              (SELECT MAX (B_ED.EFFDT)
+                 FROM PS_POSITION_DATA B_ED
+                WHERE     B.POSITION_NBR = B_ED.POSITION_NBR
+                      AND B_ED.EFFDT <= TO_DATE ('2012-07-01', 'YYYY-MM-DD'))
+       --AND a4.EMPLID = D.EMPLID
+       AND A4.JOBCODE = E.JOBCODE
+       AND E.EFFDT =
+              (SELECT MAX (E_ED.EFFDT)
+                 FROM PS_JOBCODE_TBL E_ED
+                WHERE     E.SETID = E_ED.SETID
+                      AND E.JOBCODE = E_ED.JOBCODE
+                      AND E_ED.EFFDT <= A4.EFFDT)
+       AND F.EFFDT =
+              (SELECT MAX (F_ED.EFFDT)
+                 FROM PS_SAL_GRADE_TBL F_ED
+                WHERE     F.SETID = F_ED.SETID
+                      AND F.SAL_ADMIN_PLAN = F_ED.SAL_ADMIN_PLAN
+                      AND F.GRADE = F_ED.GRADE
+                      AND F_ED.EFFDT <= A4.EFFDT)
+       AND F.GRADE = A4.GRADE
+       AND F.SAL_ADMIN_PLAN = A4.SAL_ADMIN_PLAN
+       AND G.EFFDT =
+              (SELECT MAX (G_ED.EFFDT)
+                 FROM PS_UNION_TBL G_ED
+                WHERE G.UNION_CD = G_ED.UNION_CD AND G_ED.EFFDT <= B.EFFDT)
+       AND A4.EMPLID = H.EMPLID
+       AND H.EFFDT =
+              (SELECT MAX (H_ED.EFFDT)
+                 FROM PS_BEN_PROG_PARTIC H_ED
+                WHERE     H.EMPLID = H_ED.EMPLID
+                      AND H.EMPL_RCD = H_ED.EMPL_RCD
+                      AND H.COBRA_EVENT_ID = H_ED.COBRA_EVENT_ID
+                      AND H_ED.EFFDT <= TO_DATE ('2012-07-01', 'YYYY-MM-DD'))
+       --AND D.EMPLID = I.EMPLID
+       --AND D.EMPLID = J.EMPLID
+
+
+
+/*
+     --AND A.EMPLID = D.EMPLID           
+     --AND D.EMPLID = I.EMPLID 
+     --AND D.EMPLID = J.EMPLID     
+group by B.BUSINESS_UNIT, B.DEPTID, A.EMPLID, a.NAME_PSFORMAT, a.SEX
+, a.BIRTHDATE, A.EMPL_STATUS, A.STEP, A.HOURLY_RT
+, A.COMP_FREQUENCY, A.COMPRATE, A.ANNL_BENEF_BASE_RT, A.POSITION_NBR
+, B.EFF_STATUS, B.DESCR, B.JOBCODE, E.DESCR, B.POSN_STATUS, B.BUDGETED_POSN
+, B.MAX_HEAD_COUNT, B.REPORTS_TO, B.STD_HOURS, B.UNION_CD, G.DESCRSHORT
+, B.REG_TEMP, B.FULL_PART_TIME, B.FTE, B.BENEFIT_PROGRAM, B.REPORT_DOTTED_LINE
+, B.PHONE, B.MB_SAFETY_SENSITIV, E.EFF_STATUS, E.SAL_ADMIN_PLAN, E.GRADE, E.MANAGER_LEVEL
+, E.JOB_FAMILY, E.MED_CHKUP_REQ, E.FLSA_STATUS, E.EEO4CODE, E.JOB_FUNCTION
+, a.ADDRESS1, a.CITY, a.STATE, a.POSTAL, F.MIN_RT_ANNUAL, F.MAX_RT_ANNUAL
+, H.BENEFIT_PROGRAM, A.ACTION, A.ACTION_DT, A.ACTION_REASON
+, A.JOB_ENTRY_DT, E.EEO_JOB_GROUP, a.HIRE_DT, a.ETHNIC_GRP_CD, B.LOCATION, A.EFFDT, A.EFFSEQ, A.GL_PAY_TYPE
+, a.ADDRESS2, TO_CHAR(SYSDATE,'YYYY-MM-DD'),B.POSITION_NBR
+,TO_CHAR(B.EFFDT,'YYYY-MM-DD'),E.SETID,E.JOBCODE,TO_CHAR(E.EFFDT,'YYYY-MM-DD'),G.UNION_CD
+,TO_CHAR(G.EFFDT,'YYYY-MM-DD')
+*/

@@ -1,0 +1,357 @@
+http://www.oracle-base.com/articles/misc/UNIXForDBAs.php              --Unix commands for DBA's
+http://www.rocket99.com/unix/unix32.html                              --Basic shell programming
+http://www.uic.edu/depts/accc/software/unixgeneral/vi101.html         --Vi
+http://www.cyberciti.biz/faq/unix-creating-symbolic-link-ln-command/  -- Symbolic links
+
+vi file_name: opens file in view mode
+
+pressing i here will take it to insert mode. In insert mode we can make changes to the file. 
+While in insert mode if you have to delete a text, u have to hit esc to get out of inert mode and type x, this will delete 
+the letter under the curosr. At this point after we have deleted the required text type i again to enter in to insert mode 
+and start typing.
+
+----------------------------------------
+UNIX VERSION
+----------------------------------------
+
+uname -a
+getconf KERNEL_BITS       --32 or 64 bits
+who -r                	  --gives the run-level of unix machine.
+/usr/contrib/bin/machinfo --gives the machine info
+/usr/sbin/swapinfo -a
+
+----------------------------------------
+UNIX Kernal parameters values
+----------------------------------------
+/usr/sbin/kctune
+
+----------------------------------------
+UNIX softwares installed
+----------------------------------------
+swlist -l patch 
+show_patches
+
+----------------------------------------
+High memory and swap usage on UNIX.
+----------------------------------------
+http://h30499.www3.hp.com/t5/Databases/High-memory-usage-on-HPux-11iv3-with-oracle-10/td-p/5375777#.UBGY4aBf3l4
+
+----------------------------------------
+IP
+----------------------------------------
+netstat -in
+
+----------------------------------------
+UNIX stats
+http://docs.oracle.com/cd/E11882_01/server.112/e16638/autostat.htm
+----------------------------------------
+
+CPU		sar, vmstat, mpstat, iostat
+Memory	sar, vmstat
+Disk	sar, iostat
+Network	netstat
+
+
+
+If you're in the first line of the file and have to delete the whole content of the file use  dG
+If you're anywhere in the file and have to delete the whole content of the file use            :1,$d
+to delete the current line use         dd
+
+ALWAYS HIT ESC TO GET OUT OF A MODE.
+
+When you are in viewing mode, below are few helpful commands.
+
+dd 		to delete a line
+yy 		to copy a line
+0 		go to the begning of the line
+$ 		go to the end of the line
+yw to 	copy a word. place the cursor at the begning of the word to copy a word
+y$ 		copy text from the cursor point to the end of the line.
+p to 	paste a copied
+u to 	undo previous command, any cut copy or paset or...
+CTL-u 	to undo everything
+CTL+b 	one page up
+CTL+f 	one page down
+shift+j merge two lines. Go to end of 1st line and enter this cmd to move the next line to this line.
+
+:q!   to trash all changes. 
+:w    to save. 
+:wq   to save the changes and exit.i 
+
+ls -d */ --displays only directories
+ls -d .*/ --displays hidden directories
+
+G to go to the end of the file. when opened in view mode.
+1G will take you to the begning of the file. Likewise 50G will take to 5oth line of the file.
+
+
+
+If you want to copy a file and paste to other file. open first file copy the text and do :e second_file_name and then in the same session the second file opens and we can paste it there.
+
+to : a string with another string in a file. use below commands
+
+:s/search_sting/replace_sting                only that particular line where the cursor.
+:%s/search_sting/replace_sting               globally in the file
+:s/search_sting/replace_sting/g              globally in the file
+:%s/nov10/\&month_year/g
+
+:%s/(ctrl-v)(ctrl-m)//g
+and press Enter key.
+Important!! – press (Ctrl-v) (Ctrl-m) combination to enter ^M character, dont use “^” and M.
+
+:set ignorecase  use this command before issuing the above command to ignore the case of the search sting in the file.
+
+the %s in the above command searches for the string globally in the file.
+the \ is escape charecter for the sepecial chareccter in the replace string the &. to replace the nov10 with &month_year all occurances in the file we use above command. the g at the end is used to replace globally in the file.
+
+
+
+:/foo searches for a strin foo in the file.
+n search for next occurance
+N search for previous occurance
+
+
+
+Scroll forward one screen    CTRL-f
+Scroll back one screen       CTRL-b        
+Scroll up half a screen      CTRL-u
+Scroll down half a screen    CTRL-d
+
+zip or unzip a file to different location
+unzip package.zip -d $ORACLE_HOME  -- Where oracle home is the location where the unzipped files go to.
+
+/opt/java6/bin or /usr/sbin or /usr/bin   -> Look for jar at this location.
+/opt/java6/bin/jar –xvf filename.zip 
+gzip -c filename > /desired-location-of-the-file/filename2.Z
+
+move files. Below command will move the file to /tmp location
+mv file.txt /tmp
+
+------------------------------------------------------------
+copy command cp
+------------------------------------------------------------
+copy directory to another directory.
+cp -r /home/hope/files/* /home/hope/backup   -- This command copies all the directories and sub directories under .../files to .../backup
+
+------------------------------------------------------------
+admin console in web version
+------------------------------------------------------------
+/usr/sbin/sam
+/usr/sbin/kcweb -F
+
+------------------------------------------------------------
+crontab
+------------------------------------------------------------
+crontab -l username --should be done as root user, to see crontab entries of other users
+
+how to set ORACLE_HOME and ORACLE_SID in UNIX for oracle user. For every user there will be a directory with the name of the user under /home directory so..
+
+go to /home/oracle and here you should find .profile file. Open it with vi and then add the below lines there.
+
+# Set up the Oracle Home:
+        ORACLE_HOME=/apps/app/oracle/oracle/product/10.2.0/client_1  -- Home of Oracle
+        export ORACLE_HOME
+
+# Set up the Oracle SID:
+        ORACLE_SID=hordmo   -- Default sid, this will be the default when we log in to unix.
+        export ORACLE_SID
+
+Save the file and it should be set for the next time you log in.
+
+NOTE: Only ls -a shows the .profile file in that location ls -ltr doesn't.
+------------------------------------
+how to set the environment variable PATH in UNIX for that particular session. PATH has nothing to do with setting ORACLE_HOME or ORACLE_SID or OMS_HOME or ORACLE_BASE...
+PATH is only a variable where you can save any path and execute the "programs in that path" from any directory on the server. add the .(dot) at the end of the path to execute the shell programs with out using the "./" in the front of the name of the program.
+
+export PATH=$PATH:<your additions seperated with colons>
+
+say for example u want to run the sqlplus from any directory in unix. first you have to set the path to the location of the sqlplus. sqlplus usually resides in $ORACLE_HOME/bin. Do below to add sqlplus to PATH
+export PATH=$PATH:/apps/app/oracle/product/10.2.0/client_1/bin    -- where /apps/app/oracle/product/10.2.0/client_1/bin is the location of the sqlplus.
+
+After this is done, we can run sqlplus from any where.
+-------------------------------------
+
+---------How to use auto fill from previous commands type like bash if bash isnnot used----
+Press Esc key and the combination of keys k and j are used to get the previous commands
+k is for the most recent command
+j is for move between the commands returned by pressing k
+a is for exiting out of the bash mode in to the normal $  mode 
+------------------------------------------------------------------------------------------
+
+-----------------------
+pstack command in UNIX
+-----------------------
+$ pstack <process id>
+
+---------------------
+rename and move files
+---------------------
+rename a file
+
+mv file1 file2
+
+---------------------------------
+CHECK the RAM size on the machine
+---------------------------------
+# /usr/contrib/bin/machinfo  | grep -i Memory
+
+---------------------------------
+USERS AND INFORMATION ABOUT USERS
+---------------------------------
+when a user is created, there should exist a directory under /home with the user name. For example, oracle user should have a directory as /home/oracle and should be the owner of that directory.
+
+smh command is to for GUI of unix server. create user in unix, it is a utility to create users and assign groups to users. --This utlity creates the user, creates the .profile file of the user under the directory /home/oracle. 
+
+vi /etc/passwd   --This file says about the home of a user in the first line.
+
+cd $HOME takes to the home directory of the the user.
+
+set command shows all the parameters set to a particular user.
+
+finger command shows all the current loings for that user ex: finger oracle
+
+------------------------------
+du -sk *       gives the actual size of the direcotries under your current directory. Shows KB
+------------------------------
+env | sort   gives all the set environment variables for that user.
+
+-------------------------------------
+Memory usage by process in UNIX
+-------------------------------------
+--For all processes:
+UNIX95= ps -e -o pid,sz,pcpu,ruser,args
+
+--For a single process (in this case PID 4161)
+UNIX95= ps -p 26309 -o pid,sz,pcpu,ruser,args 
+
+--Top 5 highest cpu user
+UNIX95= ps -e -o pcpu,pid | sort -n -r |grep -v "%CPU"|head -5
+
+UNIX95= ps -e -o vsz=kbytes -o ruser -o pid,args=Command-Line | sort -rnk1 | grep -v kbytes >> mem_test.log
+
+ipcs -a
+
+---------------------------------------------
+write the output of a command to file in unix
+---------------------------------------------
+command >> file_name.ext
+
+--------------------------------
+CHMOD chmod permissions on files
+--------------------------------
+chmod -R 775 gives permissions to directory and all its sub directories
+
+--------------------------------------------------------------------
+view last 100 lines of a file
+--------------------------------------------------------------------
+tail -100 file_name.ext
+
+tail-100f file_name.ext  <-- This will show the content of a file as it changes and doesn't get out of it. This will help in viewing log files when during an installation.
+
+--------------------------------------------------------------------
+find command
+--------------------------------------------------------------------
+find . -mtime +60 -exec rm -rf {} \;    --to delete old files here +60 is the number of days. all files older than 90 days will be removed. the "." in the command can be 	replaced with "/" to search for a file from the root directory.
+
+find /u01/app/oracle/diag/rdbms/hrprd/hrprd/trace/*.trc -mtime +15 -print -exec rm {} \;
+find /u01/app/oracle/diag/rdbms/hrprd/hrprd/trace/cdmp* -mtime +15 -print -exec rm {} \;  -- used this to remove directories with name cdmp...
+
+find . -name file_name.ext      --will search for the file in the current and all the sub directories of the current directory.
+
+find . -type d -name "zinstall"    --find directory
+
+find . \( -name file1.txt -o -name file2.txt \)  -- to look for more than one file 
+
+find /u01 \( -name *.log -o -name *.trc -o -name *.trm \)  >>/tmp/houst.txt
+
+find /u01 -name *.log  >/tmp/house.txt
+
+find . *.gz -mtime +130 -print -exec mv {} ../statspack_archive \; --move older files to a different directory.
+
+--------------------------------------------------------------------
+grep command
+--------------------------------------------------------------------
+grep -r "modules" .       --searching for word modules in all the files of current directory
+grep -l "modules" .      --skip outpout and just get file names
+grep -l "mod.*" ./log*   --find and work starting with word mod in files starting with log, in current direcotry
+
+
+--------------------------------------------------------------------
+tar command
+http://www.thegeekstuff.com/2010/04/unix-tar-command-examples/
+--------------------------------------------------------------------
+tar cvf archive_name.tar dirname/         --to tar, here dirname is the director TO BE tar'd
+tar cvzf archive_name.tar.gz dirname/       -- not working on VMs
+tar cvfj archive_name.tar.gz dirname/
+
+tar cvf - my_dir | gzip -c > my_dir.tar.gz     --tar and gzip in one command
+
+
+tar xvf archive_name.tar                  --to untar, this will untar to the location where it was tard from.
+
+
+for backing up, you use
+[/backups]# tar -cvf /dev/rmt/tx5 /home/*.*
+& then you restore using
+[/backups]# tar -xvf /dev/rmt/tx5 *
+the files will be restored to /home & not /backups, but
+
+if you backup using
+[/home]# tar -cvf /dev/rmt/tx5 *.*
+& then restore using
+[/backups]# tar -xvf /dev/rmt/tx5 *
+the files will be restored to /backups
+
+--------------------------------------------------------------------
+mailx on UNIX
+--------------------------------------------------------------------
+echo "email body would be this text" | mailx -s "testing testing" "kpabba@mbta.com"
+
+--------------------------------------------------------------------
+gzip command
+-------------------------------------------------------------------- 
+gzip file.ext
+
+--gzip directoires
+gzip -dc apache_1.3.19.tar.gz|tar xvf - 
+
+http://www.unix.com/hp-ux/14877-decompress-hpux11-gunzip-gzip.html
+
+
+--------------------------------------------------------------------
+FILE PERMISSIONS AND TYPES
+--------------------------------------------------------------------
+What does the 'c' permission define for permissions, 'crw-rw-rw-'?
+
+'c' represents a character device e.g. a serial port or a terminal - note these process data in bits.
+'b' represents a block device e.g. hard drive, cdrom etc.. these process data in blocks or bytes.
+'l' represents a symbolic (soft) link as in a Windows shortcut
+'d' represents directory
+'-' represents a file
+ 
+oracle@hseax02:/> ls -l | grep tmp
+drwxrwxrwt  20 root       root          8192 May 21 13:35 tmp
+
+"t" in the above permissions represent a sticky bit and it means only owner or root can delete the directory but no one else.
+
+chmod +t tmp
+chmod -t tmp
+
+--------------------------------------------------------------------
+SCP
+-------------------------------------------------------------------- 
+if scp is not working below link might be of help to debug the problem.
+http://h30499.www3.hp.com/t5/System-Administration/ssh-connect-to-host-port-22-Connection-refused/td-p/4649971#.UBKbhqBf3l4
+--------------------------------------------------------------------
+scp -pr file_name user_name@server_name:<path>/.
+scp -r directory_name user_name@server_name:<path>/.
+
+--------------------------------------------------------------------
+if condition in UNIX
+--------------------------------------------------------------------
+--diff between if and test in unix
+http://compgroups.net/comp.unix.programmer/difference-between-test-and/53459
+-- if with AND operator
+http://www.unix.com/shell-programming-scripting/39286-help-regarding-error-message-test-command-parameter-not-valid.html 
+-- AND operator and OR operator
+http://stackoverflow.com/questions/6583126/problem-with-logical-operator-in-bash-script

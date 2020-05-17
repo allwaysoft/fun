@@ -1,0 +1,58 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Fri Jul 10 13:23:54 2009
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+Control File:   cadcustom_babranch.ctl
+Data File:      D:\table_exports\babranch.txt
+  Bad File:     BABRANCH.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 2
+Errors allowed: 50
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table DA.BABRANCH, loaded from every logical record.
+Insert option in effect for this table: APPEND
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+BRN_BANK_CODE                       FIRST     *   ,  O(") CHARACTER            
+BRN_BRANCH_CODE                      NEXT     *   ,  O(") CHARACTER            
+BRN_BRANCH_NAME                      NEXT     *   ,  O(") CHARACTER            
+BRN_SHORT_NAME                       NEXT     *   ,  O(") CHARACTER            
+BRN_USER                             NEXT     *   ,  O(") CHARACTER            
+BRN_LAST_UPD_DATE                    NEXT     *   ,  O(") CHARACTER            
+BRN_SADDR_ORASEQ                     NEXT     *   ,  O(") CHARACTER            
+BRN__IU__CREATE_DATE                 NEXT     *   ,  O(") CHARACTER            
+BRN__IU__CREATE_USER                 NEXT     *   ,  O(") CHARACTER            
+BRN__IU__UPDATE_DATE                 NEXT     *   ,  O(") CHARACTER            
+BRN__IU__UPDATE_USER                 NEXT     *   ,  O(") CHARACTER            
+
+
+Table DA.BABRANCH:
+  37 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 181632 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          2
+Total logical records read:            37
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Fri Jul 10 13:23:54 2009
+Run ended on Fri Jul 10 13:23:54 2009
+
+Elapsed time was:     00:00:00.07
+CPU time was:         00:00:00.03

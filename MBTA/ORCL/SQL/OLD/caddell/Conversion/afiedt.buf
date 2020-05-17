@@ -1,0 +1,5 @@
+update invoice
+set inv_paid_amt = 0
+where inv_num = '90220.0510'
+and inv_num is null
+/

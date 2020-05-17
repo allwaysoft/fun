@@ -1,0 +1,474 @@
+SQL> 
+SQL> connect mbta/hallo@mvdb;
+Connected.
+SQL> 
+SQL> drop table ACCESSLEVEL;
+drop table ACCESSLEVEL
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ACCESSLEVEL" 
+
+
+SQL> drop table ALARMACTION;
+drop table ALARMACTION
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ALARMACTION" 
+
+
+SQL> drop table ALARMEVENT;
+drop table ALARMEVENT
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ALARMEVENT" 
+
+
+SQL> drop table ALARMSERVERCONFIG;
+drop table ALARMSERVERCONFIG
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ALARMSERVERCONFIG" 
+
+
+SQL> drop table ALARMSERVERGROUP;
+drop table ALARMSERVERGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ALARMSERVERGROUP" 
+
+
+SQL> drop table ALARMSERVERGROUP_ALARMEVENT;
+drop table ALARMSERVERGROUP_ALARMEVENT
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop 
+"MBTA"."ALARMSERVERGROUP_ALARMEVENT" 
+
+
+SQL> drop table ARTICLE;
+drop table ARTICLE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ARTICLE" 
+
+
+SQL> drop table ARTICLE_RELEASE;
+drop table ARTICLE_RELEASE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ARTICLE_RELEASE" 
+
+
+SQL> drop table BALANCEGROUP;
+drop table BALANCEGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."BALANCEGROUP" 
+
+
+SQL> drop table CASHTYPE;
+drop table CASHTYPE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."CASHTYPE" 
+
+
+SQL> drop table COMPANY;
+drop table COMPANY
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."COMPANY" 
+
+
+SQL> drop table CURRENCIES;
+drop table CURRENCIES
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."CURRENCIES" 
+
+
+SQL> drop table DBCONNECTPARAMETER;
+drop table DBCONNECTPARAMETER
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."DBCONNECTPARAMETER" 
+
+
+SQL> drop table DEFAULTSTATIONGROUP;
+drop table DEFAULTSTATIONGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."DEFAULTSTATIONGROUP" 
+
+
+SQL> drop table DEVICECLASS;
+drop table DEVICECLASS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."DEVICECLASS" 
+
+
+SQL> drop table DEVICECLASS_VERSIONS;
+drop table DEVICECLASS_VERSIONS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop 
+"MBTA"."DEVICECLASS_VERSIONS" 
+
+
+SQL> drop table DEVICECONFIG;
+drop table DEVICECONFIG
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."DEVICECONFIG" 
+
+
+SQL> drop table EVENT;
+drop table EVENT
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."EVENT" 
+
+
+SQL> drop table EVENTGROUP;
+drop table EVENTGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."EVENTGROUP" 
+
+
+SQL> drop table FEPDATA;
+drop table FEPDATA
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."FEPDATA" 
+
+
+SQL> drop table FUNCTION;
+drop table FUNCTION
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."FUNCTION" 
+
+
+SQL> drop table FUNCTIONGROUP;
+drop table FUNCTIONGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."FUNCTIONGROUP" 
+
+
+SQL> drop table GRAPHICMAP;
+drop table GRAPHICMAP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."GRAPHICMAP" 
+
+
+SQL> drop table GRAPHICPROPERTY;
+drop table GRAPHICPROPERTY
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."GRAPHICPROPERTY" 
+
+
+SQL> drop table HARDWARECOMPONENTS;
+drop table HARDWARECOMPONENTS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."HARDWARECOMPONENTS" 
+
+
+SQL> drop table JOBTABLE;
+drop table JOBTABLE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."JOBTABLE" 
+
+
+SQL> drop table LOCKDEPENDENCIES;
+drop table LOCKDEPENDENCIES
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."LOCKDEPENDENCIES" 
+
+
+SQL> drop table MASTERASSEMBLY;
+drop table MASTERASSEMBLY
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."MASTERASSEMBLY" 
+
+
+SQL> drop table MENUTREE;
+drop table MENUTREE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."MENUTREE" 
+
+
+SQL> drop table MULTIMEDIAGROUP;
+drop table MULTIMEDIAGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."MULTIMEDIAGROUP" 
+
+
+SQL> drop table ORAERR;
+drop table ORAERR
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ORAERR" 
+
+
+SQL> drop table PAYMENTCASHTYPE;
+drop table PAYMENTCASHTYPE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."PAYMENTCASHTYPE" 
+
+
+SQL> drop table PAYMENTOPDATA;
+drop table PAYMENTOPDATA
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."PAYMENTOPDATA" 
+
+
+SQL> drop table PERMDETAIL;
+drop table PERMDETAIL
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."PERMDETAIL" 
+
+
+SQL> drop table PERMISSION;
+drop table PERMISSION
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."PERMISSION" 
+
+
+SQL> drop table PREVIOUSPASSWORD;
+drop table PREVIOUSPASSWORD
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."PREVIOUSPASSWORD" 
+
+
+SQL> drop table PREVIOUSPIN;
+drop table PREVIOUSPIN
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."PREVIOUSPIN" 
+
+
+SQL> drop table RELEASE;
+drop table RELEASE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."RELEASE" 
+
+
+SQL> drop table RELEASE_VERSIONS;
+drop table RELEASE_VERSIONS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."RELEASE_VERSIONS" 
+
+
+SQL> drop table ROUTES;
+drop table ROUTES
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."ROUTES" 
+
+
+SQL> drop table SCHEDULEELEMENT;
+drop table SCHEDULEELEMENT
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."SCHEDULEELEMENT" 
+
+
+SQL> drop table SCHEDULEGROUP;
+drop table SCHEDULEGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."SCHEDULEGROUP" 
+
+
+SQL> drop table SCHEDULEGROUPELEMENTS;
+drop table SCHEDULEGROUPELEMENTS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop 
+"MBTA"."SCHEDULEGROUPELEMENTS" 
+
+
+SQL> drop table SCTVMRELATION;
+drop table SCTVMRELATION
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."SCTVMRELATION" 
+
+
+SQL> drop table SDRELEASE;
+drop table SDRELEASE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."SDRELEASE" 
+
+
+SQL> drop table SDRELEASE_RELEASE;
+drop table SDRELEASE_RELEASE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."SDRELEASE_RELEASE" 
+
+
+SQL> drop table STATIONCONTROLLER;
+drop table STATIONCONTROLLER
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."STATIONCONTROLLER" 
+
+
+SQL> drop table STATUSOPTIONS;
+drop table STATUSOPTIONS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."STATUSOPTIONS" 
+
+
+SQL> drop table TABLEINFO;
+drop table TABLEINFO
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TABLEINFO" 
+
+
+SQL> drop table TARIFFVERSIONS;
+drop table TARIFFVERSIONS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TARIFFVERSIONS" 
+
+
+SQL> drop table TVMFEPGROUP;
+drop table TVMFEPGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TVMFEPGROUP" 
+
+
+SQL> drop table TVMGROUP;
+drop table TVMGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TVMGROUP" 
+
+
+SQL> drop table TVMNETCONFGROUP;
+drop table TVMNETCONFGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TVMNETCONFGROUP" 
+
+
+SQL> drop table TVMSCHEDULEGROUPELEMENT;
+drop table TVMSCHEDULEGROUPELEMENT
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop 
+"MBTA"."TVMSCHEDULEGROUPELEMENT" 
+
+
+SQL> drop table TVMSCHEDULEGROUPELEMENTS;
+drop table TVMSCHEDULEGROUPELEMENTS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop 
+"MBTA"."TVMSCHEDULEGROUPELEMENTS" 
+
+
+SQL> drop table TVMSTATION;
+drop table TVMSTATION
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TVMSTATION" 
+
+
+SQL> drop table TVMTABLE;
+drop table TVMTABLE
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TVMTABLE" 
+
+
+SQL> drop table TVMVERSIONGROUP;
+drop table TVMVERSIONGROUP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."TVMVERSIONGROUP" 
+
+
+SQL> drop table UNIQUENUMBERS;
+drop table UNIQUENUMBERS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."UNIQUENUMBERS" 
+
+
+SQL> drop table USERDATA;
+drop table USERDATA
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."USERDATA" 
+
+
+SQL> drop table USERGROUPS;
+drop table USERGROUPS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."USERGROUPS" 
+
+
+SQL> drop table VERSIONGROUPLIST;
+drop table VERSIONGROUPLIST
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."VERSIONGROUPLIST" 
+
+
+SQL> drop table VERSIONS;
+drop table VERSIONS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."VERSIONS" 
+
+
+SQL> drop table WORKSTATIONGRP;
+drop table WORKSTATIONGRP
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."WORKSTATIONGRP" 
+
+
+SQL> drop table WORKSTATIONS;
+drop table WORKSTATIONS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."WORKSTATIONS" 
+
+
+SQL> drop table WSGRPCONTENTS;
+drop table WSGRPCONTENTS
+           *
+ERROR at line 1:
+ORA-12083: must use DROP MATERIALIZED VIEW to drop "MBTA"."WSGRPCONTENTS" 
+
+
+SQL> 
+SQL> 
+SQL> spool off

@@ -1,0 +1,10 @@
+had to spool the gates file since direct load to acces didnt work on the gates data as it was huge. The other two query output data worked fine with the direct load from oracle to access.
+
+
+7.	Once the table is created, go into MS Access, create a new database.
+8.	Click on File/Get External Data/Import.
+9.	In the Files of type box, choose ODBC Databases.
+10.	Click on Machine Data Source and choose the ODBC connection for the Production AFC database.
+11.	Enter the log in info for the MBTA user.
+12.	In the import Objects window, choose the table to import into Access.
+13.	Close Access window and go to Windows explorer.  Locate the .mdb file that was just created and compress it.

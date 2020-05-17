@@ -1,0 +1,16 @@
+#!/bin/ksh
+user=$1
+/usr/bin/clear
+t=0
+for i in 'UNIX95= ps -e -o vsz=kbytes -o ruser -o pid,args=Command-Line | sort -rnk1 | grep -v kbytes'
+do
+t='expr $t +$i'
+done
+echo "\n In total there is $t kb of memory claimed by user $user \n"
+
+echo "swapinfo :"
+/usr/sbin/swapinfo
+echo "\n"
+
+
+#UNIX95= ps -el -o pid,comm,sz | grep -i -v pid | sort -nr -k 3,3

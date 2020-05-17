@@ -1,0 +1,158 @@
+[Bootstrap]
+SetupTitle=Install
+SetupText=Copying Files, please stand by.
+CabFile=AFC_Satellite_Inventory.CAB
+Spawn=Setup1.exe
+Uninstal=st6unst.exe
+TmpDir=msftqws.pdw
+Cabs=1
+
+[Bootstrap Files]
+File1=@VB6STKIT.DLL,$(WinSysPathSysFile),,,7/15/00 2:00:00 AM,101888,6.0.84.50
+File2=@COMCAT.DLL,$(WinSysPathSysFile),$(DLLSelfRegister),,5/31/98 2:00:00 AM,22288,4.71.1460.1
+File3=@ASYCFILT.DLL,$(WinSysPathSysFile),,,3/8/99 2:00:00 AM,147728,2.40.4275.1
+File4=@OLEPRO32.DLL,$(WinSysPathSysFile),$(DLLSelfRegister),,3/8/99 2:00:00 AM,164112,5.0.4275.1
+File5=@OLEAUT32.DLL,$(WinSysPathSysFile),$(DLLSelfRegister),,4/12/00 2:00:00 AM,598288,2.40.4275.1
+File6=@STDOLE2.TLB,$(WinSysPathSysFile),$(TLBRegister),,6/3/99 2:00:00 AM,17920,2.40.4275.1
+File7=@MSVBVM60.DLL,$(WinSysPathSysFile),$(DLLSelfRegister),,2/23/04 10:42:40 PM,1386496,6.0.97.82
+File8=@MSVCRT40.DLL,$(WinSysPathSysFile),,,6/1/99 2:00:00 AM,326656,4.22.0.0
+
+[IconGroups]
+Group0=AFC_Satellite_Inventory
+PrivateGroup0=-1
+Parent0=$(Programs)
+
+[AFC_Satellite_Inventory]
+Icon1="AFC_Satellite_Inventory.exe"
+Title1=AFC_Satellite_Inventory
+StartIn1=$(AppPath)
+
+[Setup]
+Title=AFC_Satellite_Inventory
+DefaultDir=$(ProgramFiles)\AFC_Satellite_Inventory
+AppExe=AFC_Satellite_Inventory.exe
+AppToUninstall=AFC_Satellite_Inventory.exe
+
+[Setup1 Files]
+File1=@0.REG,$(AppPath),0.REG,,2/19/07 8:32:36 AM,166,0.0.0.0
+File2=@MSCAL.OCX,$(WinSysPath),$(DLLSelfRegister),$(Shared),6/26/98 2:00:00 AM,89600,8.0.0.5007
+File3=@TABCTL32.OCX,$(WinSysPath),$(DLLSelfRegister),$(Shared),3/9/04 2:00:00 AM,224016,6.1.97.82
+File4=@MSFLXGRD.OCX,$(WinSysPath),$(DLLSelfRegister),$(Shared),3/9/04 2:00:00 AM,260880,6.1.97.82
+File5=@COMCT332.OCX,$(WinSysPath),$(DLLSelfRegister),$(Shared),3/9/04 2:00:00 AM,416528,6.7.0.9782
+File6=@MSCOMCT2.OCX,$(WinSysPath),$(DLLSelfRegister),$(Shared),3/9/04 2:00:00 AM,662288,6.1.97.82
+File7=@MSCOMCTL.OCX,$(WinSysPath),$(DLLSelfRegister),$(Shared),3/9/04 2:00:00 AM,1081616,6.1.97.82
+File8=@Satellite.dll,$(WinSysPath),$(DLLSelfRegister),$(Shared),2/12/07 4:20:04 PM,28672,1.0.0.0
+File9=@fssl-1-2-1-1.dll,$(WinSysPath),,$(Shared),12/7/04 11:53:16 PM,585728,1.2.1.1
+File10=@msvcp71.dll,$(WinSysPath),,$(Shared),3/18/03 8:14:52 PM,499712,7.10.3077.0
+File11=@etc-1-0-12-3.dll,$(WinSysPath),,$(Shared),12/7/04 11:39:48 PM,86016,1.0.12.20
+File12=@atl71.dll,$(WinSysPath),,$(Shared),3/18/03 7:05:50 PM,89088,7.10.3077.0
+File13=@xerces-c_2_1_0.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/8/04 12:00:28 AM,1466368,2.1.0.0
+File14=@crlov.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),8/4/05 2:43:50 AM,1429504,11.0.0.1830
+File15=@ParameterDesigner.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/7/04 11:02:28 PM,576512,11.0.0.893
+File16=@prompt.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),10/17/05 11:53:00 PM,1191936,11.0.0.1904
+File17=@sacommlayer.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/7/04 11:18:56 PM,287744,11.0.0.893
+File18=@saxmlserialize.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/7/04 11:19:14 PM,138752,11.0.0.893
+File19=@saxserialize.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/7/04 11:08:22 PM,212992,11.0.0.893
+File20=@keycode.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),8/4/05 1:36:24 AM,1462272,11.0.0.1830
+File21=@u2dapp.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:12:42 PM,61440,11.0.0.893
+File22=@u2dpost.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),2/3/01 9:05:56 AM,102400,8.5.0.61
+File23=@u2ddisk.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:12:58 PM,39424,11.0.0.893
+File24=@u2fxml.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),2/3/01 4:28:16 AM,225280,8.5.0.45
+File25=@u2ftext.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),11/7/05 12:39:56 AM,184320,11.0.0.1924
+File26=@u2fsepv.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),11/8/00 4:46:00 PM,36864,8.0.0.9
+File27=@u2fcr.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:12:24 PM,86016,11.0.0.893
+File28=@crtslv.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/7/04 11:18:38 PM,117248,11.0.0.893
+File29=@ExportModeller.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/7/04 11:02:54 PM,708608,11.0.0.893
+File30=@crxf_xls.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),11/21/05 12:18:42 AM,851968,11.0.0.1937
+File31=@crxf_wordw.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:10:40 PM,258048,11.0.0.893
+File32=@crxf_rtf.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/6/05 12:39:22 AM,495616,11.0.0.1952
+File33=@crxf_pdf.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),8/4/05 2:28:18 AM,434176,11.0.0.1830
+File34=@sacommoncontrols.dll,$(CommonFiles)\Business Objects\3.0\bin,$(DLLSelfRegister),$(Shared),12/7/04 11:37:32 PM,808960,11.0.0.893
+File35=@filedialog.dll,$(CommonFiles)\Business Objects\3.0\bin,$(DLLSelfRegister),$(Shared),12/7/04 11:36:02 PM,516608,11.0.0.893
+File36=@crdb_dictionary.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),8/11/04 2:08:00 PM,1478747,11.0.0.599
+File37=@p2ixbse.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:45:42 PM,184320,11.0.0.718
+File38=@CRAnalyzer.dll,$(CommonFiles)\Business Objects\3.0\bin,$(DLLSelfRegister),$(Shared),12/7/04 11:27:52 PM,184320,11.0.0.893
+File39=@chartui.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/19/05 4:49:36 PM,2875392,11.0.0.2
+File40=@sscsdk80.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/19/05 1:18:22 AM,1372160,11.0.0.7
+File41=@querybuilder.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/13/05 12:05:26 AM,204800,11.0.0.1959
+File42=@libOCAHelperw-2-13.dll,$(WinSysPath),,$(Shared),12/8/04 11:11:24 PM,1470464,11.0.0.749
+File43=@ebus-3-3-2-4.dll,$(WinSysPath),,$(Shared),12/7/04 11:42:34 PM,1728512,3.3.2.24
+File44=@cxlibw-2-6.dll,$(WinSysPath),,$(Shared),12/7/04 10:32:40 PM,1261568,11.0.0.721
+File45=@libOCASecurityw-1-6.dll,$(WinSysPath),,$(Shared),12/7/04 11:20:22 PM,770048,11.0.0.748
+File46=@crdb_odbc.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),10/11/05 11:08:20 PM,400384,11.0.0.1898
+File47=@crdb_dao.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:36:10 PM,217088,11.0.0.718
+File48=@crdb_ado.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),10/23/05 11:09:30 PM,430080,11.0.0.1910
+File49=@crqe.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),9/7/05 11:20:38 PM,1929216,11.0.0.1865
+File50=@Implode.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),1/6/03 9:20:14 AM,18944,1.0.0.1
+File51=@u25samp1.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:06:22 PM,13824,11.0.0.893
+File52=@u25dts.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:04:30 PM,14336,11.0.0.893
+File53=@u252000.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:05:06 PM,14336,11.0.0.893
+File54=@u2lfinra.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:05:56 PM,106496,11.0.0.893
+File55=@u2lexch.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:05:44 PM,19968,11.0.0.893
+File56=@u2ldts.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:05:32 PM,14336,11.0.0.893
+File57=@u2lcom.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:04:54 PM,46592,11.0.0.893
+File58=@u2l2000.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:05:20 PM,14848,11.0.0.893
+File59=@ufmanager.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/7/04 11:06:36 PM,81920,11.0.0.893
+File60=@crtowords_en.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),12/8/04 12:16:54 AM,9728,11.0.0.893
+File61=@mfc71u.dll,$(WinSysPath),,$(Shared),3/18/03 9:12:12 PM,1047552,7.10.3077.0
+File62=@msvcr71.dll,$(WinSysPath),,$(Shared),2/21/03 4:42:22 AM,348160,7.10.3052.4
+File63=@cslibu-2-0-0.dll,$(WinSysPath),,$(Shared),1/16/06 12:58:38 AM,1658880,11.0.0.1993
+File64=@craxddrt.dll,$(CommonFiles)\Business Objects\3.0\bin,$(DLLSelfRegister),$(Shared),1/17/06 2:42:06 AM,13283328,11.0.0.1994
+File65=@usp10.dll,$(WinSysPath),,$(Shared),8/4/04 2:56:46 AM,406528,1.420.2600.2180
+File66=@GdiPlus.dll,$(CommonFiles)\Business Objects\3.0\bin,,$(Shared),8/4/04 2:56:58 AM,1712128,5.1.3102.2180
+File67=@craxdrt.dll,$(CommonFiles)\Business Objects\3.0\bin,$(dllSelfRegister),$(Shared),12/26/05 3:11:00 AM,8202240,11.0.0.1972
+File68=@CRViewer.dll,$(CommonFiles)\Business Objects\3.0\crystalreportviewers11\ActiveXControls,$(DLLSelfRegister),$(Shared),1/4/06 6:35:12 AM,1299592,11.0.0.1981
+File69=@MSVCRT.DLL,$(WinSysPathSysFile),,,2/17/04 2:00:00 AM,278581,6.0.9782.0
+File70=@scrrun.dll,$(WinSysPath),$(DLLSelfRegister),$(Shared),8/4/04 2:56:44 AM,151552,5.6.0.8820
+File71=@MSSTDFMT.DLL,$(WinSysPath),$(DLLSelfRegister),$(Shared),2/23/04 2:00:00 AM,119808,6.1.97.82
+File72=@VB5DB.DLL,$(WinSysPath),,$(Shared),6/18/98 2:00:00 AM,89360,6.0.81.69
+File73=@msrepl35.dll,$(WinSysPathSysFile),,,4/26/00 3:34:56 PM,415504,3.51.3225.0
+File74=@MSRD2X35.DLL,$(WinSysPathSysFile),$(DLLSelfRegister),,4/24/98 2:00:00 AM,252176,3.51.623.0
+File75=@expsrv.dll,$(WinSysPathSysFile),,,8/4/04 2:56:42 AM,380957,6.0.72.9589
+File76=@vbajet32.dll,$(WinSysPathSysFile),,,8/4/04 2:56:46 AM,30749,6.0.1.9431
+File77=@Msjint35.dll,$(WinSysPathSysFile),,,8/13/02 7:00:00 PM,123664,3.51.623.0
+File78=@msjter35.dll,$(WinSysPathSysFile),,,8/13/02 7:00:00 PM,24848,3.51.623.0
+File79=@msjet35.dll,$(WinSysPathSysFile),$(DLLSelfRegister),,4/26/00 3:34:48 PM,1050896,3.51.3328.0
+File80=@DAO350.DLL,$(MSDAOPath),$(DLLSelfRegister),$(Shared),2/24/00 7:07:14 PM,570128,3.51.1608.0
+File81=@msado27.tlb,$(WinSysPath),,$(Shared),8/4/04 12:21:44 AM,81920,2.81.1117.0
+File82=@P2smon.dll,$(WinSysPath),,$(Shared),2/3/01 4:26:54 AM,163840,8.5.0.12
+File83=@AFC_Satellite_Inventory.exe,$(AppPath),,,2/19/07 8:29:31 AM,1929216,1.0.0.0
+
+; The following lines may be deleted in order to obtain extra 
+; space for customizing this file on a full installation diskette.
+; 
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+; XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

@@ -1,0 +1,238 @@
+You should not use RMAN binary compression and media manager compression together. Example: while backing up to tape by networker do not use COMPRESSED in rman script.
+
+OEM generated script for Level 0 full backup BEFORE
+
+backup incremental level 0 cumulative device type disk tag '%TAG' database;
+backup device type disk tag '%TAG' archivelog all not backed up delete all input;
+run {
+allocate channel oem_backup_disk1 type disk format '+HRSTGFRA/HRSTG/BACKUPSET/%U' maxpiecesize 1000 G;
+backup tag '%TAG' current controlfile;
+release channel oem_backup_disk1;
+}
+
+
+backup device type disk tag '%TAG' archivelog all not backed up delete all input;
+
+
+Changed script to use more channels           AFTER
+
+run {
+resync catalog;
+crosscheck archivelog all;
+allocate channel oem_backup_disk1 type disk ;
+allocate channel oem_backup_disk2 type disk ;
+allocate channel oem_backup_disk3 type disk ;
+allocate channel oem_backup_disk4 type disk ;
+backup as COMPRESSED BACKUPSET database format '+HRSTGFRA/HRSTG/BACKUPSET/HRSTG_DB_%U'  tag 'data files';
+backup as COMPRESSED BACKUPSET archivelog all not backed up format '+HRSTGFRA/HRSTG/BACKUPSET/HRSTG_ARC_%U' tag 'archive logs' delete all input;
+release channel oem_backup_disk1;
+release channel oem_backup_disk2;
+release channel oem_backup_disk3;
+release channel oem_backup_disk4;
+}
+run {
+allocate channel oem_backup_disk1 type disk ;
+backup as COMPRESSED BACKUPSET current controlfile format '+HRSTGFRA/HRSTG/BACKUPSET/HRSTG_CTL_%F' tag 'control file';
+release channel oem_backup_disk1;
+}
+run {
+allocate channel oem_backup_disk1 type disk ;
+backup as COMPRESSED BACKUPSET spfile              format '+HRSTGFRA/HRSTG/BACKUPSET/HRSTG_SPFILE_%U' tag 'spfile';
+release channel oem_backup_disk1;
+}
+
+
+
+
+
+backup as COMPRESSED BACKUPSET current controlfile format '+HRSTGFRA/HRSTG/BACKUPSET/HRSTG_CTL_%F'    tag 'control file';  -- this is not used as we set autobakcup of control file.
+
+
+to_date('03/29/12 17:00:00','MM/DD/YY hh24:mi:ss')
+
+
+
+run
+{
+set until time  "to_date('03/29/12 17:00:00','MM/DD/YY hh24:mi:ss')";
+DELETE NOPROMPT BACKUP;
+DELETE NOPROMPT ARCHIVELOG until time "to_date('11/29/11 17:00:00','MM/DD/YY hh24:mi:ss')";
+}
+
+IF PARALLELISM IS SET IN THE RMAN PROFILE THEN WE CAN USE THE BELWO COMMAND
+DELETE NOPROMPT OBSOLETE;   -- to use this in the below script at the bottom, we need to have a retention policy set for the bakcups.
+CHANGE NAMES OF BACKUP PIECES BEFORING USING.
+
+DELETE NOPROMPT BACKUP;
+
+run 
+{
+resync catalog;
+CROSSCHECK ARCHIVELOG ALL;
+CROSSCHECK BACKUPSET;
+CROSSCHECK BACKUP;
+CROSSCHECK COPY;
+backup database format '+HRPAYFRA' tag 'regular_data_06_01_2012';
+backup archivelog all format '+HRPAYFRA' tag 'regular_arc_06_01_2012' delete all input;
+CROSSCHECK BACKUP;
+DELETE NOPROMPT EXPIRED BACKUPSET;
+DELETE NOPROMPT EXPIRED BACKUP;
+DELETE NOPROMPT EXPIRED COPY;
+DELETE NOPROMPT EXPIRED ARCHIVELOG ALL;
+}
+
+
+backup as COMPRESSED BACKUPSET database format ‘+HRPAYFRA’ tag ‘retain_2’ keep until time ‘sysdate+2'; 
+
+tag 'retain_2' keep until time 'sysdate+2';
+tag 'retain_3' keep until time 'sysdate+3';
+
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '+HRPAYFRA';
+-- above is tested and finalized. SHOULD NOT USE THE complete path of FRA hs to be mentioned if you want to mention a name (in this case "cntl_%d_%F") to backupset. Else backup will go to Oracle_HOME/dbs folder 
+-- If complete path is used it will still create an alias name in the outer directory, which is ''+HRPAYFRA/hrpay/backupset' and then create a new directory with that date
+	-- and create the actual files in that folder. ''+HRPAYFRA/hrpay/backupset/2012_06_22/xxxxx'
+
+RESTORE AND RECOVER TO POINT IN TIME.
+
+run {
+allocate channel oem_backup_disk1 type disk format '+HRSTGFRA';
+allocate channel oem_backup_disk2 type disk format '+HRSTGFRA';
+allocate channel oem_backup_disk3 type disk format '+HRSTGFRA';
+allocate channel oem_backup_disk4 type disk format '+HRSTGFRA';
+
+restore database until time "to_date('2011-12-01 05:00:00', 'YYYY-MM-DD HH24:MI:SS')";
+recover database until time "to_date('2011-12-01 05:00:00', 'YYYY-MM-DD HH24:MI:SS')";
+validate database;
+
+release channel oem_backup_disk1;
+release channel oem_backup_disk2;
+release channel oem_backup_disk3;
+release channel oem_backup_disk4;
+}
+
+
+RESTORE ALL ARCHIVE LOGS.
+
+run {
+set archivelog destination to '+HRSTGFRA/HRSTG/ARCHIVELOG';
+restore archivelog all;
+} 
+
+
+
+http://docs.oracle.com/cd/E11882_01/backup.112/e10643/rcmsubcl010.htm#RCMRF195  format command naming convention
+http://docs.oracle.com/cd/B19306_01/backup.102/b14192/bkup002.htm#CEGGGDIJ      tag command in rman
+http://ksadba.wordpress.com/2009/03/14/spfile-backup-and-recovery/              spfile backup and restore useage of tag and format
+
+http://docs.oracle.com/cd/B28359_01/backup.111/b28270/rcmcncpt.htm#autoId24
+
+4.4.2 Making Incremental Backups: BACKUP INCREMENTAL
+After starting RMAN, run the BACKUP INCREMENTAL command at the RMAN prompt. This example makes a level 0 incremental backup of the database:
+
+BACKUP INCREMENTAL LEVEL 0 DATABASE;
+
+This example makes a differential level 1 backup of the SYSTEM tablespace and datafile tools01.dbf. It will only back up those data blocks changed since the most recent level 1 or level 0 backup:
+
+BACKUP INCREMENTAL LEVEL 1
+  TABLESPACE SYSTEM
+  DATAFILE 'ora_home/oradata/trgt/tools01.dbf';
+
+This example makes a cumulative level 1 backup of the tablespace users, backing up all blocks changed since the most recent level 0 backup.
+
+BACKUP INCREMENTAL LEVEL = 1 CUMULATIVE
+  TABLESPACE users;
+
+
+
+4.4.4 Improving Incremental Backup Performance: Change Tracking
+RMAN's change tracking feature for incremental backups improves incremental backup performance by recording changed blocks in each datafile in a change tracking file. If change tracking is enabled, RMAN uses the change tracking file to identify changed blocks for incremental backup, thus avoiding the need to scan every block in the datafile.
+
+After enabling change tracking, the first level 0 incremental backup still has to scan the entire datafile, as the change tracking file does not yet reflect the status of the blocks. Subsequent incremental backup that use this level 0 as parent will take advantage of the change tracking file.
+
+Using change tracking in no way changes the commands used to perform incremental backups, and the change tracking files themselves generally require little maintenance after initial configuration.
+
+Change tracking is disabled by default, because it does introduce some minimal performance overhead on your database during normal operations. However, the benefits of avoiding full datafile scans during backup are considerable, especially if only a small percentage of data blocks are changed between backups. If your backup strategy involves incremental backups, then you should enable change tracking.
+
+One change tracking file is created for the whole database. By default, the change tracking file is created as an Oracle managed file in DB_CREATE_FILE_DEST. You can also specify the name of the block change tracking file, placing it in any location you choose.
+
+
+---------------------------------------------------------------------------------
+DUPLICATE DATABASE
+---------------------------------------------------------------------------------
+
+http://surachartopun.com/2009/11/duplicate-without-connection-to-target.html
+
+you can duplicate database by excluding some table spaces, you can resynchroniza a duplicate database. Use below link for the both.
+
+http://download.oracle.com/docs/cd/B19306_01/backup.102/b14191/rcmdupdb.htm
+
+Duplicate a dabase from a particular backup of the source, see below.
+
+https://support.oracle.com/CSP/ui/flash.html#tab=KBHome%28page=KBHome&id=%28%29%29,%28page=KBNavigator&id=%28from=BOOKMARK&bmDocTitle=How%20to%20Duplicate%20a%20database%20using%20RMAN%20with%20a%20specific%20Backup%20Tag.&viewingMode=1143&bmDocType=HOWTO&bmDocDsrc=KB&bmDocID=140603.1%29%29
+
+Restore database using asm to another server
+http://www.oracle11ggotchas.com/articles/Using%20RMAN%20to%20restore%20a%20database%20to%20another%20server%20in%20an%20ASM%20environment.pdf
+
+http://sabdarsyed.blogspot.com/2008/08/cloning-and-refreshing-oracle-database.html
+
+
+rman auxiliary /
+connect catalog rman/rman1@emgcr
+spool log to /u01/app/oracle/admin/scripts/logs_hrstg/dup_hrdevtohrstg.log
+duplicate database hrdev to hrstg;
+spool log off;
+---------------------------------------------------------------------------------
+END DUPLICATE DATABASE
+---------------------------------------------------------------------------------
+
+---------------------------------------------------------------------------------
+RMAN CONFIGURE COMMAND
+---------------------------------------------------------------------------------
+
+CONFIGURE RETENTION POLICY TO REDUNDANCY 1;
+CONFIGURE DEFAULT DEVICE TYPE TO DISK;
+CONFIGURE CONTROLFILE AUTOBACKUP ON;       --this backups control and spfile. Not the pfile, if pfile is used.
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '+HRPAYFRA';
+-- above is tested and finalized. SHOULD NOT USE THE complete path of FRA hs to be mentioned if you want to mention a name (in this case "cntl_%d_%F") to backupset. Else backup will go to Oracle_HOME/dbs folder 
+-- If complete path is used it will still create an alias name in the outer directory, which is ''+HRPAYFRA/hrpay/backupset' and then create a new directory with that date
+	-- and create the actual files in that folder. ''+HRPAYFRA/hrpay/backupset/2012_06_22/xxxxx'
+
+CONFIGURE DEVICE TYPE DISK PARALLELISM 4 BACKUP TYPE TO COMPRESSED BACKUPSET;
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT   '+HRPAYFRA';
+-- above is tested and finalized. SHOULD NOT USE THE complete path of FRA hs to be mentioned if you want to mention a name (in this case "cntl_%d_%F") to backupset. Else backup will go to Oracle_HOME/dbs folder 
+-- If complete path is used it will still create an alias name in the outer directory, which is ''+HRPAYFRA/hrpay/backupset' and then create a new directory with that date
+	-- and create the actual files in that folder. ''+HRPAYFRA/hrpay/backupset/2012_06_22/xxxxx'
+
+CONFIGURE COMPRESSION ALGORITHM 'BASIC' AS OF RELEASE 'DEFAULT' OPTIMIZE FOR LOAD TRUE;
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE;
+
+
+select inst_id,SECONDS_IN_WAIT,sid,event from gv$session_wait
+where upper(EVENT) like '%DISK%IO%';
+
+
+--Below is just an example.
+RMAN> SHOW ALL;
+
+CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 3 DAYS;
+CONFIGURE BACKUP OPTIMIZATION ON;
+CONFIGURE DEFAULT DEVICE TYPE TO DISK; # default
+CONFIGURE CONTROLFILE AUTOBACKUP ON;
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE SBT_TAPE TO '%F'; # default
+CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '%F'; # default
+CONFIGURE DEVICE TYPE 'SBT_TAPE' PARALLELISM 2 BACKUP TYPE TO COMPRESSED BACKUPSET;
+CONFIGURE DEVICE TYPE DISK PARALLELISM 1 BACKUP TYPE TO BACKUPSET; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE SBT_TAPE TO 1; # default
+CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE SBT_TAPE TO 1; # default
+CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; # default
+CONFIGURE CHANNEL DEVICE TYPE 'SBT_TAPE' PARMS 'ENV=(OB_DEVICE=tape1)';
+CONFIGURE MAXSETSIZE TO UNLIMITED; # default
+CONFIGURE ENCRYPTION FOR DATABASE OFF; # default
+CONFIGURE ENCRYPTION ALGORITHM 'AES128'; # default
+CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; # default
+CONFIGURE SNAPSHOT CONTROLFILE NAME TO '/disk1/oracle/dbs/snapcf_ev.f'; # default
+
+
+SHOW RETENTION POLICY;
+CONFIGURE BACKUP OPTIMIZATION CLEAR;     -- this command brings the particular configuration to default.

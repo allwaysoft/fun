@@ -1,0 +1,33 @@
+/* This Sample Code is provided for the purpose of illustration only and is not intended 
+to be used in a production environment.  THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE 
+PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR 
+PURPOSE.  We grant You a nonexclusive, royalty-free right to use and modify the Sample Code
+and to reproduce and distribute the object code form of the Sample Code, provided that You 
+agree: (i) to not use Our name, logo, or trademarks to market Your software product in which
+the Sample Code is embedded; (ii) to include a valid copyright notice on Your software product
+in which the Sample Code is embedded; and (iii) to indemnify, hold harmless, and defend Us and
+Our suppliers from and against any claims or lawsuits, including attorneys’ fees, that arise or 
+result from the use or distribution of the Sample Code.
+*/
+--Currently executing statements.sql
+---- lists users in sys.dm_exec_requests
+select r.session_id
+		,status
+		,substring(qt.text,r.statement_start_offset/2, 
+			(case when r.statement_end_offset = -1 
+			then len(convert(nvarchar(max), qt.text)) * 2 
+			else r.statement_end_offset end -				r.statement_start_offset)/2) 
+		as query_text   --- this is the statement executing right now
+		,qt.dbid
+		,qt.objectid
+		,r.cpu_time
+		,r.total_elapsed_time
+		,r.reads
+		,r.writes
+		,r.logical_reads
+		,r.scheduler_id
+from sys.dm_exec_requests r
+cross apply sys.dm_exec_sql_text(sql_handle) as qt
+where r.session_id > 50
+order by r.scheduler_id, r.status, r.session_id

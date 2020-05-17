@@ -1,0 +1,70 @@
+SQL> 
+SQL> connect sys/internal as sysdba;
+Connected.
+SQL> grant dba to mviewadmin;
+
+Grant succeeded.
+
+SQL> disconnect;
+Disconnected from Oracle9i Release 9.2.0.1.0 - Production
+JServer Release 9.2.0.1.0 - Production
+SQL> connect mviewadmin/mviewadmin@mvdb;
+Connected.
+SQL> 
+SQL> create or replace procedure Jobs_Broken_Proc is
+  2    cursor my_broken_jobs is
+  3  	   select job from user_jobs where broken = 'Y';
+  4  begin
+  5  
+  6    for broken_job in my_broken_jobs loop
+  7  	   begin
+  8  	     dbms_job.broken(broken_job.job,FALSE);
+  9  	   exception
+ 10  	      when others then null;
+ 11  	   end;
+ 12    end loop;
+ 13  end;
+ 14  /
+
+Procedure created.
+
+SQL> 
+SQL> 
+SQL> create or replace procedure Jobs_Broken is
+  2    jobno number;
+  3  begin
+  4  
+  5    dbms_job.submit( job => jobno,
+  6  	   what => 'Jobs_Broken_Proc;',
+  7  	   next_date => sysdate,
+  8  	   interval => 'sysdate + (10/(24*60))');
+  9    dbms_job.run(jobno);
+ 10    commit;
+ 11  
+ 12  end;
+ 13  /
+
+Procedure created.
+
+SQL> 
+SQL> 
+SQL> execute Jobs_Broken_Proc;
+
+PL/SQL procedure successfully completed.
+
+SQL> execute Jobs_Broken;
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> disconnect;
+Disconnected from Oracle9i Release 9.2.0.1.0 - Production
+JServer Release 9.2.0.1.0 - Production
+SQL> connect sys/internal as sysdba;
+Connected.
+SQL> revoke dba from mviewadmin;
+
+Revoke succeeded.
+
+SQL> 
+SQL> spool off

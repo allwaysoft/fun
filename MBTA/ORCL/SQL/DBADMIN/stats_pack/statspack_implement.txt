@@ -1,0 +1,122 @@
+0. run spcreate.sql from $ORACLE_HOME/rdbms/admin
+
+1. Create schedule based on the frequency it has to run.
+
+BEGIN
+  SYS.DBMS_SCHEDULER.CREATE_SCHEDULE
+    (
+      schedule_name    => 'PERFSTAT.MBTA_STATSP_1_HR_SCHDL'
+     ,start_date       => TO_TIMESTAMP_TZ('','yyyy/mm/dd hh24:mi:ss.ff tzr')
+     ,repeat_interval  => 'FREQ=HOURLY;BYMINUTE=20'
+     ,end_date         => NULL
+     ,comments         => NULL
+    );
+END;
+/
+
+BEGIN
+  SYS.DBMS_SCHEDULER.CREATE_JOB
+    (
+       job_name        => 'PERFSTAT.MBTA_STATSP_SNAPSHOT_1_HR_JOB'
+      ,schedule_name   => 'PERFSTAT.MBTA_STATSP_1_HR_SCHDL'
+      ,job_class       => 'DEFAULT_JOB_CLASS'
+      ,job_type        => 'STORED_PROCEDURE'
+      ,job_action      => 'perfstat.statspack.snap'
+      ,comments        => 'Statspack collection every 1 Hr'
+    );
+END;
+/	
+
+-- use below to change the snap level, we are donig level 7.
+
+exec statspack.modify_statspack_parameter(i_snap_level=>7, i_modify_parameter=>'true');
+
+-- use below to send email out
+
+https://forums.oracle.com/forums/thread.jspa?threadID=994739
+http://www.oracle-base.com/articles/11g/scheduler-enhancements-11gr2.php#email_notification
+
+----exec DBMS_SCHEDULER.SET_SCHEDULER_ATTRIBUTE('email_Server','smtprelayhs.mbta.com:25');
+
+exec DBMS_SCHEDULER.SET_SCHEDULER_ATTRIBUTE('email_Server','smtprelayhs.mbta.com');
+
+exec DBMS_SCHEDULER.SET_SCHEDULER_ATTRIBUTE('email_Sender','database@mbta.com');
+
+select * from dba_SCHEDULER_GLOBAL_ATTRIBUTE
+	
+--Do the below as the user where the job is created. This will send out an email if the job doesn't run for any reason.	
+BEGIN
+ DBMS_SCHEDULER.ADD_JOB_EMAIL_NOTIFICATION (
+  job_name   =>  'MBTA_STATSP_SNAPSHOT_1_HR_JOB',
+  recipients =>  'database@mbta.com',
+  sender     =>  'hrprdab@mbta.com',
+  subject    =>  'Oracle Scheduler Job Notification:- %job_owner%.%job_name%: %event_type%',
+  body       =>  'Job: %job_owner%.%job_name%.%job_subname%
+Event: %event_type%
+Date: %event_timestamp%
+Log id: %log_id%
+Job class: %job_class_name%
+Run count: %run_count%
+Failure count: %failure_count%
+Retry count: %retry_count%
+Error code: %error_code%
+Error message, if any: %error_message%',
+  events     =>  'JOB_FAILED, JOB_BROKEN, JOB_DISABLED, JOB_SCH_LIM_REACHED, JOB_STOPPED, JOB_CHAIN_STALLED');
+END;
+/
+
+BEGIN
+ DBMS_SCHEDULER.REMOVE_JOB_EMAIL_NOTIFICATION (
+  job_name   =>  'MBTA_STATSP_SNAPSHOT_1_HR_JOB',
+  recipients =>  'database@mbta.com',
+  events     =>  'JOB_SUCCEEDED, JOB_FAILED, JOB_BROKEN, JOB_DISABLED, JOB_SCH_LIM_REACHED, JOB_STOPPED, JOB_CHAIN_STALLED');
+END;
+/
+
+-- Now enable the scheduled job
+BEGIN
+DBMS_SCHEDULER.ENABLE('PERFSTAT.MBTA_STATSP_SNAPSHOT_1_HR_JOB');
+END;
+/	
+
+--------------------------
+alter system set smtp_out_server='emailserver.domain.com' scope=both;
+
+select * from dba_SCHEDULER_GLOBAL_ATTRIBUTE
+
+SELECT JOB_NAME, STATE FROM DBA_SCHEDULER_JOBS
+
+WHERE JOB_NAME = 'PERFSTAT.MBTA_STATSP_1_HR_JOB';
+
+SELECT JOB_NAME, RECIPIENT, EVENT FROM dba_SCHEDULER_NOTIFICATIONS;
+
+SELECT subject, body
+FROM   user_scheduler_notifications
+--------------------------
+
+
+-------------------------------------------
+--Generate hourly reports every night, look at below script
+-------------------------------------------
+
+C:\MISC\ORACLE\Documents\DBADMIN\stats_pack\auto_statspack_report.sh
+
+-------------------------------------------
+--auto purge statspack snapshots older than 30 days from the database.
+-------------------------------------------
+http://asktom.oracle.com/pls/asktom/f?p=100:11:::::P11_QUESTION_ID:6722856149512
+
+column min_snap_id new_val LoSnapId
+column max_snap_id new_val HiSnapId
+select nvl(min(s.snap_id), 0) min_snap_id, nvl(max(s.snap_id), 0) max_snap_id
+from stats$snapshot s
+   , stats$database_instance di
+where s.dbid               = :dbid
+   and di.dbid             = :dbid
+   and s.instance_number   = :inst_num
+   and di.instance_number  = :inst_num
+   and di.startup_time     = s.startup_time
+   and s.snap_time         < sysdate-30;
+
+-- Drop everything in statspack schema.
+spdrop.sql   

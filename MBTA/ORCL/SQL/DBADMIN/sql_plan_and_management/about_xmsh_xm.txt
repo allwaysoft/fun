@@ -1,0 +1,1 @@
+http://blog.tanelpoder.com/2009/05/26/scripts-for-showing-execution-plans-via-plain-sql-and-also-in-oracle-9i/

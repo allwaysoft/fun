@@ -1,0 +1,41 @@
+CREATE PROCEDURE DeleteEmployee ( @EmployeeID int )
+AS
+
+BEGIN TRY
+   BEGIN TRANSACTION    -- Start the transaction
+
+   -- Delete the Employee's phone numbers
+   DELETE FROM EmployeePhoneNumbers
+   WHERE EmployeeID = @EmployeeID
+
+   -- Delete the Employee record
+   DELETE FROM Employees
+   WHERE EmployeeID = @EmployeeID
+
+   -- If we reach here, success!
+   COMMIT
+END TRY
+BEGIN CATCH
+  -- Whoops, there was an error
+  IF @@TRANCOUNT > 0
+     ROLLBACK
+
+  -- Raise an error with the details of the exception
+  DECLARE @ErrMsg nvarchar(4000), @ErrSeverity int
+  SELECT @ErrMsg = ERROR_MESSAGE(),
+         @ErrSeverity = ERROR_SEVERITY()
+
+  RAISERROR(@ErrMsg, @ErrSeverity, 1)
+END CATCH
+
+
+-- Below is used give the details about the error occured.
+BEGIN CATCH
+SELECT
+ERROR_NUMBER() AS ErrorNumber,
+ERROR_SEVERITY() AS ErrorSeverity,
+ERROR_STATE() AS ErrorState,
+ERROR_PROCEDURE() AS ErrorProcedure,
+ERROR_LINE() AS ErrorLine,
+ERROR_MESSAGE() AS ErrorMessage;
+END CATCH;

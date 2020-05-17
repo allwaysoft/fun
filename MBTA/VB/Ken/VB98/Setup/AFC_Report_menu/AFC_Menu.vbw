@@ -1,0 +1,7 @@
+Frm_Menu = 78, 7, 882, 830, , 0, 0, 0, 0, C
+ModDB = 375, 6, 937, 829, 
+Frm_Report = 106, 70, 1049, 830, , 0, 0, 0, 0, C
+Frm_Incident_Counts = 7, 1, 1123, 824, C, 0, 0, 0, 0, C
+Frm_Calendar = 0, 0, 0, 0, C, 0, 0, 0, 0, C
+New_Incident_Counts = 0, 0, 0, 0, C, 0, 136, 930, 959, C
+Frm_Login = 128, 206, 923, 869, , 0, 0, 0, 0, C

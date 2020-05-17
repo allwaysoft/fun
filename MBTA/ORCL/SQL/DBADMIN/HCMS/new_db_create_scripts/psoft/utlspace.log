@@ -1,0 +1,21 @@
+SQL> 
+SQL> REM * Create a temporary tablespace for database users.
+SQL> REM *
+SQL> REM -- MBTA Custom  Below PSTEMP Table Space is not necessary as we can use default TEMP tablespace for everything.
+SQL> REM CREATE TEMPORARY TABLESPACE PSTEMP
+SQL> REM TEMPFILE              '+HRSTGDATA/hrstg/tempfile/pstemp01.dbf'           SIZE 300M
+SQL> REM EXTENT MANAGEMENT LOCAL UNIFORM SIZE 128K
+SQL> REM ;
+SQL> 
+SQL> REM * Create a tablespace for database users default tablespace.
+SQL> REM *
+SQL> CREATE TABLESPACE       PSDEFAULT
+  2  DATAFILE              '+HRSTGDATA/hrstg/datafile/psdefault.dbf'          SIZE 100M autoextend on next 20M maxsize UNLIMITED
+  3  EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+  4  SEGMENT SPACE MANAGEMENT AUTO
+  5  ;
+
+Tablespace created.
+
+SQL> 
+SQL> spool off

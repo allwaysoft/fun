@@ -1,0 +1,115 @@
+select top 1 * from servicealerts 
+where mode = 'Subway'
+and route = 'Red Line'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Subway'
+and route = 'Red Line - Mattapan Line'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Subway'
+and route = 'Green Line'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Subway'
+and route = 'Blue Line'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Subway'
+and route = 'Orange Line'
+and isclosed = 1 and delay <> 'Advisory'
+--------------
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Kingston/Plymouth'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Newburyport/Rockport'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Providence/Stoughton'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Needham'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Middleborough/Lakeville'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Lowell'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Haverhill'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Greenbush'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Franklin/Forge Park'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Framingham/Worcester'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Fitchburg/South Acton'
+and isclosed = 1 and delay <> 'Advisory'
+union all
+select top 1 * from servicealerts 
+where mode = 'Commuter Rail'
+and route = 'Fairmount'
+and isclosed = 1 and delay <> 'Advisory'
+
+union all
+select top 1 * from servicealerts 
+where mode = 'Silver Line'
+and isclosed = 1 and delay <> 'Advisory'
+
+union all
+select top 1 * from servicealerts 
+where mode = 'Bus'
+and isclosed = 1 and delay <> 'Advisory'
+
+union all
+select top 1 * from servicealerts 
+where mode = 'Boat'
+and isclosed = 1 and delay <> 'Advisory'
+
+union all
+select top 1 * from servicealerts 
+where mode = 'Elevator'
+and isclosed = 1 and delay <> 'Advisory'
+
+union all
+select top 1 * from servicealerts 
+where mode = 'Escalator'
+and isclosed = 1 and delay <> 'Advisory'
+
+union all
+select top 1 * from servicealerts 
+where mode = 'HP'
+and isclosed = 1 and delay <> 'Advisory'

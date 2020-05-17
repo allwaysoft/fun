@@ -1,0 +1,115 @@
+EXPLAIN PALN WITH HINTS.
+
+ /*+
+        ORDERED
+        INDEX        (sub    XIE1T1)
+        USE_HASH    (sd)
+        USE_HASH    (sub)        
+        USE_HASH    (mcm)
+        USE_HASH    (st)
+        USE_HASH    (ms)
+        USE_HASH    (hol)
+        parallel(sd 8)
+        parallel(sub 8)
+        parallel(mcm 8)
+        parallel(st 8)
+        parallel(ms 8)
+        FULL        (sd)
+        FULL        (mcm)
+        FULL        (st)
+        FULL        (ms)        
+        USE_NL        (rou)
+        USE_NL        (tvm)
+        USE_NL        (sta)
+    */
+
+
+
+PLAN_TABLE_OUTPUT
+----------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation                                   |  Name| Rows  | Bytes |TempSpc| Cost  | Pstart| Pstop |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                            |      |     1 |   269 |       |   329K|       |       |
+|   1 |  SORT GROUP BY                              |      |     1 |   269 |       |   329K|       |       |
+|*  2 |   HASH JOIN OUTER                           |      |     1 |   269 |       |   329K|       |       |
+|   3 |    NESTED LOOPS OUTER                       |      |     1 |   258 |       |   329K|       |       |
+|   4 |     NESTED LOOPS                            |      |     1 |   240 |       |   329K|       |       |
+|   5 |      NESTED LOOPS                           |      |     1 |   227 |       |   329K|       |       |
+|*  6 |       HASH JOIN                             |      |     1 |   209 |       |   329K|       |       |
+|*  7 |        HASH JOIN                            |      |     1 |   183 |       |   328K|       |       |
+|*  8 |         HASH JOIN                           |      |     1 |   153 |   111M|   314K|       |       |
+|   9 |          PARTITION RANGE ITERATOR           |      |       |       |       |       |     8 |    14 |
+|* 10 |           TABLE ACCESS FULL                 | MCM  |    15M|   713M|       | 30194 |     8 |    14 |
+|* 11 |          HASH JOIN OUTER                    |      |    36M|  3683M|   325M|   274K|       |       |
+|  12 |           PARTITION RANGE ITERATOR          |      |       |       |       |       |     8 |    14 |
+|* 13 |            TABLE ACCESS FULL                | SD   |    36M|  2188M|       | 50038 |     8 |    14 |
+|  14 |           PARTITION RANGE ITERATOR          |      |       |       |       |       |     8 |    14 |
+|* 15 |            TABLE ACCESS BY LOCAL INDEX ROWID| SD   |  2561K|   105M|       |   219K|     8 |    14
+|* 16 |             INDEX RANGE SCAN                | XIESD|  5538K|       |       |  8177 |     8 |    14 |
+|  17 |         PARTITION RANGE ITERATOR            |      |       |       |       |       |     8 |    14 |
+|* 18 |          TABLE ACCESS FULL                  | ST   |   170M|  4877M|       | 13824 |     8 |    14 |
+|  19 |        PARTITION RANGE ITERATOR             |      |      |       |        |       |     8 |    14 |
+|* 20 |         TABLE ACCESS FULL                   | MS   |  1671 | 43446 |       |   566 |     8 |    14 |
+|  21 |       TABLE ACCESS BY INDEX ROWID           | ROU  |     1 |    18 |       |     1 |       |       |
+|* 22 |        INDEX UNIQUE SCAN                    |XPKROU|     1 |       |       |       |       |       |
+|* 23 |      INDEX RANGE SCAN                       |XIETVM|     1 |    13 |       |     1 |       |       |
+|  24 |     TABLE ACCESS BY INDEX ROWID             | STA  |     1 |    18 |       |     1 |       |       |
+|* 25 |      INDEX UNIQUE SCAN                      |XPKSTA|     1 |       |       |       |       |       |
+|* 26 |    TABLE ACCESS FULL                        | HOL  |  1352 | 14872 |       |    11 |       |       |
+----------------------------------------------------------------------------------------------------
+
+EXPALIN PLAN WITH ONLY PARALLEL HINTS.
+
+       /*+
+        parallel(sd 8)
+        parallel(sub 8)
+        parallel(mcm 8)
+        parallel(st 8)
+        parallel(ms 8)
+       */
+
+PLAN_TABLE_OUTPUT
+----------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------
+| Id  | Operation                                 |  Name  | Rows  | Bytes | Cost  | Pstart| Pstop |
+----------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                          |        |     1 |   269 |   579 |       |       |
+|   1 |  SORT GROUP BY                            |        |     1 |   269 |   579 |       |       |
+|   2 |   NESTED LOOPS OUTER                      |        |     1 |   269 |   575 |       |       |
+|*  3 |    FILTER                                 |        |       |       |       |       |       |
+|   4 |     NESTED LOOPS OUTER                    |        |       |       |       |       |       |
+|   5 |      NESTED LOOPS                         |        |     1 |   215 |   573 |       |       |
+|   6 |       NESTED LOOPS                        |        |     1 |   152 |   572 |       |       |
+|   7 |        NESTED LOOPS                       |        |     1 |   105 |   571 |       |       |
+|   8 |         NESTED LOOPS OUTER                |        |     2 |   150 |   570 |       |       |
+|   9 |          NESTED LOOPS                     |        |     2 |   114 |   569 |       |       |
+|* 10 |           HASH JOIN                       |        |    43 |  1892 |   567 |       |       |
+|  11 |            INLIST ITERATOR                |        |       |       |       |       |       |
+|  12 |             TABLE ACCESS BY INDEX ROWID   | ROU    |     5 |    90 |     1 |       |       |
+|* 13 |              INDEX RANGE SCAN             | XPKROU |     5 |       |     1 |       |       |
+|  14 |            PARTITION RANGE ITERATOR       |        |       |       |       |     8 |    14 |
+|* 15 |             TABLE ACCESS FULL             | MS     |  1671 | 43446 |   566 |     8 |    14 |
+|* 16 |           INDEX RANGE SCAN                |XIE2TVM |     1 |    13 |     1 |       |       |
+|  17 |          TABLE ACCESS BY INDEX ROWID      | STA    |     1 |    18 |     1 |       |       |
+|* 18 |           INDEX UNIQUE SCAN               | XPKSTA |     1 |       |       |       |       |
+|  19 |         PARTITION RANGE ITERATOR          |        |       |       |       |   KEY |   KEY |
+|* 20 |          TABLE ACCESS BY LOCAL INDEX ROWID| ST     |     1 |    30 |     1 |   KEY |   KEY |
+|* 21 |           INDEX RANGE SCAN                | XIE1ST |     5 |       |     1 |   KEY |   KEY |
+|  22 |        PARTITION RANGE ITERATOR           |        |       |       |       |   KEY |   KEY |
+|  23 |         INLIST ITERATOR                   |        |       |       |       |       |       |
+|* 24 |          TABLE ACCESS BY LOCAL INDEX ROWID| MCM    |     1 |    47 |     1 |   KEY |   KEY |
+|* 25 |           INDEX RANGE SCAN                | XIE4MCM|     1 |       |     1 |   KEY |   KEY |
+|* 26 |       TABLE ACCESS BY GLOBAL INDEX ROWID  | SD     |     1 |    63 |     1 | ROWID | ROW L 
+|* 27 |        INDEX RANGE SCAN                   | XPKSD  |     1 |       |     1 |       |       |
+|* 28 |      TABLE ACCESS BY GLOBAL INDEX ROWID   | SD     |     1 |    43 |     1 | ROWID | ROW L 
+|* 29 |       INDEX UNIQUE SCAN                   | XPKSD  |     1 |       |       |       |       |
+|  30 |    TABLE ACCESS BY INDEX ROWID            | HOL    |     1 |    11 |     1 |       |       |
+|* 31 |     INDEX RANGE SCAN                      | PK_HOL |     1 |       |     1 |       |       |
+----------------------------------------------------------------------------------------------------
+
+
+NO HINTS
+

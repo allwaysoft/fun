@@ -1,0 +1,103 @@
+BEGIN DBMS_MVIEW.REFRESH('BALANCEGROUP','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+BEGIN DBMS_MVIEW.REFRESH('DEVICECLASS','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+
+
+BEGIN DBMS_MVIEW.REFRESH('FEPDATA','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+
+
+
+BEGIN DBMS_MVIEW.REFRESH('JOBTABLE','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+BEGIN DBMS_MVIEW.REFRESH('TVMSCHEDULEGROUPELEMENTS','C'); END;
+
+*
+ERROR at line 1:
+ORA-00942: table or view does not exist
+ORA-06512: at "SYS.DBMS_SNAPSHOT_UTL", line 183
+ORA-06512: at "SYS.DBMS_SNAPSHOT_UTL", line 429
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+BEGIN DBMS_MVIEW.REFRESH('TVMTABLE','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+BEGIN DBMS_MVIEW.REFRESH('TVMVERSIONGROUP','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+
+
+
+
+BEGIN DBMS_MVIEW.REFRESH('VERSIONS','C'); END;
+
+*
+ERROR at line 1:
+ORA-12008: error in materialized view refresh path
+ORA-02266: unique/primary keys in table referenced by enabled foreign keys
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 794
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 851
+ORA-06512: at "SYS.DBMS_SNAPSHOT", line 832
+ORA-06512: at line 1
+

@@ -1,0 +1,688 @@
+#!/bin/bash
+#------------------------------------------
+#NOTES
+#
+#To run this script, use the following syntax: ./RMAN_BACKUP.txt >> /home/oracle/backup_logs/backup_log_`date +"%m_%d_%y_%R:%S"`.txt
+#This script also presumes you have a directory named whatever your $BACKUP_LOG_DIR_NAME is (see the CONSTANTS section below), located in the same directory as this script.
+#This is a "UNIVERSAL" backup script, so it will automatically apply Oracle best practices, and make use of the best features available in all versions from 9 to 11.
+#It will also automatically back up all databases, and manage all logs, no matter how many databases or listeners are running on a single server.
+#See the notes at the end of this script for details on how to RECOVER your database from backup.
+#------------------------------------------#End notes
+#VARIABLES -- ALL VARIABLES THAT MUST SUFFER THE INFLEXIBLE TORMENT OF HARDCODING GO HERE- but hey, at least if you need to change something you change it here only once, and you should be good to go.
+#
+export ORACLE_HOME="/oracle/oracle/db/9.2"
+export BACKUP_DESTINATION_9i="/oracle/backup/rman" #If you are backing up a 9i database, this directory MUST be specified to tell oracle where to put the backup files, and a directory with each ORACLE_SID must exist under that location. Otherwise, its not used.
+#------------------------------------------#End variables
+#SOURCE
+#
+#If you have an ORACLE_HOME, etc. set in the .bash_profile, this will override whatever got set above in the VARIABLES section.
+source ~/.bash_profile
+#------------------------------------------#End source
+#SET
+#
+set -u  #No uninitialized variables will be allowed now.
+set -x  #Assist in debugging by making output verbose.
+#------------------------------------------#End set
+#CONSTANTS -- Set it and forget it. The rest of the script uses these variables- so there's no hard-coding. Change it once here, and your change will cascade through the rest of the script.
+#
+export EMAIL_ADDRESS=dmdcdba@ascentmedia.com
+export BACKUP_BASE_DIR=`pwd` #By default, set to wherever this script runs from, but you can change it to whatever you want here.
+export BACKUP_LOG_DIR_NAME=backup_logs
+export DAYS_TO_KEEP_LOGS=7
+export MAIL_FILE=/var/spool/mail/oracle
+export TEMP_DIR=/tmp/oracle
+
+export FILE_DATE=`date +"%m_%d_%y_%R:%S"`
+export USE_BLOCK_CHANGE_TRACKING="Y" #Valid values are Y or N to toggle on or off block change tracking for RMAN (block change tracking improves RMAN performance by telling RMAN which blocks have changed- meaning it won't have to read every block in the database.)
+export USE_RMAN_BLOCK_CHECKSUM="Y"   #Valid values are Y or N to toggle on or off block check summing for RMAN to detect and repair corrupt data blocks.
+
+export THE_SIDS=`ps -ef|grep pmon|grep -v grep|awk -F_ '{print $NF}'|sed '/^+/ d'` #This lists all of the running PMON processes, which we will then parse to get a list of current ORACLE_SIDs. We then iterate over each ORACLE_SID to determine the databases which will be backed up.
+export THE_LISTENERS=`ps -ef|grep tnslsnr|grep -v grep|awk '{print $9}'`   #This lists the name of all the listeners running on the machine. We will parse this and use it to roll the listener logs.
+export DUMP_DESTINATIONS=( "audit_file_dest" "background_dump_dest" "core_dump_dest" "user_dump_dest" ) #This array is used later to list the directories where we will delete unneeded trace, audit, listener, and dump files older than your $DAYS_TO_KEEP_LOGS. Destinations can be added or removed here.
+
+#------------------------------------------#End constants
+#FUNCTIONS
+#
+check_err()
+{
+if [ $1 -ne 0 ]; then
+LINE_NUMBER=$2
+LOGFILE=`find "$BACKUP_BASE_DIR"/"$BACKUP_LOG_DIR_NAME" -type f -printf "%TY-%Tm-%Td %TT %p\n" | sort | tail -1|awk '{print $3}'`
+
+MESSAGE_HEADER="RMAN backup script located at $BACKUP_BASE_DIR/"`basename $0`" for oracle SID $ORACLE_SID on host $HOSTNAME failed at (or near) line number $LINE_NUMBER on "`date +"%m_%d_%y_%R:%S"`".
+ 
+For more information, see the latest database backup log located at $LOGFILE/.
+The contents of that log follow below:
+----------------------------------------------------"
+MESSAGE_BODY=""
+
+if [ "" = "$LOGFILE" ]; then
+   MESSAGE_BODY=$3
+ else
+  n=`wc -l < "$LOGFILE"`
+  i=1
+
+  while [ "$i" -le "$n" ]
+  do
+  line=`cat "$LOGFILE" | head -$i | tail -1`
+  MESSAGE_BODY="$MESSAGE_BODY
+    $line"
+ i=`expr $i + 1`
+ done 
+fi
+
+MESSAGE="
+$MESSAGE_HEADER
+$MESSAGE_BODY
+"
+
+SUBJECT="FAILED DATABASE BACKUP ON $HOSTNAME at Line $LINE_NUMBER"
+
+ echo "$MESSAGE"| mailx -s "$SUBJECT" "$EMAIL_ADDRESS"
+ exit 1
+fi
+}
+#------------------------------------------#End functions
+#-----------BEGIN SCRIPT-------------------
+#SCRIPT
+#
+cd ~
+#-------Check to see that the $ORACLE_HOME is correctly set
+if [ -s $ORACLE_HOME/bin/sqlplus ]; then
+  echo "Found sqlplus in ORACLE_HOME, so ORACLE_HOME variable is probably correctly set."
+ check_err $? $LINENO " "
+else
+  echo "Could not locate SQLPLUS in ORACLE_HOME."
+  echo "Please be sure this variable is correctly set in your .bash_profile, or at the beginning of this script."
+  echo "Exiting script."
+ check_err 1 $LINENO " "
+fi
+ check_err $? $LINENO " "
+
+if [ -s `pwd`/$BACKUP_LOG_DIR_NAME ]; then 
+ echo "Backup log directory already exists- no need to create one. Please be sure to output the results of each script run to this directory."
+ check_err $? $LINENO " "
+else
+ check_err 1 $LINENO "No directory exists at "$BACKUP_BASE_DIR"/"$BACKUP_LOG_DIR_NAME" to store logs for each backup run. Exiting script."
+fi
+ check_err $? $LINENO " "
+
+for EACH_SID in $THE_SIDS
+do
+
+ check_err $? $LINENO " "
+
+ export ORACLE_SID=$EACH_SID
+ echo "Gathering information for the backup of "$ORACLE_SID
+ check_err $? $LINENO " "
+
+#------- Gather the database name to use with RAC and Data Guard. In these configurations, the script will be run on all servers participating in the configuration, but at offset intervals- i.e. node 1 will run at 1am, and node 2 will run at 2am.
+#------- Then, we will use the BACKUP NOT BACKED UP SINCE TIME syntax to detect any incomplete backups. If the backup was successfully completed on the first node, then RMAN will skip the backup, but do all of the rest of the good stuff in this script.
+DB_NAME=`$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF | grep '^DD ' | awk '{print $2}'
+set serveroutput on
+whenever sqlerror exit 1
+set linesize 100
+declare
+        l_database_name long;
+begin
+        select value as DATABASE_NAME INTO l_database_name from v\\$parameter where name= 'db_name';
+        dbms_output.put_line( 'x' );
+        dbms_output.put_line( 'DD ' || l_database_name );
+end;
+/
+exit
+EOF`
+ check_err $? $LINENO " "
+echo "Current Database Name is: "$DB_NAME
+
+#------- Gather the database version to determine what features we can use.
+DB_VERSION=`$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF | grep '^DD ' | awk '{print $2}'
+set serveroutput on
+whenever sqlerror exit 1
+set linesize 100
+declare
+        l_version long;
+begin
+        select substr(version, 1, (instr(version, '.',1,1)-1)) as VERSION INTO l_version from v\\$instance;
+        dbms_output.put_line( 'x' );
+        dbms_output.put_line( 'DD ' || l_version );
+end;
+/
+exit
+EOF`
+ check_err $? $LINENO " "
+echo "Current Database Version is: "$DB_VERSION
+
+#------- If this is a 9i database, verify that there is a place to put the backups.
+  if [ "$DB_VERSION" -lt "10" ]; then
+    BACKUP_DESTINATION_9i=`echo "${BACKUP_DESTINATION_9i}" | sed -e "s/\/*$//" ` #Remove the trailing slash from the filepath if you accidentally specified one.
+         check_err $? $LINENO " "
+      if [ "" = "$BACKUP_DESTINATION_9i" ]; then
+        echo "No directory to put 9i backup files in was specified. This must be set in the variable BACKUP_DESTINATION_9i at the head of this script..."
+         check_err 1 $LINENO " "
+      fi
+      if [ -s "$BACKUP_DESTINATION_9i"/"$ORACLE_SID" ]; then
+        echo "Found directory to put 9i backup files in..."
+      else
+        echo "The directory to put the 9i backup files in does not exist, or is specified incorrectly."
+        echo "Please verify that the variable BACKUP_DESTINATION_9i is correctly set within this script."
+        echo "Please also verify that under the BACKUP_DESTINATION_9i directory is a folder named the same as each ORACLE_SID."
+         check_err 1 $LINENO " "
+      fi
+ check_err $? $LINENO " " 
+  fi
+ check_err $? $LINENO " "
+
+#------- Enable block change tracking if possible
+export SQL1="" #Set these to nothing since we've enabled the set -u option.
+export SQL2=""
+
+if [ "$DB_VERSION" -lt "10" ]; then
+  echo ""
+  echo "Block change tracking can not be enabled for this database since the version is lower than 10G."
+ check_err $? $LINENO " "
+else
+  echo "Database version is appropriate for block change tracking." 
+  echo "Attempting to determine if RMAN block change tracking is already enabled..."
+ check_err $? $LINENO " "
+
+ BLOCK_TRACKING_ENABLED=`$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF | grep '^DD ' | awk '{print $2}' #Since this must be a 10.x or greater database, then see if block change tracking is already enabled or not- and if not, enable it.
+ set serveroutput on
+ whenever sqlerror exit 1
+ set linesize 100
+ declare
+        l_status long;
+ begin
+        select status INTO l_status from v\\$block_change_tracking;
+        dbms_output.put_line( 'x' );
+        dbms_output.put_line( 'DD ' || l_status );
+ end;
+ /
+ exit
+EOF`
+ check_err $? $LINENO " "
+  echo "The current status of block change tracking is: "$BLOCK_TRACKING_ENABLED
+ check_err $? $LINENO " "
+  echo "Attempting to determine the name and location of the RMAN block change tracking file..."
+ check_err $? $LINENO " "
+
+ BLOCK_TRACKING_FILE=`$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF | grep '^DD ' | awk '{print $2}' #Put the block tracking file in the same place as the SYSTEM tablespace.
+ set serveroutput on
+ whenever sqlerror exit 1
+ set linesize 100
+ declare
+        l_filename long;
+ begin
+        select max(file_name) as FILE_NAME INTO l_filename from dba_data_files where tablespace_name = 'SYSTEM';
+        dbms_output.put_line( 'x' );
+        dbms_output.put_line( 'DD ' || l_filename );
+ end;
+ /
+ exit
+EOF`
+ check_err $? $LINENO " "
+ BLOCK_TRACKING_FILE=`dirname $BLOCK_TRACKING_FILE`/BLOCK_CHANGE_TRACKFILE.DBF
+ check_err $? $LINENO " "
+ echo "The RMAN block change tracking file is: "$BLOCK_TRACKING_FILE
+ check_err $? $LINENO " "
+
+ check_err $? $LINENO " "
+
+  if [ "$USE_BLOCK_CHANGE_TRACKING"="Y" ]; then
+   if [ "DISABLED" = $BLOCK_TRACKING_ENABLED ]; then
+     SQL2="ALTER DATABASE ENABLE BLOCK CHANGE TRACKING USING FILE '$BLOCK_TRACKING_FILE';" 
+    check_err $? $LINENO " "
+   else
+     SQL2="SELECT 'BLOCK CHANGE TRACKING NOT APPLICABLE OR ALREADY ENABLED OR EXPLICITLY DISABLED BY THIS SCRIPT' AS BLOCK_CHANGE_TRACKING_STATUS FROM DUAL;"
+    check_err $? $LINENO " "
+   fi
+  fi
+ check_err $? $LINENO " "
+fi
+ check_err $? $LINENO " "
+
+#------- Enable block check summing if possible.
+#In order to detect and repair corruption, we will ensure block checksum is enabled:
+if [ USE_RMAN_BLOCK_CHECKSUM="Y" ]; then
+echo "Block checksumming helps detect and repair corruption."
+echo "The script variable USE_RMAN_BLOCK_CHECKSUM=Y, so we will ensure RMAN block checksumming is enabled."
+
+#------- In order to correctly format the SQL for block change tracking and summing, we'll need to know if we are using an SPFILE or not.
+USE_SP_FILE=`$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF | grep '^DD ' | awk '{print $2}'
+set serveroutput on
+whenever sqlerror exit 1
+set linesize 100
+declare
+        l_spfile long;
+begin
+        select value as SPFILE INTO l_spfile from v\\$parameter where name = 'spfile';
+        dbms_output.put_line( 'x' );
+        dbms_output.put_line( 'DD ' || l_spfile );
+end;
+/
+exit
+EOF`
+ check_err $? $LINENO " "
+
+  if [ "" = "$USE_SP_FILE" ]; then #We can only use the SCOPE=BOTH syntax if an spfile is being used.
+    echo "No SPFILE is being used for this database instance."
+    SQL1='ALTER SYSTEM SET DB_BLOCK_CHECKSUM=TRUE;'
+     check_err $? $LINENO " "
+  else
+    echo "SPFILE is being used. Spfile located at: "$USE_SP_FILE
+    SQL1='ALTER SYSTEM SET DB_BLOCK_CHECKSUM=TRUE SCOPE=BOTH;'
+      check_err $? $LINENO " "
+  fi
+ check_err $? $LINENO " "
+
+else
+SQL1="SELECT 'RMAN BLOCK CHECK SUMMING EXPLICITLY DISABLED BY THIS SCRIPT OR NOT APPLICABLE' AS BLOCK_CHECK_SUMMING_STATUS FROM DUAL;"
+ check_err $? $LINENO " "
+fi
+ check_err $? $LINENO " "
+
+#-------Now run the following block check and block sum commands from sqlplus:
+echo ""
+echo "About to run the following SQL statements:"
+echo $SQL1
+echo $SQL2
+  check_err $? $LINENO " "
+$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF
+set serveroutput on
+whenever sqlerror exit 1
+set linesize 100
+$SQL1
+$SQL2
+EOF
+
+  check_err $? $LINENO " "
+
+#------- End block change tracking and block summing section.
+
+#------- Setup backup commands, based on the database version. Note the \n which will output each command to a new line in the temp file.
+  BACKUP_CONFIGURE_COMMANDS_BASE=(
+     "
+     run { \n
+     CONFIGURE RETENTION POLICY TO REDUNDANCY 1; \n #We will keep one copy of all our backupset and redo files required to recover the database to the current time. Two copies may be better, in case one is corrupt but we have to weigh this against the amount of disk space we can consume. We will not use a recovery window based policy. \n
+     CONFIGURE BACKUP OPTIMIZATION ON; \n #Set this to ON in order to skip backing up of files that have already been backed up, but haven't changed since the last backup. \n
+     CONFIGURE DEFAULT DEVICE TYPE TO DISK; \n #By default, we will write our backups to DISK, or really- to the FRA if possible.  \n
+     CONFIGURE CONTROLFILE AUTOBACKUP ON; \n #Set to ON to make RMAN to automatically back up the control file, and also enable RMAN to restore the control file autobackup without access to an RMAN repository \n
+     CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE SBT_TAPE TO '"$DB_NAME"_controlfile_%F'; \n # \n
+     CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '"$DB_NAME"_controlfile_%F'; \n # \n
+     CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE SBT_TAPE TO 1; \n # default \n
+     CONFIGURE DATAFILE BACKUP COPIES FOR DEVICE TYPE DISK TO 1; \n # default \n
+     CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE SBT_TAPE TO 1; \n # default \n
+     CONFIGURE ARCHIVELOG BACKUP COPIES FOR DEVICE TYPE DISK TO 1; \n # default \n
+     CONFIGURE CHANNEL DEVICE TYPE 'SBT_TAPE' PARMS 'SBT_LIBRARY=mylibrary.disksbt,ENV=(BACKUP_PARAM=value)'; \n # \n
+     CONFIGURE MAXSETSIZE TO UNLIMITED; \n # default \n
+     CONFIGURE SNAPSHOT CONTROLFILE NAME TO '$ORACLE_HOME/dbs/snapshot_controlfile_$DB_NAME.scf'; \n #Our custom value for the name of the snapshot controlfile \n
+     } \n
+     "
+     )
+
+ check_err $? $LINENO " "
+
+  BACKUP_CONFIGURE_COMMANDS_9i=(
+     "
+     CONFIGURE DEVICE TYPE DISK PARALLELISM 3; \n
+     CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '$BACKUP_DESTINATION_9i/$ORACLE_SID/%d_DB_%u_%s_%p'; \n #This is used in 9.2 databases to tell RMAN where to back up the database, whereas in 10G it backs up to the FRA, which is specified as the initialization parameter db_recovery_file_dest. \n
+     "
+     )
+
+ check_err $? $LINENO " "
+
+  BACKUP_CONFIGURE_COMMANDS_10G=(
+     "
+     run { \n
+     CONFIGURE ENCRYPTION FOR DATABASE OFF; \n # default \n
+     CONFIGURE ENCRYPTION ALGORITHM 'AES128'; \n # default \n
+     CONFIGURE ARCHIVELOG DELETION POLICY TO NONE; \n # Set to NONE because we are not using Data Guard \n
+     CONFIGURE DEVICE TYPE 'SBT_TAPE' PARALLELISM 3 BACKUP TYPE TO COMPRESSED BACKUPSET; \n #We are setting this to COMPRESSED BACKUPSET for SBT_TAPE because BACKUPSET is the only option (vs. image copy) for SBT_TAPE. \n
+     CONFIGURE DEVICE TYPE DISK PARALLELISM 3 BACKUP TYPE TO COPY; \n #We are setting this to COPY (meaning image copy- that is, an exact copy of the data file) instead of COMPRESSED BACKUPSET in order to use the Incrementally Updated Backup Method. \n
+     } \n 
+     "
+     )
+
+ check_err $? $LINENO " "
+
+  BACKUP_RUN_COMMANDS_BASE=(
+   "
+   ALLOCATE CHANNEL FOR MAINTENANCE DEVICE TYPE DISK; \n 
+   run { \n 
+   ALLOCATE CHANNEL BASE_CHAN_1 DEVICE TYPE DISK; \n 
+   CROSSCHECK ARCHIVELOG ALL; \n 
+   CROSSCHECK BACKUPSET; \n 
+   CROSSCHECK BACKUP; \n
+   CROSSCHECK COPY; \n
+   DELETE NOPROMPT EXPIRED BACKUPSET; \n  
+   DELETE NOPROMPT EXPIRED BACKUP; \n 
+   DELETE NOPROMPT EXPIRED COPY; \n  
+   DELETE NOPROMPT OBSOLETE; \n 
+   } \n 
+   "
+   )
+
+ check_err $? $LINENO " "
+
+  BACKUP_RUN_COMMANDS_9i=(
+     "
+     BACKUP TAG "$DB_NAME"_main_backup DATABASE; \n 
+     "
+     )
+
+ check_err $? $LINENO " "
+
+  BACKUP_RUN_COMMANDS_10G=(
+     "
+     run { \n 
+     ALLOCATE CHANNEL BACKUP_CHAN_1 DEVICE TYPE DISK; \n 
+     ALLOCATE CHANNEL BACKUP_CHAN_2 DEVICE TYPE DISK; \n 
+     ALLOCATE CHANNEL BACKUP_CHAN_3 DEVICE TYPE DISK; \n 
+     RECOVER COPY OF DATABASE WITH TAG "$DB_NAME"_main_backup; \n 
+     BACKUP NOT BACKED UP SINCE TIME 'SYSDATE-1' INCREMENTAL LEVEL 1 FOR RECOVER OF COPY WITH TAG "$DB_NAME"_main_backup DATABASE; \n #This is the line that does the magic- if its Data Guard or RAC, and RMAN discovers that the backup has already run, then it skips it. Otherwise, it automatically picks up where the other instance(s) failed and runs a backup for that database. Also, for single instance databases, it runs the backup only for that instance. \n
+     CATALOG RECOVERY AREA; \n 
+     } \n 
+     "
+     )
+
+ check_err $? $LINENO " "
+
+if [ "$DB_VERSION" -lt "10" ]; then
+
+   BACKUP_COMMAND=(
+   "
+    ${BACKUP_CONFIGURE_COMMANDS_BASE[@]}
+    ${BACKUP_CONFIGURE_COMMANDS_9i[@]}
+    ${BACKUP_RUN_COMMANDS_BASE[@]}
+    ${BACKUP_RUN_COMMANDS_9i[@]}
+    ${BACKUP_RUN_COMMANDS_BASE[@]}
+   "
+    )
+
+ check_err $? $LINENO " "
+
+else 
+
+   BACKUP_COMMAND=(
+   "
+    ${BACKUP_CONFIGURE_COMMANDS_BASE[@]}
+    ${BACKUP_CONFIGURE_COMMANDS_10G[@]}
+    ${BACKUP_RUN_COMMANDS_BASE[@]}
+    ${BACKUP_RUN_COMMANDS_10G[@]}
+    ${BACKUP_RUN_COMMANDS_BASE[@]}
+   "
+    )
+
+ check_err $? $LINENO " "
+
+fi
+
+COMMANDS=""
+TEMPFILE=""
+ check_err $? $LINENO " "
+
+TEMPFILE=`pwd`/tempout.txt
+ check_err $? $LINENO " "
+
+echo -e ${BACKUP_COMMAND[@]} > "$TEMPFILE"
+ check_err $? $LINENO " "
+
+#---
+  n_1=`wc -l < "$TEMPFILE"`
+  i_1=1
+
+ check_err $? $LINENO " "
+
+  while [ "$i_1" -le "$n_1" ]
+  do
+  line_1=`cat "$TEMPFILE" | head -$i_1 | tail -1`
+  COMMANDS="$COMMANDS
+    $line_1"
+ i_1=`expr $i_1 + 1`
+ done 
+
+ check_err $? $LINENO " "
+#-------Now we can actually begin the backup.
+echo ""
+echo "Beginning backup for "$ORACLE_SID"..."
+echo "BACKUP COMMANDS ARE: $COMMANDS"
+echo ""
+echo "End of backup command list..."
+
+$ORACLE_HOME/bin/rman target / nocatalog << EOF 
+@$TEMPFILE 
+exit; 
+EOF
+
+ check_err $? $LINENO " "
+rm -rf $TEMPFILE
+ check_err $? $LINENO " "
+
+echo "End of backup..."
+echo ""
+
+#------- Now roll the logs and clean up- this should be done for backup logs, listener logs, and stuff in the adump/bdump/cdump/udump and trace directories.
+ DUMP_DESTINATIONS=`echo "${DUMP_DESTINATIONS[@]}" | sed -e "s/(//" ` #Remove the leading parenthesis from the destination if it accidentally came with one.
+ DUMP_DESTINATIONS=`echo "${DUMP_DESTINATIONS[@]}" | sed -e "s/)//" ` #Remove the trailing parenthesis from the destination if it accidentally came with one.
+  check_err $? $LINENO " "
+
+for THE_DESTINATIONS in ${DUMP_DESTINATIONS[@]}
+do
+
+MY_DEST=`$ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF | grep '^DD ' | awk '{print $2}'
+set serveroutput on
+whenever sqlerror exit 1
+set linesize 100
+declare
+        l_status number;
+        l_dummy binary_integer;
+        l_dump_dest long;
+begin
+        l_status := dbms_utility.get_parameter_value('$THE_DESTINATIONS', l_dummy, l_dump_dest);
+        dbms_output.put_line( 'x' );
+        dbms_output.put_line( 'DD ' || l_dump_dest );
+end;
+/
+exit
+EOF`
+  check_err $? $LINENO " "
+
+  if [ "" = "$MY_DEST" ]; then
+    echo "The destination "$THE_DESTINATIONS" has no value."
+    echo "Please be sure the variable DUMP_DESTINATIONS is specified correctly, and that the filepaths for these destinations are correctly set in Oracle."
+     check_err 1 $LINENO " "
+  elif [ `echo $MY_DEST |grep ?` ]; then
+     echo "Question mark found in filepath: "$MY_DEST" Substituting ORACLE_HOME for question mark..."
+      MY_DEST=`echo "${ORACLE_HOME}${MY_DEST}" | sed -e "s/?//"`
+     echo "New filepath is: "$MY_DEST
+      check_err $? $LINENO " "
+  else
+     echo "Passed filepath tests for destination: "$THE_DESTINATIONS" located at: "$MY_DEST"."
+  fi
+   check_err $? $LINENO " "
+
+if [ "background_dump_dest" = $THE_DESTINATIONS ]; then
+   mv $MY_DEST/alert_$ORACLE_SID.log $MY_DEST/alert_"$ORACLE_SID"_"$FILE_DATE".log
+   $ORACLE_HOME/bin/sqlplus "/ as sysdba" <<EOF
+   set serveroutput on
+   whenever sqlerror exit 1
+   set linesize 100
+   execute sys.dbms_system.ksdwrt(2,'------------CREATED NEW ALERT LOG FILE ON: '||SYSDATE||'------------'); 
+EOF
+fi
+  check_err $? $LINENO " "
+
+if [ `find $MY_DEST/* -mtime +$DAYS_TO_KEEP_LOGS -print 2>/dev/null | wc -l` -gt 0 ]; then
+ echo "Removing trace, alert, and dump files older than "$DAYS_TO_KEEP_LOGS" days from "$THE_DESTINATIONS" located at: "$MY_DEST"."
+ find $MY_DEST/* -mtime +$DAYS_TO_KEEP_LOGS -print 2>/dev/null -exec rm -rf {} \;
+  check_err $? $LINENO " "
+ else
+  echo "No trace, alert, and dump files older than "$DAYS_TO_KEEP_LOGS" days were found to delete from "$THE_DESTINATIONS" located at: "$MY_DEST"."
+  check_err $? $LINENO " "
+fi
+  check_err $? $LINENO " "
+
+done #End of THE_DESTINATIONS
+done #End of EACH_SID
+
+for EACH_LISTENER in $THE_LISTENERS
+do
+
+ LISTENER=$EACH_LISTENER
+ echo "Freeing disk space by removing listener logs and log information older than "$DAYS_TO_KEEP_LOGS" days for listener named "$LISTENER
+  check_err $? $LINENO " "
+
+if [ $DB_VERSION -lt "11" ]; then
+
+ LISTENER_LOG_DIR=`$ORACLE_HOME/bin/lsnrctl << EOF
+ set current_listener $LISTENER 
+ show log_directory
+ exit
+EOF` #It comes with a trailing slash: /
+ LISTENER_LOG_DIR=`echo $LISTENER_LOG_DIR|awk -F'set to' '{print $2}'|awk '{print $1}'`
+  check_err $? $LINENO " "
+
+ LISTENER_LOG_F=`$ORACLE_HOME/bin/lsnrctl << EOF
+ set current_listener $LISTENER 
+ show log_file
+ exit
+EOF`
+ LISTENER_LOG_F=`echo $LISTENER_LOG_F|awk -F'set to' '{print $2}'|awk '{print $1}'` 
+  check_err $? $LINENO " "
+
+ LISTENER_LOG_FILE="$LISTENER_LOG_DIR""$LISTENER_LOG_F"
+  check_err $? $LINENO " "
+
+else
+
+ LISTENER_LOG_DIR=`$ORACLE_HOME/bin/lsnrctl << EOF
+ set current_listener $LISTENER 
+ show log_directory
+ exit
+EOF` #It comes with a trailing slash: /
+ LISTENER_LOG_DIR=`echo $LISTENER_LOG_DIR|awk -F'set to' '{print $2}'|awk '{print $1}'`
+  check_err $? $LINENO " "
+
+ LISTENER_LOG_DIR="$LISTENER_LOG_DIR"/  #It comes without a trailing slash: / (so we have to add one)
+
+ LISTENER_LOG_FILE=`$ORACLE_HOME/bin/lsnrctl << EOF
+ set current_listener $LISTENER 
+ show log_file
+ exit
+EOF`
+ LISTENER_LOG_FILE=`echo $LISTENER_LOG_FILE|awk -F'set to' '{print $2}'|awk '{print $1}'`
+  check_err $? $LINENO " "
+fi
+  check_err $? $LINENO " "
+
+  echo "LISTENER_LOG_DIR is: "$LISTENER_LOG_DIR
+  echo "LISTENER_LOG_FILE is: "$LISTENER_LOG_FILE
+
+$ORACLE_HOME/bin/lsnrctl << EOF
+set current_listener $LISTENER
+set log_status on
+set log_status off
+exit
+EOF
+
+  check_err $? $LINENO " "
+
+  echo "Moving logs for listener named: "$LISTENER
+  mv "$LISTENER_LOG_FILE" "$LISTENER_LOG_FILE"_"$FILE_DATE".log #The issue here is that in version 11, oracle moved the default location of the listener log. So, you have to run: lsnrctl show log_directory + lsnrctl show log_file for < 11g and lsnrctl show log_file for > 11g. ...The output of which must be parsed.
+  check_err $? $LINENO " "
+
+$ORACLE_HOME/bin/lsnrctl << EOF
+set current_listener $LISTENER
+set log_status on
+exit
+EOF
+
+  check_err $? $LINENO " "
+
+   if [ `find $LISTENER_LOG_DIR* -mtime +$DAYS_TO_KEEP_LOGS -print 2>/dev/null | wc -l` -gt 0 ]; then
+     echo "Removing listener logs older than "$DAYS_TO_KEEP_LOGS" days."
+     find $LISTENER_LOG_DIR* -mtime +$DAYS_TO_KEEP_LOGS -print 2>/dev/null -exec rm -rf {} \;
+    check_err $? $LINENO " "
+   else
+     echo "No listener logs older than "$DAYS_TO_KEEP_LOGS" days were found to delete."
+    check_err $? $LINENO " "
+   fi
+  check_err $? $LINENO " "
+done #END of EACH_LISTENER
+  check_err $? $LINENO " "
+
+if [ -s find "$BACKUP_BASE_DIR"/"$BACKUP_LOG_DIR_NAME"/* -mtime +$DAYS_TO_KEEP_LOGS -print 2>/dev/null ]; then
+ echo "Removing backup run logs older than "$DAYS_TO_KEEP_LOGS" days."
+ find "$BACKUP_BASE_DIR"/"$BACKUP_LOG_DIR_NAME"/* -mtime +$DAYS_TO_KEEP_LOGS -print 2>/dev/null -exec rm -rf {} \;
+  check_err $? $LINENO " "
+ else 
+ echo "No backup run logs older than "$DAYS_TO_KEEP_LOGS" days were found to delete."
+  check_err $? $LINENO " "
+fi
+  check_err $? $LINENO " "
+
+#---------------------------------Clean out Oracle's Mail spool.
+export TOTAL_LINES=`expr \`wc -l $MAIL_FILE|awk '{print $1}'\` + 1`
+  check_err $? $LINENO " "
+export LINE_NUMBER=`grep -n "\`date +"%a %b %e" -d $DAYS_TO_KEEP_LOGS-days-ago\`" $MAIL_FILE|awk '{print $1}'|awk -F: '{print $1}'|head -1`
+  check_err $? $LINENO " "
+
+if [ -z "$LINE_NUMBER" ]; then
+ export LINE_NUMBER=0
+  check_err $? $LINENO " "
+fi
+ 
+tail -`expr $TOTAL_LINES - $LINE_NUMBER` $MAIL_FILE > $TEMP_DIR
+  check_err $? $LINENO " "
+
+if [ `wc -l $TEMP_DIR|awk '{print $1}'` -gt 0 ]; then
+ cat $TEMP_DIR > $MAIL_FILE
+  check_err $? $LINENO " "
+fi
+  check_err $? $LINENO " "
+
+rm $TEMP_DIR
+  check_err $? $LINENO " "
+#---------------------------------
+
+#END OF SCRIPT
+#------------------------------------------------------------------------
+#References used to build this lovely script:
+#RMAN BEST PRACTICES: http://www.oracle.com/technology/deploy/availability/pdf/S942_Chien.doc.pdf
+#Oracle 10G Database Backup and Recovery Advanced User's Guide: http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b10734/rcmarchi.htm#1006446
+#DatabaseJournal.com: http://www.databasejournal.com/features/oracle/article.php/3439441/Oracle-10g-Availability-Enhancements-Part-1-Backup-and-Recovery-Improvements.htm
+#http://www.oracle.com/technology/oramag/oracle/07-jan/o17recovery.html
+#------------------------------------------------------------------------------------
+# BUT- EVEN BETTER:
+# Supposing your 10G or higher database crashes, ALL YOU NEED TO DO TO RECOVER IS: 
+#   In order to save time for the restore, you can switch the database to copy command with:
+# RMAN> switch database to copy; #This must be done while the database is mounted, but not open.
+#   All datafile pointers will then be pointed to RMAN's image backup copies of the datafiles in the FRA, and Oracle will use the RMAN copy as THE datafile until the broken one can be restored. Cool, hunh?
+# RMAN> restore database; #This command may fail, but whether or not that's important (and you can skip it) depends on why it failed.
+# RMAN> recover database; #This must be done to bring the datafile up to current using the archived redo logs.
+# RMAN> alter database open;
+# Now the database is pointed to the data files in the FRA. You probably don't want to do this for long, so assuming the file becomes available, you'd want to reverse the 
+# process by restoring the file to its original location, and then switching back to *that* copy, like this:
+#
+# SQL> select file#, name, status from v$datafile where file# = <your_file_number>;
+# 
+# NAME
+# ----------------------------------------------------------------------------------------------------
+# /u01/app/oracle/recovery_area/TEST/Backups/TEST/datafile/o1_mf_users_5hvsjm59_.dbf <-- Note how its now pointing to the datafile copy in the FRA?
+#
+# SQL> alter database datafile <your_file_number> offline; <-- alternately, depending on the number of files, or which files you have to do this for (as the SYSTEM file can't be offlined directly), this could be performed by shutting the database down, and then bringing it up in the mount state. 
+# RMAN> backup as copy datafile <your_file_number> format '/u01/app/oracle/oradata/test/users01.dbf'; <-- Where the format string is the filepath or ASM diskgroup that the file was originally stored before we lost it.
+# RMAN> switch datafile <your_file_number> to copy; <-- True, its already looking at a copy (the one in the FRA), but you've just made another copy, and want to point to that one.
+# RMAN> recover datafile <your_file_number>;
+# SQL> alter database datafile <your_file_number> online;
+# After doing this, you MUST then run a backup in order to replace the now outdated image copies in the FRA.
+# HA! **SUPER** easy!
+
+#Now, assuming you also want to get the contents of the FRA off-site using tape, then you'd just need to go into RMAN, and:
+#   run {
+#     allocate channel c1 type sbt_tape;
+#      backup recovery area;
+#    }
+
+
+

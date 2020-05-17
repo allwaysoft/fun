@@ -1,0 +1,8 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Mon Jan 18 16:38:49 2010
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+SQL*Loader-500: Unable to open file (D:\cm\2006\Conversion\cadcustom_acct_files\cadcustom_uetd_extendedde.ctl)
+SQL*Loader-553: file not found
+SQL*Loader-509: System error: The system cannot find the file specified.

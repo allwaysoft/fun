@@ -1,0 +1,27 @@
+/* This Sample Code is provided for the purpose of illustration only and is not intended 
+to be used in a production environment.  THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE 
+PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR 
+PURPOSE.  We grant You a nonexclusive, royalty-free right to use and modify the Sample Code
+and to reproduce and distribute the object code form of the Sample Code, provided that You 
+agree: (i) to not use Our name, logo, or trademarks to market Your software product in which
+the Sample Code is embedded; (ii) to include a valid copyright notice on Your software product
+in which the Sample Code is embedded; and (iii) to indemnify, hold harmless, and defend Us and
+Our suppliers from and against any claims or lawsuits, including attorneys’ fees, that arise or 
+result from the use or distribution of the Sample Code.
+*/
+select
+	m.database_id,
+	db_name(m.database_id) as database_name,
+	m.file_id,
+	m.name as file_name, 
+	m.physical_name, 
+	m.type_desc,
+	fs.num_of_reads, 
+	fs.num_of_bytes_read, 
+	fs.io_stall_read_ms, 
+	fs.num_of_writes, 
+	fs.num_of_bytes_written, 
+	fs.io_stall_write_ms
+from sys.dm_io_virtual_file_stats(NULL, NULL) fs
+	join sys.master_files m on fs.database_id = m.database_id and fs.file_id = m.file_id

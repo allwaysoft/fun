@@ -1,0 +1,258 @@
+<object runat="server" scope="application" id="cms_id_dict" progid="scripting.dictionary"></object>
+<object runat="server" scope="application" id="busheadsigns_dict" progid="scripting.dictionary"></object>
+<object runat="server" scope="application" id="atisbusheadsigns_dict" progid="scripting.dictionary"></object>
+<object runat="server" scope="application" id="crstations_dict" progid="scripting.dictionary"></object>
+<object runat="server" scope="application" id="subwaystations_dict" progid="scripting.dictionary"></object>
+<object runat="server" scope="application" id="oLandmarkDict" progid="scripting.dictionary"></object>
+<object runat="server" scope="application" id="landmark_dict" progid="scripting.dictionary"></object>
+
+<script language="vbscript" runat="server">
+
+sub Application_OnStart
+
+'Old Google API Key
+Application("GoogleApiKey") = "ABQIAAAAFXXk8wtBgtVFZY4uoxocXBScGtiEVNZJLYYePAcabKIYtN-rVhRW9qh-yGBdL0psL9jvcDhqf8V9oA"
+'New Google API Key
+Application("GoogleApiKey") = "ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+
+	'Application("ConnStr") = "Provider=SQLOLEDB;Data Source=216.128.23.218;UID=webdbuser;PWD=DfTp%m#4z;DATABASE=thetweb"
+	'Application("ConnStr") = "Provider=SQLOLEDB;Data Source=maverick.mbta.com;UID=mbtawadm;PWD=12345;DATABASE=thetweb"
+	'Application("ConnStr") = "Provider=SQLOLEDB;Data Source=maverick.mbta.com;UID=mbtawadm;PWD=12345;DATABASE=thetweb"
+	Application("ConnStr") = "Provider=SQLOLEDB;Data Source=10.1.1.10;UID=mbtawadm;PWD=uVbj%kfA;DATABASE=thetweb"
+
+	'Application("CMSConnString") = "Provider=SQLOLEDB;Data Source=216.128.23.218;UID=webdbuser;PWD=DfTp%m#4z;DATABASE=thetwebcms616"
+	'Application("CMSConnString") = "Provider=SQLOLEDB;Data Source=maverick.mbta.com;UID=mbtawadm;PWD=12345;DATABASE=thetwebcms"
+	
+	'Application("CMSConnString") = "Provider=SQLOLEDB;Data Source=10.1.1.10;UID=webdbuser;PWD=DfTp%m#4z;DATABASE=thetwebcms616"
+	'Application("ConnStr") = "Provider=SQLOLEDB;Data Source=10.2.1.60;UID=mbtawadm;PWD=12345;DATABASE=thetweb"
+
+	'Test kG 1/23/2009 
+	'Application("CMSConnString") = "Provider=SQLOLEDB;Data Source=10.2.1.60;UID=mbtawadm;PWD=12345;DATABASE=thetwebcms"
+	Application("CMSConnString") = "Provider=SQLOLEDB;Data Source=10.1.1.10;UID=webdbuser;PWD=DfTp%m#4z;DATABASE=ektron76"
+	
+	' 7/28/09   
+	Application("CharlieCardWeb") = "https://charliecard.mbta.com/"
+	Application("CharlieCardCommerce") = "https://commerce.mbta.com/"
+	Application("CharlieCardWebOn") = True
+	Application("CharlieCardCommerceOn") = True
+
+Application("ImagePath") = "E:\virtuals\feedbackImages\"
+
+
+	'Application("ServerURL") = "http://testmbta.mbta.com/"
+	'Application("ServerURL") = "http://haymarket.mbta.com/"
+	Application("ServerURL") = "http://www.mbta.com/"
+	Application("EnableATISTools") = true
+
+'Old Google API Keys
+	''-- WWW.MBTA.COM
+	'Application("GoogleApiKey_Live_1") = "ABQIAAAAFXXk8wtBgtVFZY4uoxocXBScGtiEVNZJLYYePAcabKIYtN-rVhRW9qh-yGBdL0psL9jvcDhqf8V9oA"
+	'Application("GoogleApiKey_Live_2") = "ABQIAAAAFXXk8wtBgtVFZY4uoxocXBScGtiEVNZJLYYePAcabKIYtN-rVhRW9qh-yGBdL0psL9jvcDhqf8V9oA"
+	'Application("GoogleApiKey_Live_3") = "ABQIAAAAFXXk8wtBgtVFZY4uoxocXBScGtiEVNZJLYYePAcabKIYtN-rVhRW9qh-yGBdL0psL9jvcDhqf8V9oA"
+	'Application("GoogleApiKey_Live_4") = "ABQIAAAAFXXk8wtBgtVFZY4uoxocXBScGtiEVNZJLYYePAcabKIYtN-rVhRW9qh-yGBdL0psL9jvcDhqf8V9oA"
+
+	''-- HAYMARKET.MBTA.COM
+	'Application("GoogleApiKey_Staging_1") = "ABQIAAAA5vn1V5E7XCjW0p1PDjt8iBS1iu3q6fDTvpfbOdjyEMyoVSzSWRSofAwVoS0I8mOqBC1_vMpUdZReEA"
+	'Application("GoogleApiKey_Staging_2") = "ABQIAAAA2QH8eUCwKcfewAhnxqz-uxS1iu3q6fDTvpfbOdjyEMyoVSzSWRRDpJwbLpKDv9OqOYTRWVP0AzwPGg"
+	'Application("GoogleApiKey_Staging_3") = "ABQIAAAA8L872tbhjv1zGQQRSL82VxS1iu3q6fDTvpfbOdjyEMyoVSzSWRQwYGyr9vxLtO1ZlEcJON6x8mCtIw"
+	'Application("GoogleApiKey_Staging_4") = "ABQIAAAAQs_gVIAgooYHUg2r83lPbhS1iu3q6fDTvpfbOdjyEMyoVSzSWRTB8RoEHlZnMRZhSlDd6ECp9owecw"
+
+'New Google API Keys
+	'-- WWW.MBTA.COM
+	Application("GoogleApiKey_Live_1") = "ABQIAAAAU9qjFqp_-yZ1sDhRmjbVphQrR9lSK5biq2lz9ZbU_3AtMWrq-BR5vB26U5K-6OGGk1_qaZHQfA9Ocw" '"ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+	Application("GoogleApiKey_Live_2") = "ABQIAAAAU9qjFqp_-yZ1sDhRmjbVphQrR9lSK5biq2lz9ZbU_3AtMWrq-BR5vB26U5K-6OGGk1_qaZHQfA9Ocw" '"ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+	Application("GoogleApiKey_Live_3") = "ABQIAAAAU9qjFqp_-yZ1sDhRmjbVphQrR9lSK5biq2lz9ZbU_3AtMWrq-BR5vB26U5K-6OGGk1_qaZHQfA9Ocw" '"ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+	Application("GoogleApiKey_Live_4") = "ABQIAAAAU9qjFqp_-yZ1sDhRmjbVphQrR9lSK5biq2lz9ZbU_3AtMWrq-BR5vB26U5K-6OGGk1_qaZHQfA9Ocw" '"ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+
+	'-- HAYMARKET.MBTA.COM
+	Application("GoogleApiKey_Staging_1") = "ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+	Application("GoogleApiKey_Staging_2") = "ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+	Application("GoogleApiKey_Staging_3") = "ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+	Application("GoogleApiKey_Staging_4") = "ABQIAAAAwxjAW5aXMl6oPj6D-xapoxQrR9lSK5biq2lz9ZbU_3AtMWrq-BQTi6cJunkypEVWj6HFn3hwBz-D8A"
+
+
+    Application("GoogleApiKey_Current_Key") = 0
+    
+    Application("servernumber") = "Y"
+    
+    '-- WebSite Off-Line switch (True for off-line)
+       	Application("MBTA-Offline") = "False"
+
+
+    '-- Set which templates to use in Fares & Passes section
+    Application("templateState") =  "new"
+
+	'-- Load match between Atisstopid and Ektron ID
+    LoadCMSIDs()
+    
+    '-- Loads ATIS routes to application variable, Application("AllAtisRoutes"), to be used throughout application
+   Application("AllAtisRoutes") = "BLUE,E,W|CT1,I,O|CT2,I,O|CT3,I,O|F1,I,O|F2,L,|F2H-BOS,L|F2HLOGAN,L|F4,I,O|FAIRMNT,I,O|FITCHBRG,I,O|FRANKLIN,I,O|GREEN-B,E,W|GREEN-C,E,W|GREEN-D,E,W|GREEN-E,E,W|HAVRHILL,I,O|KINGSTON,I,O|LOWELL,I,O|MIDLBORO,I,O|MP22,L,|MP33,L,|MP55,L,|MP66,L,|NBRYROCK,I,O|NEEDHAM,I,O|ORANGE,N,S|OLCOLONY,I,O|PROVSTOU,I,O|READING,I,O|RED,N,S|ROCKPORT,I,O|GREENBSH,I,O|SL1,I,O|SL2,I,O|SL4,I,O|SL5,I,O|STOUGHTN,I,O|WHITMAN,I,O|WORCSTER,I,O|1,I,O|4,I,O|5,I,O|7,I,O|8,I,O|9,I,O|10,I,O|11,I,O|14,I,O|15,I,O|16,I,O|17,I,O|18,I,O|19,I,O|21,I,O|22,I,O|23,I,O|24,I,O|26,I,O|27,I,O|28,I,O|29,I,O|30,I,O|31,I,O|32,I,O|33,I,O|34,I,O|34E,I,O|35,I,O|36,I,O|37,I,O|38,I,O|39,I,O|40,I,O|41,I,O|42,I,O|43,I,O|44,I,O|45,I,O|47,I,O|48,I,O|50,I,O|51,I,O|52,I,O|55,I,O|57,I,O|59,I,O|60,I,O|62,I,O|64,I,O|65,I,O|66,I,O|67,I,O|68,I,O|69,I,O|70,I,O|70A,I,O|71,I,O|72,I,O|73,I,O|74,I,O|75,I,O|76,I,O|77,I,O|78,I,O|79,I,O|80,I,O|83,I,O|84,I,O|85,I,O|86,I,O|87,I,O|88,I,O|89,I,O|90,I,O|91,I,O|92,I,O|93,I,O|94,I,O|95,I,O|96,I,O|97,I,O|99,I,O|100,I,O|101,I,O|104,I,O|105,I,O|106,I,O|108,I,O|109,I,O|110,I,O|111,I,O|112,I,O|114,I,O|116,I,O|117,I,O|119,I,O|120,I,O|121,I,O|131,I,O|132,I,O|134,I,O|136,I,O|137,I,O|170,I,O|171,O,|201,I,O|202,I,O|210,I,O|211,I,O|212,I,O|214,I,O|215,I,O|216,I,O|217,I,O|220,I,O|221,I,O|222,I,O|225,I,O|230,I,O|236,I,O|238,I,O|240,I,O|245,I,O|325,I,O|326,I,O|350,I,O|351,I,O|352,I,O|354,I,O|355,I,O|411,I,O|424,I,O|424W,I,O|426,I,O|426W,I,O|428,I,O|429,I,O|430,I,O|431,I,O|434,I,O|435,I,O|436,I,O|439,I,O|441,I,O|442,I,O|448,I,O|449,I,O|450,I,O|451,I,O|455,I,O|456,I,O|459,I,O|465,I,O|468,I,O|500,I,O|501,I,O|502,I,O|503,I,O|504,I,O|505,I,O|553,I,O|554,I,O|555,I,O|556,I,O|558,I,O"
+    
+ 
+    '-- Load bus head signs to dictionary, busheadsigns_dict, to be used throughout application
+    LoadBusHeadSigns()
+    
+    '-- Loads ATIS Routes and matches them to bus headsigns, stored in atisbusheadsigns_dict dictionary
+    LoadBusAtisRoutesAndHeadSigns()
+
+ Application("LandMarkTypes") = "ARTS,Arts & Entertainment|ATTR,Attractions|PASS,Buy T Pass|TRANS,Centers of Transportation|HALL,Exhibit Halls|HOSP,Hospitals|SHOP,Malls and shopping centers|CR,Commuter Rail|SUBWAY,Subway"
+   
+     '-- Loads landmarks from landmark table for find stations and landmarks functionality
+         LoadLandmarks()
+
+'set the cache object parameters
+' Enable the cleanup mechanisms (flushing)
+	
+	' Enable background cleanup
+'	Cache.FlushEnabled = True 
+	
+	' Flush items that haven't been used in 5 mintues
+'	Cache.FlushTimeout = 30000
+	
+	' Perform the background cleanup every 10 minutes
+'	Cache.FlushInterval = 60000 	
+
+end sub
+
+sub Application_OnEnd
+
+end sub
+
+sub Session_OnStart
+
+
+end sub
+
+sub Session_OnEnd
+
+end sub
+
+function LoadCMSIDs()
+    'Create the parser object
+    dim xmlDoc
+    set xmlDoc = Server.CreateObject("Msxml2.DOMDocument")
+    xmlDoc.async = false
+    xmlDoc.load(server.MapPath("/lib/xml/stopIds.xml"))
+    Set rootStops = xmlDoc.documentElement
+    if xmlDoc.xml <> "" then
+	    for each Stops in rootStops.SelectNodes("stopIds")
+	        Stops_Ektron = Stops.SelectSingleNode("ektronId").text
+	        Stops_ATIS = Stops.SelectSingleNode("atisId").text
+            if cms_id_dict.Exists(Stops_ATIS) then cms_id_dict.Remove(Stops_ATIS)
+            cms_id_dict.Add Stops_ATIS, Stops_Ektron
+	    next
+	end if
+end function
+
+function LoadBusHeadSigns()
+
+    Set CMSConn = Server.CreateObject( "ADODB.Connection" )
+    CMSConn.Open Application("CMSConnString")
+
+    Dim xmlDoc
+    Set xmlDoc = CreateObject("Microsoft.XMLDOM")
+    xmlDoc.async = false
+    sql_ektroncontent = "select content_html from content where xml_config_id=70"
+    Set RS_content = CMSConn.Execute(sql_ektroncontent)
+
+    While NOT RS_content.EOF
+        tempContentHTML = RS_content("content_html")
+        xmlDoc.loadXML(tempContentHTML)
+        Set root = xmlDoc.documentElement
+        Set objLst = xmlDoc.getElementsByTagName("*")
+        For i = 0 to (objLst.length - 1)
+            tmpTextValue = ""
+            if objLst.item(i).tagname = "RouteNumber" then
+                BusRouteNumber = objLst.item(i).text
+            elseif objLst.item(i).tagname = "Description" then
+                BusDescription = objLst.item(i).text
+            end if
+        Next
+        if busheadsigns_dict.Exists(BusRouteNumber) then busheadsigns_dict.Remove(BusRouteNumber)
+        busheadsigns_dict.Add BusRouteNumber, BusDescription
+        RS_content.MoveNext
+
+    Wend
+    RS_content.Close()
+    Set RS_content = Nothing
+    Set xmlDoc = Nothing
+    CMSConn.Close
+    Set CMSConn = Nothing
+    
+end function
+
+function LoadBusAtisRoutesAndHeadSigns()
+
+    arrStrInfo = split(Application("AllAtisRoutes"),"|")
+    for i = 0 to ubound(arrStrInfo)
+        if arrStrInfo(i) <> "" then
+            arrRoute = split(arrStrInfo(i),",")
+           if IsNumeric(left(arrRoute(0),1)) or cInt(Instr(arrRoute(0),"CT"))=1 or cInt(Instr(arrRoute(0),"SL"))=1 or strComp(arrRoute(0),"MATTAPAN")=0  or strComp(arrRoute(0),"SHUTTLE")=0 then
+                 for each BusHeadSign in busheadsigns_dict
+                    if instr(arrRoute(0),"/") > 0 then
+                            arrBusHeadSign = split(arrRoute(0),"/")
+                            for i_arrBusHeadSign = 0 to ubound(arrBusHeadSign)
+                                if strComp(atisRouteName, arrBusHeadSign(i_arrBusHeadSign))=0 then
+                                    if instr(BusHeadSign,arrRoute(0)) then
+                                        routeDisplayName = arrRoute(0) & "  - " & busheadsigns_dict.item(BusHeadSign)
+                                    end if
+                                end if
+                            next
+                    elseif strComp(arrRoute(0), BusHeadSign)=0 then
+                        routeDisplayName = arrRoute(0) & "  - " & busheadsigns_dict.item(BusHeadSign)
+                    end if
+                next
+                if atisbusheadsigns_dict.Exists(arrRoute(0)) then atisbusheadsigns_dict.Remove(arrRoute(0))
+                atisbusheadsigns_dict.Add arrRoute(0), routeDisplayName
+                routeDisplayName = ""
+            end if
+        end if
+    next
+
+end function
+
+
+function LoadLandmarks()
+ arrStrLandMarkTypes = split(Application("LandMarkTypes"),"|")
+	   for i = 0 to ubound(arrStrLandMarkTypes)
+	    	 	atisLandmarktype = split(arrStrLandMarkTypes(i),",")
+	    	 	getLandmarkByType(atisLandmarktype(0))
+	    	 	if ((atisLandmarktype(0) <> "CR") and (atisLandmarktype(0) <> "SUBWAY")) then 
+			 oLandmarkDict.add atisLandmarktype(0),atisLandmarktype(1)
+			 end if 
+	 		
+    	next
+end function
+
+
+function getLandmarkByType(landMarkType)
+
+    Set Conn = Server.CreateObject( "ADODB.Connection" )
+    Conn.Open Application("ConnStr")
+
+	Set Cmd_landmarks = Server.CreateObject("ADODB.Command")
+	sql_landmarks = "select LandmarkLat, LandmarkLong, LandmarkName, landmarktype from Landmark where landmarktype='" & landMarkType & "'  and LandmarkLat <> '1E-06' order by LandmarkName"
+         Set RS_landmarks = Conn.Execute(sql_landmarks)
+	 count = 0
+	While NOT RS_landmarks.EOF
+		
+		strLatLong = RS_landmarks("LandmarkLat") & "::" & RS_landmarks("LandmarkLong")& "::" & RS_landmarks("landmarktype")  
+		if landMarkType = "CR" then 
+			crstations_dict.Add strLatLong, replace(RS_landmarks("LandmarkName"),"'", "''")
+		elseif 	landMarkType = "SUBWAY" then 
+			subwaystations_dict.Add strLatLong, replace(RS_landmarks("LandmarkName"),"'", "''")
+		else 
+			strLatLong = strLatLong & "::" & count
+		     landmark_dict.Add strLatLong, replace(RS_landmarks("LandmarkName"),"'", "''")
+			count = count + 1
+		end if 
+		RS_landmarks.MoveNext
+	Wend
+	RS_landmarks.Close
+	Set RS_landmarks = Nothing
+ 	Conn.Close
+    Set Conn = Nothing
+ 
+end function
+
+</script>

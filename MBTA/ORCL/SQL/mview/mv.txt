@@ -1,0 +1,127 @@
+At the Master Site:
+----------------------------------------------------------------------------------------------
+CREATE MATERIALIZED VIEW LOG ON "MBTA"."APPLTYPE"     --creating mv log, oracle inturn creates mv table for an mv log
+PCTFREE 60 
+PCTUSED 30 
+INITRANS 1 
+MAXTRANS 255 
+LOGGING STORAGE(INITIAL 524288 NEXT 524288 MINEXTENTS 1 MAXEXTENTS 2147483645 PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1 BUFFER_POOL DEFAULT) 
+TABLESPACE "MV_LOGS"
+WITH PRIMARY KEY EXCLUDING NEW VALUES;
+
+
+
+BEGIN                          --add the master table to the master group, on which the mv whould be create at the mv site.
+   DBMS_REPCAT.CREATE_MASTER_REPOBJECT (
+      gname => 'MBTA_REPG1',
+      type => 'TABLE',
+      oname => 'APPLTYPE',
+      sname => 'MBTA',
+      use_existing_object => TRUE,
+      copy_rows => FALSE);
+END;
+/
+
+commit
+-----------------------------------------------------------------------------------------------
+
+
+At MV Site:
+-----------------------------------------------------------------------------------------------
+CREATE MATERIALIZED VIEW MBTA.APPLTYPE1     --Create MV
+TABLESPACE USER_DATA_A
+PCTUSED    40
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          100K
+            NEXT             100K
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            FREELISTS        1
+            FREELIST GROUPS  1
+            BUFFER_POOL      DEFAULT
+           )
+NOCACHE
+LOGGING
+NOPARALLEL
+BUILD IMMEDIATE
+USING INDEX
+            TABLESPACE USER_DATA_A
+            PCTFREE    10
+            INITRANS   2
+            MAXTRANS   255
+            STORAGE    (
+                        INITIAL          100K
+                        NEXT             100K
+                        MINEXTENTS       1
+                        MAXEXTENTS       UNLIMITED
+                        PCTINCREASE      0
+                        FREELISTS        1
+                        FREELIST GROUPS  1
+                        BUFFER_POOL      DEFAULT
+                       )
+REFRESH FAST
+START WITH TO_DATE('30-Mar-2011 16:23:02','dd-mon-yyyy hh24:mi:ss')
+NEXT /*15:Mins*/ sysdate + 15/(60*24)
+WITH PRIMARY KEY
+AS 
+/* Formatted on 03/30/2011 4:03:03 PM (QP5 v5.139.911.3011) */
+SELECT "APPLTYPEID" "APPLTYPEID",
+       "DESCRIPTION" "DESCRIPTION",
+       "USERNEW" "USERNEW",
+       "TIMENEW" "TIMENEW",
+       "USERCHANGE" "USERCHANGE",
+       "TIMECHANGE" "TIMECHANGE"
+  FROM "MBTA"."APPLTYPE"@NWCD.MBTA.COM "APPLTYPE1";
+
+COMMENT ON TABLE MBTA.APPLTYPE1 IS 'snapshot table for snapshot MBTA.APPLTYPE';
+
+CREATE UNIQUE INDEX MBTA.XPKAPPLTYPE1 ON MBTA.APPLTYPE1
+(APPLTYPEID)
+LOGGING
+TABLESPACE USER_DATA_A
+PCTFREE    10
+INITRANS   2
+MAXTRANS   255
+STORAGE    (
+            INITIAL          100K
+            NEXT             100K
+            MINEXTENTS       1
+            MAXEXTENTS       UNLIMITED
+            PCTINCREASE      0
+            FREELISTS        1
+            FREELIST GROUPS  1
+            BUFFER_POOL      DEFAULT
+           )
+NOPARALLEL;
+
+
+
+
+BEGIN       -- Add mv to the mv group
+   DBMS_REPCAT.CREATE_MVIEW_REPOBJECT (
+      gname => 'hr_repg',
+      sname => 'hr',
+      oname => 'countries_mv1',
+      type => 'SNAPSHOT',
+      min_communication => TRUE);
+END;
+
+-- Run below proc to add a mview to the refresh grouop but I guess it has to be done only with mvadmin user.
+BEGIN
+   DBMS_REFRESH.add(
+      name => 'MVIEWADMIN.MBTA_REFG2',
+      list => 'MBTA.APPLTYPE1',
+      lax => TRUE);
+      commit;
+END;
+
+
+-----------------------------------------------------------------------------------------------
+
+EXECUTE DBMS_MVIEW.REFRESH('emp_dept_sum','C');  -- to complete refresh a materialized view manually, C/F are parameters. C is complete, F is fast.
+
+

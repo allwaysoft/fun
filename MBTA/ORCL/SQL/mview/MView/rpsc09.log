@@ -1,0 +1,992 @@
+SQL> 
+SQL> 
+SQL> -- 1. Connect as materialized view administrator
+SQL> -- =============================================
+SQL> 
+SQL> CONNECT mviewadmin/mviewadmin@mvdb
+Connected.
+SQL> 
+SQL> -- 2. Create all replication object
+SQL> -- ================================
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ACCESSLEVEL',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ALARMACTION',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ALARMEVENT',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ALARMSERVERCONFIG',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ALARMSERVERGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 5  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ALARMSERVERGROUP_ALARMEVENT',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ARTICLE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ARTICLE_RELEASE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'BALANCEGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'CASHTYPE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 10  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'COMPANY',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'CURRENCIES',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'DBCONNECTPARAMETER',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'DEFAULTSTATIONGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'DEVICECLASS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 15  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'DEVICECLASS_VERSIONS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'DEVICECONFIG',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'EVENT',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'EVENTGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'FEPDATA',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 20  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'FUNCTION',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'FUNCTIONGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'GRAPHICMAP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'GRAPHICPROPERTY',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'HARDWARECOMPONENTS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 25  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'JOBTABLE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'LOCKDEPENDENCIES',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'MASTERASSEMBLY',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'MENUTREE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'MULTIMEDIAGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 30  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ORAERR',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'PAYMENTCASHTYPE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'PAYMENTOPDATA',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'PERMDETAIL',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'PERMISSION',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 35  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'PREVIOUSPASSWORD',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'PREVIOUSPIN',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'RELEASE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'RELEASE_VERSIONS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'ROUTES',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 40  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'SCHEDULEELEMENT',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'SCHEDULEGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'SCHEDULEGROUPELEMENTS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'SCTVMRELATION',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'SDRELEASE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 45  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'SDRELEASE_RELEASE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'STATIONCONTROLLER',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'STATUSOPTIONS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TABLEINFO',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TARIFFVERSIONS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 50  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMFEPGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMNETCONFGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMSCHEDULEGROUPELEMENT',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMSCHEDULEGROUPELEMENTS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMSTATION',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 55  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMTABLE',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'TVMVERSIONGROUP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'UNIQUENUMBERS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'USERDATA',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'USERGROUPS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 60  ########################################
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'VERSIONGROUPLIST',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'VERSIONS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'WORKSTATIONGRP',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'WORKSTATIONS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> BEGIN
+  2    DBMS_REPCAT.CREATE_MVIEW_REPOBJECT(
+  3  	   gname => 'mbta_repg1',
+  4  	   sname => 'MBTA',
+  5  	   oname => 'WSGRPCONTENTS',
+  6  	   type => 'SNAPSHOT',
+  7  	   min_communication => TRUE);
+  8  END;
+  9  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 65  ########################################
+SQL> 
+SQL> 
+SQL> -- 3. Add the defined objects to the refresh group
+SQL> -- ===============================================
+SQL> 
+SQL> BEGIN
+  2    DBMS_REFRESH.ADD (
+  3  	   name => 'mviewadmin.mbta_refg1',
+  4  	   list => '
+  5  		   MBTA.ACCESSLEVEL
+  6  		   ,MBTA.ALARMACTION
+  7  		   ,MBTA.ALARMEVENT
+  8  		   ,MBTA.ALARMSERVERCONFIG
+  9  		   ,MBTA.ALARMSERVERGROUP
+ 10  		   ,MBTA.ALARMSERVERGROUP_ALARMEVENT
+ 11  		   ,MBTA.ARTICLE
+ 12  		   ,MBTA.ARTICLE_RELEASE
+ 13  		   ,MBTA.BALANCEGROUP
+ 14  		   ,MBTA.CASHTYPE
+ 15  		   ,MBTA.COMPANY
+ 16  		   ,MBTA.CURRENCIES
+ 17  		   ,MBTA.DBCONNECTPARAMETER
+ 18  		   ,MBTA.DEFAULTSTATIONGROUP
+ 19  		   ,MBTA.DEVICECLASS
+ 20  		   ,MBTA.DEVICECLASS_VERSIONS
+ 21  		   ,MBTA.DEVICECONFIG
+ 22  		   ,MBTA.EVENT
+ 23  		   ,MBTA.EVENTGROUP
+ 24  		   ,MBTA.FEPDATA
+ 25  		   ,MBTA.FUNCTION
+ 26  		   ,MBTA.FUNCTIONGROUP
+ 27  		   ,MBTA.GRAPHICMAP
+ 28  		   ,MBTA.GRAPHICPROPERTY
+ 29  		   ,MBTA.HARDWARECOMPONENTS
+ 30  		   ,MBTA.JOBTABLE
+ 31  		   ,MBTA.LOCKDEPENDENCIES
+ 32  		   ,MBTA.MASTERASSEMBLY
+ 33  		   ,MBTA.MENUTREE
+ 34  		   ,MBTA.MULTIMEDIAGROUP
+ 35  		   ,MBTA.ORAERR
+ 36  		   ,MBTA.PAYMENTCASHTYPE
+ 37  		   ,MBTA.PAYMENTOPDATA
+ 38  		   ,MBTA.PERMDETAIL
+ 39  		   ,MBTA.PERMISSION
+ 40  		   ,MBTA.PREVIOUSPASSWORD
+ 41  		   ,MBTA.PREVIOUSPIN
+ 42  		   ,MBTA.RELEASE
+ 43  		   ,MBTA.RELEASE_VERSIONS
+ 44  		   ,MBTA.ROUTES
+ 45  		   ,MBTA.SCHEDULEELEMENT
+ 46  		   ,MBTA.SCHEDULEGROUP
+ 47  		   ,MBTA.SCHEDULEGROUPELEMENTS
+ 48  		   ,MBTA.SCTVMRELATION
+ 49  		   ,MBTA.SDRELEASE
+ 50  		   ,MBTA.SDRELEASE_RELEASE
+ 51  		   ,MBTA.STATIONCONTROLLER
+ 52  		   ,MBTA.STATUSOPTIONS
+ 53  		   ,MBTA.TABLEINFO
+ 54  		   ,MBTA.TARIFFVERSIONS
+ 55  		   ,MBTA.TVMFEPGROUP
+ 56  		   ,MBTA.TVMGROUP
+ 57  		   ,MBTA.TVMNETCONFGROUP
+ 58  		   ,MBTA.TVMSCHEDULEGROUPELEMENT
+ 59  		   ,MBTA.TVMSCHEDULEGROUPELEMENTS
+ 60  		   ,MBTA.TVMSTATION
+ 61  		   ,MBTA.TVMTABLE
+ 62  		   ,MBTA.TVMVERSIONGROUP
+ 63  		   ,MBTA.UNIQUENUMBERS
+ 64  		   ,MBTA.USERDATA
+ 65  		   ,MBTA.USERGROUPS
+ 66  		   ,MBTA.VERSIONGROUPLIST
+ 67  		   ,MBTA.VERSIONS
+ 68  		   ,MBTA.WORKSTATIONGRP
+ 69  		   ,MBTA.WORKSTATIONS
+ 70  		   ,MBTA.WSGRPCONTENTS
+ 71  		   ',
+ 72  	   lax => TRUE);
+ 73  END;
+ 74  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> spool off

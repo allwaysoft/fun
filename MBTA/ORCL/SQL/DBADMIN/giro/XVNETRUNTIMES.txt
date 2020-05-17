@@ -1,0 +1,8 @@
+SELECT     GIRO.HASTUS_rtver.sched_type_id, GIRO.HASTUS_linkrt.start_place, GIRO.HASTUS_linkrt.end_place, GIRO.HASTUS_linkrt.period_start, GIRO.HASTUS_linkrt.period_end, 
+                      GIRO.HASTUS_linkrt.run_time
+FROM      GIRO.HASTUS_linkrt INNER JOIN
+                      GIRO.HASTUS_rtver ON GIRO.HASTUS_linkrt.rtver_id = GIRO.HASTUS_rtver.rtver_id
+WHERE     (GIRO.HASTUS_rtver.rt_ver = '1113') OR
+                      (GIRO.HASTUS_rtver.rt_ver = '1613') OR
+                      (GIRO.HASTUS_rtver.rt_ver = '1713')
+ORDER BY GIRO.HASTUS_rtver.rt_ver

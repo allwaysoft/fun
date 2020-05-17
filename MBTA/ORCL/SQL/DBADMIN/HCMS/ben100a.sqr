@@ -1,0 +1,4601 @@
+!***********************************************************************
+! BEN100A:  Enrollment Reporting Snapshot (Using BN_SNAP_XXX Tables)   *
+!***********************************************************************
+!                                                                      *
+!                                                                      *
+!                                                                      *
+!                                                                      *
+! This software and related documentation are provided under a         *
+! license agreement containing restrictions on use and                 *
+! disclosure and are protected by intellectual property                *
+! laws. Except as expressly permitted in your license agreement        *
+! or allowed by law, you may not use, copy, reproduce,                 *
+! translate, broadcast, modify, license, transmit, distribute,         *
+! exhibit, perform, publish or display any part, in any form or        *
+! by any means. Reverse engineering, disassembly, or                   *
+! decompilation of this software, unless required by law for           *
+! interoperability, is prohibited.                                     *
+! The information contained herein is subject to change without        *
+! notice and is not warranted to be error-free. If you find any        *
+! errors, please report them to us in writing.                         *
+!                                                                      *
+!                                                                      *
+! Copyright (C) 1988, 2011, Oracle and/or its affiliates.              *
+! All Rights Reserved.                                                 *
+!***********************************************************************
+!                                                                      *
+!          $Date:  2011/08/08:14:40:14                        
+!       $Release:  HR89                                       
+!    $Resolution:  852837                                     
+!                                                                      *
+!***********************************************************************
+!                                                                      *
+! This program is used to populate the "BN_SNAP" tables with a
+! "snapshot" of benefits enrollment information as of a specified date.
+! Each time this program is run, the "BN_SNAP" tables are purged of all
+! existing data - thus these tables only contain a snapshot of
+! enrollments as of the most recent run.
+! The use specifies which plan types are to be processed, as well as
+! other processing options by making entries in the BN_SNAP_CONFIG
+! single-row configuration table.
+! Note that this SQR performs set processing, as opposed to
+! employee-by-employee processing. Any customizations to this program
+! should follow this same set processing model in order to maintain
+! the speed and efficiency of the code.
+!**********************************************************************
+!
+! Modification History:
+!       Initial Development: 10/31/2000   PeopleSoft, Inc.          dcd
+!
+!**********************************************************************
+
+#Include 'setenv.sqc' !Set environment
+
+! Cache Table Sizes
+#Define CalcRulesMax    500     ! Maximum number of Calc Rules for 2X/3X plans
+#Define PlanMax         500     ! Maximum number of 2X/3X plans
+#Define SalaryMax       200     ! Maximum number of job rows per employee over past 2 years
+
+
+
+!----------
+Begin-Setup
+!----------
+  #Include 'ptpsp125.sqc'
+End-Setup
+
+
+BEGIN-PROGRAM
+  do Init-DateTime
+  do Init-Number
+  do Get-Current-DateTime
+  do Init-Report
+  do Process-Main
+  do Get-Current-DateTime
+  Display 'Process ended at ' noline
+  Display $AsOfNow
+  do StdAPI-Term
+END-PROGRAM
+
+!********************************************
+Begin-Procedure Init-Report
+!********************************************
+
+
+ ! Cache of Calc Rules
+ Let #CalcRulesEntries = 0
+ Create-Array Name = CalcRulesTbl  Size = {CalcRulesMax}
+   Field=Calc_Rules_Id:char
+   Field=Combine_Mult_Sal:char
+   Field=Benefits_Base:char
+   Field=Bn_Annl_Benbase_Cd:char
+   Field=Coverage_Minimum:integer
+   Field=Coverage_Maximum:integer
+   Field=Grp_Mthd:char
+   Field=Eval_Actv:char
+   Field=Covrg_As_Of_Cd:char
+   Field=Covrg_As_Of_MM:integer
+   Field=Covrg_As_Of_DD:integer
+   Field=Prem_As_Of_Cd:char
+   Field=Prem_As_Of_MM:integer
+   Field=Prem_As_Of_DD:integer
+   Field=Use_Rounding_Rules:char
+   Field=Round_Up_Amt:number
+   Field=Round_To:integer
+   Field=Round_Base:char
+   Field=Round_Base_Flat:char
+   Field=Round_Factored:char
+   Field=Round_Final:char
+   Field=Add_Flat_Option:char
+
+ ! Cache of 2X/3X Plan Definitions
+ Let #PlanEntries = 0
+ Create-Array Name = PlanTbl  Size = {PlanMax}
+   Field=Plan_Type:char
+   Field=Benefit_Plan:char
+   Field=Life_Add_Covrg:char
+   Field=Flat_Amount:integer
+   Field=Factor_XSalary:number
+   Field=Salary_Replace_Pct:number
+   Field=Maximum_Mo_Benefit:number
+   Field=Use_Sal_Replace:char
+
+
+ ! Cache of Employee Salary Info
+ Let #SalaryEntries = 0
+ Create-Array Name = SalaryTbl  Size = {SalaryMax}
+   Field=Benefit_Rcd_Nbr:integer
+   Field=Empl_Rcd:integer
+   Field=Effdt_YMD:char
+   Field=Empl_Status:char
+   Field=Annual_Rt:number
+   Field=Hourly_Rt:number
+   Field=Comp_Frequency:char
+   Field=Comprate:number
+   Field=Annl_Benef_Base_Rt:number
+   Field=Std_Hours:number
+   Field=Std_Hrs_Frequency:char
+   Field=Stdhrs_Freq_Factor:integer
+   Field=Freq_Annual_Factor:integer
+   Field=Frequency_Type:char
+   Field=Primary_Job_Ind:char
+   Field=Primary_Flag2:char
+   Field=Benefits_Base:char
+
+ ! Counters for Statistics
+ Let #CountEmployees = 0
+ Let #CountDependents = 0
+ Let #CountJobs = 0
+ Let #CountPlanType = 0
+ Let #TotalBNSnapPer = 0
+ Let #TotalBNSnapPlan = 0
+
+ Move 'ENROLLMENT REPORTING SNAPSHOT' to $ReportID
+ Move 'Enrollment Reporting Snapshot' to $ReportTitle
+ Display $ReportTitle
+ Display ' '
+
+ Do StdAPI-Init
+
+ If $prcs_process_instance = ''
+   Do Ask-Values
+ Else
+   Do Get-Values
+ End-If
+
+ Move ' '  to  $Earliest_Dt_DTU           ! Load Salary History back to this date.
+ Move ' '  to  $Out_Date_DTU
+ Do Convert-To-DTU-Date($AsOfDate, $Out_Date_DTU)
+ Do DTU-Add-Years($Out_Date_DTU, -2, $Earliest_Dt_DTU)
+ Move $AsOfToday   to  $RunDate
+ Move $SysDateTime to  $RunDateTime
+
+ Do Get-Config
+ Do Display-Run-Options
+
+ Display 'Start Processing on ' noline
+ Display $AsOfToday noline
+ Display ' at ' noline
+ Display $AsOfNow noline
+ Display '... '
+
+ Move $AsOfNow to $StartTime
+ Move $AsOfToday to $StartDate
+
+End-Procedure
+
+!********************************************
+Begin-Procedure Ask-Values
+!********************************************
+
+ Display '  '
+ Let $AsOfDate = ''
+ Do Ask-As-Of-Date
+ Let $Oprid = $username
+ ! when running from an SQRW icon with userid/password embedded,
+ ! the userid is not available.
+ If $Oprid = ''
+    Let $Oprid = 'unknown'
+ End-If
+
+End-Procedure
+
+!********************************************
+begin-procedure Get-Values
+!********************************************
+
+   do Select-Parameters
+   do Get-As-Of-Date
+   Let $Oprid = Rtrim(&RUN_CNTL_BEN.OPRID,' ')
+
+end-procedure
+
+!********************************************
+Begin-Procedure Process-Main
+!********************************************
+
+ Do Truncate-Tables
+ Do Create-Employee-Population
+ Do Set-Employee-Primary-NID
+ Do Set-Employee-Disability
+ Do Set-Employee-Medicare
+ Do Create-Job-Info
+ If $Include_1X = 'Y'
+    Do 1X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 1X-Orig-Enrollment
+    End-If
+    Do 1X-Dep-Enrollments
+    If $Include_Orig = 'Y'
+       Do 1X-DOrig-Enrollments
+    End-If
+    Do 1X-Positive-Terms
+ End-If
+ If $Include_2X = 'Y'
+    Do 2X-EE-Enrollments
+    Do 2X-Update-Add-Coverage
+    If $Include_Orig = 'Y'
+       Do 2X-Orig-Enrollment
+    End-If
+    Do 2X-Plan-Defined-Covg
+    Do 2X-Dep-Enrollments
+    Do 2X-DepLife-Plan-Covg
+    Do 2X-DepLife-EE-Spec-Covg
+    Do 2X-EE-Terminations
+    Do 2X-Positive-Terms
+ End-If
+ If $Include_3X = 'Y'
+    Do 3X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 3X-Orig-Enrollment
+    End-If
+    Do 3X-Positive-Terms
+ End-If
+ If $Include_4X = 'Y'
+    Do 4X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 4X-Orig-Enrollment
+    End-If
+ Do Commit-Transaction
+    Do 4X-Dep-Enrollments
+    Do 4X-Positive-Terms
+ End-If
+ If $Include_6X = 'Y'
+    Do 6X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 6X-Orig-Enrollment
+    End-If
+    Do 6X-Positive-Terms
+ End-If
+ If $Include_7X = 'Y'
+    Do 7X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 7X-Orig-Enrollment
+    End-If
+    Do 7X-Positive-Terms
+ End-If
+ If $Include_8X = 'Y'
+    Do 8X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 8X-Orig-Enrollment
+    End-If
+    Do 8X-Dep-Enrollments
+    Do 8X-Positive-Terms
+ End-If
+ If $Include_9X = 'Y'
+    Do 9X-EE-Enrollments
+    If $Include_Orig = 'Y'
+       Do 9X-Orig-Enrollment
+    End-If
+    Do 9X-Positive-Terms
+ End-If
+ Do Update-Court-Orders
+ If $Include_Terms = 'Y'
+    If $Include_1X = 'Y'
+       Do 1X-Implied-Terms
+    End-If
+    If $Include_2X = 'Y'
+       Do 2X-Implied-Terms
+    End-If
+    If $Include_3X = 'Y'
+       Do 3X-Implied-Terms
+    End-If
+    If $Include_4X = 'Y'
+       Do 4X-Implied-Terms
+    End-If
+    If $Include_6X = 'Y'
+       Do 6X-Implied-Terms
+    End-If
+    If $Include_7X = 'Y'
+       Do 7X-Implied-Terms
+    End-If
+    If $Include_8X = 'Y'
+       Do 8X-Implied-Terms
+    End-If
+    If $Include_9X = 'Y'
+       Do 9X-Implied-Terms
+    End-If
+    Do Insert-Implied-Terms
+    If $Include_Term-Dep = 'Y'
+       If $Include_1X = 'Y'
+          Do 1X-Implied-Term-Dep
+       End-If
+    End-If
+ End-If
+ Do Set-Vendor-Info
+ If $Include_Ded = 'Y'
+    Do Update-NAPY-Date
+    Do Update-NAPY-Amount
+    Do Update-PI-Date
+    Do Update-PI-Amount
+ End-If
+ If $Include_Calc = 'Y'
+    Do Set-2X-3X-Calc-Rule
+    Do Load-Calc-Rules-Cache
+    Do Load-Plan-Cache
+    Do Calculate-Coverage
+ End-If
+ Do Create-Dependent-Population
+ Do Set-Dependent-Medicare
+ Do Update-Dependent-Phone
+ Do Update-Dependent-NID
+ Do Adjust-Addresses
+ Do Update-Orig-Enrollment-Date
+ Do Update-Run-History
+ Do Display-Statistics
+ Do Missing-GrpNbr-Check
+ Do Commit-Transaction
+
+End-Procedure
+
+!------------------------------
+Begin-Procedure Truncate-Tables
+!------------------------------
+Do Display-Start-Time('Truncate-Tables')
+
+Let $TruncateCommand = '{PTTRUNCATE}'
+
+BEGIN-SQL  On-Error = SQL-Error
+[$TruncateCommand] PS_BN_SNAP_PER
+END-SQL
+
+BEGIN-SQL  On-Error = SQL-Error
+[$TruncateCommand] PS_BN_SNAP_JOB
+END-SQL
+
+BEGIN-SQL  On-Error = SQL-Error
+[$TruncateCommand] PS_BN_SNAP_PLAN
+END-SQL
+
+BEGIN-SQL  On-Error = SQL-Error
+[$TruncateCommand] PS_BN_SNAP_TMP1
+END-SQL
+
+End-Procedure
+
+!-------------------------
+Begin-Procedure Get-Config
+!-------------------------
+BEGIN-SELECT
+CFG.INCLUDE_1X
+CFG.INCLUDE_2X
+CFG.INCLUDE_3X
+CFG.INCLUDE_4X
+CFG.INCLUDE_6X
+CFG.INCLUDE_7X
+CFG.INCLUDE_8X
+CFG.INCLUDE_9X
+CFG.INCLUDE_TERMS
+CFG.INCLUDE_TERM_DEP
+CFG.INCLUDE_DED
+CFG.INCLUDE_CALC
+CFG.INCLUDE_ORIG
+
+     Move &CFG.INCLUDE_1X    to  $Include_1X
+     Move &CFG.INCLUDE_2X    to  $Include_2X
+     Move &CFG.INCLUDE_3X    to  $Include_3X
+     Move &CFG.INCLUDE_4X    to  $Include_4X
+     Move &CFG.INCLUDE_6X    to  $Include_6X
+     Move &CFG.INCLUDE_7X    to  $Include_7X
+     Move &CFG.INCLUDE_8X    to  $Include_8X
+     Move &CFG.INCLUDE_9X    to  $Include_9X
+     Move &CFG.INCLUDE_TERMS to  $Include_Terms
+     Move &CFG.INCLUDE_TERM_DEP to  $Include_Term-Dep
+     Move &CFG.INCLUDE_DED   to  $Include_Ded
+     Move &CFG.INCLUDE_CALC  to  $Include_Calc
+     Move &CFG.INCLUDE_ORIG  to  $Include_Orig
+
+FROM PS_BN_SNAP_CONFIG CFG
+END-SELECT
+End-Procedure
+
+!-----------------------------------------
+Begin-Procedure Create-Employee-Population
+!-----------------------------------------
+! Note: Some date fields that we want to populate
+!       with NULL are omitted from the INSERT statements. This is
+!       intentional, and done to prevent DB2 syntax errors.
+!
+!       Also note that this SQL contains a strange looking WHERE clause for
+!       the Address_Typ_Tbl table, since we want to select the address type
+!       with the lowest "order by sequence" across all address types and effective
+!       dates recorded for the employee.
+!
+!       The other strange looking WHERE clause, for the Addresses table, is to get only
+!       those employees who have only one address. Employees with more than one address
+!       will be picked up in the next procedure.
+!
+ Do Display-Start-Time('Create-Employee-Population1')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PER
+(EMPLID,
+ DEPENDENT_BENEF, NAME_EFFDT, NAME, LAST_NAME, FIRST_NAME,
+ MIDDLE_NAME, NAME_SUFFIX, NAME_PREFIX, NATIONAL_ID, BIRTHDATE, DT_OF_DEATH, SEX,
+ MAR_STATUS, MAR_STATUS_DT,RELATIONSHIP, SMOKER, STUDENT, MEDICARE_A_IND, MEDICARE_B_IND,
+ MEDICARE_ELIG_RSN, DISABLED, HOME_PHONE, ADDR_EFFDT,
+ COUNTRY, ADDRESS1, ADDRESS2, ADDRESS3, ADDRESS4,
+ CITY, NUM1, NUM2, HOUSE_TYPE,
+ ADDR_FIELD1, ADDR_FIELD2, ADDR_FIELD3, COUNTY,
+ STATE, POSTAL, GEO_CODE, IN_CITY_LIMIT,
+ COUNTRY_OTHER, ADDRESS1_OTHER, ADDRESS2_OTHER, ADDRESS3_OTHER, ADDRESS4_OTHER,
+ CITY_OTHER, NUM1_OTHER, NUM2_OTHER, HOUSE_TYPE_OTHER,
+ STATE_OTHER, POSTAL_OTHER, GEO_CODE_OTHER, IN_CITY_LMT_OTHER,
+ ADDR_FIELD1_OTHER, ADDR_FIELD2_OTHER, ADDR_FIELD3_OTHER, COUNTY_OTHER)
+SELECT
+ P.EMPLID,
+ ' ', N.EFFDT, N.NAME, N.LAST_NAME, N.FIRST_NAME,
+ N.MIDDLE_NAME, N.NAME_SUFFIX, N.NAME_PREFIX, ' ', P.BIRTHDATE, P.DT_OF_DEATH, PDE.SEX,
+ PDE.MAR_STATUS, PDE.MAR_STATUS_DT,' ', 'N', 'N', 'N', 'N',
+ ' ', ' ', ' ', ADR.EFFDT,
+ ADR.COUNTRY, ADR.ADDRESS1, ADR.ADDRESS2, ADR.ADDRESS3, ADR.ADDRESS4,
+ ADR.CITY, ADR.NUM1, ADR.NUM2, ADR.HOUSE_TYPE,
+ ADR.ADDR_FIELD1, ADR.ADDR_FIELD2, ADR.ADDR_FIELD3, ADR.COUNTY,
+ ADR.STATE, ADR.POSTAL, ADR.GEO_CODE, ADR.IN_CITY_LIMIT,
+ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+FROM PS_PERS_DATA_EFFDT PDE,
+     PS_ADDRESSES ADR,
+     PS_NAMES N,
+     PS_PERSON P
+WHERE P.EMPLID = PDE.EMPLID
+  AND PDE.EFFDT <= $AsOfDate
+  AND PDE.EFFDT  = (SELECT MAX(PDE1.EFFDT)
+                      FROM PS_PERS_DATA_EFFDT PDE1
+                     WHERE PDE1.EMPLID = P.EMPLID
+                       AND PDE1.EFFDT <= $AsOfDate)
+  AND N.EMPLID = P.EMPLID
+  AND N.NAME_TYPE = 'PRI'
+  AND N.EFFDT <= $AsOfDate
+  AND N.EFFDT = (SELECT MAX(N1.EFFDT)
+                   FROM PS_NAMES N1
+                  WHERE N1.EMPLID = N.EMPLID
+                    AND N1.NAME_TYPE = N.NAME_TYPE
+                    AND N1.EFFDT <= $AsOfDate)
+  AND ADR.ADDRESS_TYPE = (SELECT AT1.ADDRESS_TYPE
+                            FROM PS_ADDRESS_TYP_TBL AT1
+                           WHERE AT1.ORDER_BY_SEQ = (SELECT MIN(AT2.ORDER_BY_SEQ)
+                                                       FROM PS_ADDRESS_TYP_TBL AT2,
+                                                            PS_ADDRESSES ADR1
+                                                      WHERE AT2.ADDRESS_TYPE = ADR1.ADDRESS_TYPE
+                                                        AND ADR1.EMPLID = ADR.EMPLID
+                                                        AND ADR1.EFFDT <= $AsOfDate
+                                                        AND ADR1.EFF_STATUS = 'A'))
+  AND ADR.EMPLID = P.EMPLID
+  AND ADR.EFFDT <= $AsOfDate
+  AND ADR.EFFDT = (SELECT MAX(ADR1.EFFDT)
+                     FROM PS_ADDRESSES ADR1
+                    WHERE ADR1.EMPLID = ADR.EMPLID
+                      AND ADR1.ADDRESS_TYPE = ADR.ADDRESS_TYPE
+                      AND ADR1.EFFDT <= $AsOfDate
+                      AND ADR1.EFF_STATUS = 'A')
+  AND 1 = (SELECT COUNT (DISTINCT ADR3.ADDRESS_TYPE)
+             FROM PS_ADDRESSES ADR3
+            WHERE ADR3.EMPLID = ADR.EMPLID
+              AND ADR3.EFFDT <= $AsOfDate
+              AND ADR3.EFF_STATUS = 'A')
+  AND EXISTS (SELECT 'X'
+                FROM PS_BEN_PROG_PARTIC BPP
+               WHERE BPP.EMPLID = PDE.EMPLID
+                 AND BPP.EFFDT <= $AsOfDate)
+
+END-SQL
+
+
+! Note: Also note that this SQL contains a strange looking WHERE clause for
+!       the Address_Typ_Tbl table, since we want to select the address type
+!       with the lowest "order by sequence" across all address types and effective
+!       dates recorded for the employee for the "home" address and the next lowest
+!       "order by sequence" for the "other" address.
+!
+
+ Do Display-Start-Time('Create-Employee-Population2')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PER
+(EMPLID,
+ DEPENDENT_BENEF, NAME_EFFDT, NAME, LAST_NAME, FIRST_NAME,
+ MIDDLE_NAME, NAME_SUFFIX, NAME_PREFIX, NATIONAL_ID, BIRTHDATE, DT_OF_DEATH, SEX,
+ MAR_STATUS, MAR_STATUS_DT, RELATIONSHIP, SMOKER, STUDENT, MEDICARE_A_IND, MEDICARE_B_IND,
+ MEDICARE_ELIG_RSN, DISABLED, HOME_PHONE, ADDR_EFFDT,
+ COUNTRY, ADDRESS1, ADDRESS2, ADDRESS3, ADDRESS4,
+ CITY, NUM1, NUM2, HOUSE_TYPE,
+ ADDR_FIELD1, ADDR_FIELD2, ADDR_FIELD3, COUNTY,
+ STATE, POSTAL, GEO_CODE, IN_CITY_LIMIT,  ADDR_OTHER_EFFDT,
+ COUNTRY_OTHER, ADDRESS1_OTHER, ADDRESS2_OTHER, ADDRESS3_OTHER, ADDRESS4_OTHER,
+ CITY_OTHER, NUM1_OTHER, NUM2_OTHER, HOUSE_TYPE_OTHER,
+ ADDR_FIELD1_OTHER, ADDR_FIELD2_OTHER, ADDR_FIELD3_OTHER, COUNTY_OTHER,
+ STATE_OTHER, POSTAL_OTHER, GEO_CODE_OTHER, IN_CITY_LMT_OTHER)
+SELECT
+ P.EMPLID,
+ ' ', N.EFFDT, N.NAME, N.LAST_NAME, N.FIRST_NAME,
+ N.MIDDLE_NAME, N.NAME_SUFFIX, N.NAME_PREFIX, ' ', P.BIRTHDATE, P.DT_OF_DEATH, PDE.SEX,
+ PDE.MAR_STATUS, PDE.MAR_STATUS_DT,' ', 'N', 'N', 'N', 'N',
+ ' ', ' ', ' ', ADR.EFFDT,
+ ADR.COUNTRY, ADR.ADDRESS1, ADR.ADDRESS2, ADR.ADDRESS3, ADR.ADDRESS4,
+ ADR.CITY, ADR.NUM1, ADR.NUM2, ADR.HOUSE_TYPE,
+ ADR.ADDR_FIELD1, ADR.ADDR_FIELD2, ADR.ADDR_FIELD3, ADR.COUNTY,
+ ADR.STATE, ADR.POSTAL, ADR.GEO_CODE, ADR.IN_CITY_LIMIT , OTH.EFFDT,
+ OTH.COUNTRY, OTH.ADDRESS1, OTH.ADDRESS2, OTH.ADDRESS3, OTH.ADDRESS4,
+ OTH.CITY, OTH.NUM1, OTH.NUM2, OTH.HOUSE_TYPE,
+ OTH.ADDR_FIELD1, OTH.ADDR_FIELD2, OTH.ADDR_FIELD3, OTH.COUNTY,
+ OTH.STATE, OTH.POSTAL, OTH.GEO_CODE, OTH.IN_CITY_LIMIT
+FROM PS_PERS_DATA_EFFDT PDE,
+     PS_ADDRESSES ADR,
+     PS_ADDRESSES OTH,
+     PS_NAMES N,
+     PS_PERSON P
+WHERE P.EMPLID = PDE.EMPLID
+  AND PDE.EFFDT <= $AsOfDate
+  AND PDE.EFFDT  = (SELECT MAX(PDE1.EFFDT)
+                      FROM PS_PERS_DATA_EFFDT PDE1
+                     WHERE PDE1.EMPLID = P.EMPLID
+                       AND PDE1.EFFDT <= $AsOfDate)
+  AND N.EMPLID = P.EMPLID
+  AND N.NAME_TYPE = 'PRI'
+  AND N.EFFDT <= $AsOfDate
+  AND N.EFFDT = (SELECT MAX(N1.EFFDT)
+                   FROM PS_NAMES N1
+                  WHERE N1.EMPLID = N.EMPLID
+                    AND N1.NAME_TYPE = N.NAME_TYPE
+                    AND N1.EFFDT <= $AsOfDate)
+  AND ADR.ADDRESS_TYPE = (SELECT AT1.ADDRESS_TYPE
+                            FROM PS_ADDRESS_TYP_TBL AT1
+                           WHERE AT1.ORDER_BY_SEQ = (SELECT MIN(AT2.ORDER_BY_SEQ)
+                                                       FROM PS_ADDRESS_TYP_TBL AT2,
+                                                            PS_ADDRESSES ADR1
+                                                      WHERE AT2.ADDRESS_TYPE = ADR1.ADDRESS_TYPE
+                                                        AND ADR1.EMPLID = ADR.EMPLID
+                                                        AND ADR1.EFFDT <= $AsOfDate
+                                                        AND ADR1.EFF_STATUS = 'A'))
+  AND ADR.EMPLID = P.EMPLID
+  AND ADR.EFFDT <= $AsOfDate
+  AND ADR.EFFDT = (SELECT MAX(ADR1.EFFDT)
+                     FROM PS_ADDRESSES ADR1
+                    WHERE ADR1.EMPLID = ADR.EMPLID
+                      AND ADR1.ADDRESS_TYPE = ADR.ADDRESS_TYPE
+                      AND ADR1.EFFDT <= $AsOfDate
+                      AND ADR1.EFF_STATUS = 'A')
+
+  AND OTH.ADDRESS_TYPE = (SELECT OT1.ADDRESS_TYPE
+                            FROM PS_ADDRESS_TYP_TBL OT1
+                           WHERE OT1.ORDER_BY_SEQ = (SELECT MIN(OT2.ORDER_BY_SEQ)
+                                                       FROM PS_ADDRESS_TYP_TBL OT2,
+                                                            PS_ADDRESSES OTH1
+                                                      WHERE OT2.ADDRESS_TYPE = OTH1.ADDRESS_TYPE
+                                                        AND OTH1.EMPLID = OTH.EMPLID
+                                                        AND OTH1.ADDRESS_TYPE <> ADR.ADDRESS_TYPE
+                                                        AND OTH1.EFFDT <= $AsOfDate
+                                                        AND OTH1.EFF_STATUS = 'A'))
+  AND OTH.EMPLID = P.EMPLID
+  AND OTH.EFFDT <= $AsOfDate
+  AND OTH.EFFDT = (SELECT MAX(OTH1.EFFDT)
+                     FROM PS_ADDRESSES OTH1
+                    WHERE OTH1.EMPLID = OTH.EMPLID
+                      AND OTH1.ADDRESS_TYPE = OTH.ADDRESS_TYPE
+                      AND OTH1.EFFDT <= $AsOfDate
+                      AND OTH1.EFF_STATUS = 'A')
+  AND EXISTS (SELECT 'X'
+                FROM PS_BEN_PROG_PARTIC BPP
+               WHERE BPP.EMPLID = PDE.EMPLID
+                 AND BPP.EFFDT <= $AsOfDate)
+
+END-SQL
+
+
+ Do Display-Start-Time('Update-Employee-Phone1')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET HOME_PHONE = (SELECT PHONE
+                       FROM PS_PERSONAL_PHONE
+                      WHERE PS_PERSONAL_PHONE.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND PHONE_TYPE = 'HOME')
+ WHERE EXISTS (SELECT 'X'
+                       FROM PS_PERSONAL_PHONE P2
+                      WHERE P2.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND PHONE_TYPE = 'HOME')
+END-SQL
+
+
+ Do Display-Start-Time('Update-Employee-Phone2')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET HOME_PHONE = (SELECT PHONE
+                       FROM PS_PERSONAL_PHONE
+                      WHERE PS_PERSONAL_PHONE.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND PS_BN_SNAP_PER.DEPENDENT_BENEF = ' '
+                        AND PREF_PHONE_FLAG = 'Y')
+ WHERE EXISTS (SELECT 'X'
+                       FROM PS_PERSONAL_PHONE P3
+                      WHERE P3.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND PS_BN_SNAP_PER.DEPENDENT_BENEF = ' '
+                        AND PREF_PHONE_FLAG = 'Y')
+   AND DEPENDENT_BENEF = ' '
+   AND HOME_PHONE = ' '
+END-SQL
+
+
+ Do Display-Start-Time('Update-Smoker')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET SMOKER = 'Y'
+ WHERE EXISTS (SELECT 'X'
+                 FROM PS_PERS_SMOKER X
+                WHERE X.EMPLID = PS_BN_SNAP_PER.EMPLID
+                  AND X.SMOKER_DT = (SELECT MAX(X1.SMOKER_DT)
+                                       FROM PS_PERS_SMOKER X1
+                                      WHERE X1.EMPLID = X.EMPLID
+                                        AND X1.SMOKER_DT <= $AsOfDate)
+                  AND X.SMOKER = 'Y')
+END-SQL
+
+ Do Display-Start-Time('Update-Smoker-Date')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET SMOKER_DT = (SELECT X.SMOKER_DT
+                 FROM PS_PERS_SMOKER X
+                WHERE X.EMPLID = PS_BN_SNAP_PER.EMPLID
+                  AND X.SMOKER_DT = (SELECT MAX(X1.SMOKER_DT)
+                                       FROM PS_PERS_SMOKER X1
+                                      WHERE X1.EMPLID = X.EMPLID
+                                        AND X1.SMOKER_DT <= $AsOfDate)
+                  AND X.SMOKER = 'Y')
+   WHERE SMOKER = 'Y'
+END-SQL
+
+ ! To avoid DB2 syntax problems, we do a discrete SQL statement
+ ! to set the Effdt field to the $AsOfDate
+ Do Display-Start-Time('Set-Effdt')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET EFFDT = $AsOfDate
+END-SQL
+
+End-Procedure
+
+!---------------------------------------
+Begin-Procedure Set-Employee-Primary-NID
+!---------------------------------------
+Do Display-Start-Time('Set-Employee-Primary-NID')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET NATIONAL_ID = (SELECT N.NATIONAL_ID
+                        FROM PS_PERS_NID N
+                       WHERE N.EMPLID = PS_BN_SNAP_PER.EMPLID
+                         AND N.PRIMARY_NID = 'Y')
+ WHERE EXISTS (SELECT N1.NATIONAL_ID
+                 FROM PS_PERS_NID N1
+                WHERE N1.EMPLID = PS_BN_SNAP_PER.EMPLID
+                  AND N1.PRIMARY_NID = 'Y')
+END-SQL
+End-Procedure
+
+!---------------------------------------
+Begin-Procedure Set-Employee-Disability
+!---------------------------------------
+Do Display-Start-Time('Set-Employee-Disability')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET DISABLED = (SELECT D.DISABLED
+                        FROM PS_DISABILITY D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID)
+ WHERE EXISTS (SELECT D1.DISABLED
+                 FROM PS_DISABILITY D1
+                WHERE D1.EMPLID = PS_BN_SNAP_PER.EMPLID)
+END-SQL
+End-Procedure
+
+!-------------------------------------------
+Begin-Procedure Set-Employee-Medicare
+!-------------------------------------------
+Do Display-Start-Time('Set-Employee-Medicare-Dates')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_EFFDT = (SELECT D.EFFDT
+                        FROM PS_BN_PERSON_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.EFFDT = (SELECT MAX(D1.EFFDT)
+                 FROM PS_BN_PERSON_EFFDT D1
+                WHERE D1.EMPLID = PS_BN_SNAP_PER.EMPLID
+                AND D1.EFFDT <= $AsofDate))
+WHERE DEPENDENT_BENEF = ' '
+END-SQL
+
+Do Display-Start-Time('Set-Employee-Medicare-A-Indicator')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_A_IND = (SELECT D.MEDICARE_A_IND
+                        FROM PS_BN_PERSON_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.EFFDT = PS_BN_SNAP_PER.MEDICARE_EFFDT)
+WHERE DEPENDENT_BENEF = ' '
+AND MEDICARE_EFFDT IS NOT NULL
+END-SQL
+
+Do Display-Start-Time('Set-Employee-Medicare-B-Indicator')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_B_IND = (SELECT D.MEDICARE_B_IND
+                        FROM PS_BN_PERSON_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.EFFDT = PS_BN_SNAP_PER.MEDICARE_EFFDT)
+WHERE DEPENDENT_BENEF = ' '
+AND MEDICARE_EFFDT IS NOT NULL
+END-SQL
+
+Do Display-Start-Time('Set-Employee-Medicare-Eligibility-Reason')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_ELIG_RSN = (SELECT D. MEDICARE_ELIG_RSN
+                        FROM PS_BN_PERSON_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.EFFDT = PS_BN_SNAP_PER.MEDICARE_EFFDT)
+WHERE DEPENDENT_BENEF = ' '
+AND MEDICARE_EFFDT IS NOT NULL
+END-SQL
+
+End-Procedure
+
+!------------------------------
+Begin-Procedure Create-Job-Info
+!------------------------------
+Do Display-Start-Time('Create-Job-Info')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_JOB
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, EMPL_RCD,
+ HIRE_DT, JOB_EFFDT, JOB_EFFSEQ, EFFDT, SERVICE_DT,
+ BENEFIT_PROGRAM, COMPANY, PAYGROUP, CURRENCY_CD, PAY_SYSTEM_FLG,
+ EMPL_STATUS, FULL_PART_TIME, ACTION, ACTION_DT, EMPL_TYPE)
+SELECT E.EMPLID, E.BENEFIT_RCD_NBR, BPP.COBRA_EVENT_ID, E.EMPL_RCD,
+       G.ORIG_HIRE_DT, J.EFFDT, J.EFFSEQ, A.EFFDT, E.SERVICE_DT,
+       BPP.BENEFIT_PROGRAM, J.COMPANY, J.PAYGROUP, D.CURRENCY_CD,
+       J.PAY_SYSTEM_FLG, J.EMPL_STATUS, J.FULL_PART_TIME, J.ACTION, J.ACTION_DT,
+       J.EMPL_TYPE
+  FROM PS_BEN_DEFN_PGM D,
+       PS_BEN_PROG_PARTIC BPP,
+       PS_JOB J,
+       PS_PRIMARY_JOBS PJ,
+       PS_PER_ORG_ASGN E,
+       PS_PER_ORG_INST G,
+       PS_BN_SNAP_PER A
+ WHERE D.BENEFIT_PROGRAM = BPP.BENEFIT_PROGRAM
+   AND D.EFFDT <= $AsOfDate
+   AND D.EFFDT  = (SELECT MAX(D1.EFFDT)
+                     FROM PS_BEN_DEFN_PGM D1
+                    WHERE D1.BENEFIT_PROGRAM = D.BENEFIT_PROGRAM
+                      AND D1.EFFDT <= $AsOfDate
+                  )
+   AND BPP.EMPLID = A.EMPLID
+   AND BPP.EMPL_RCD = E.BENEFIT_RCD_NBR
+   AND BPP.EFFDT <= $AsOfDate
+   AND BPP.EFFDT  = (SELECT MAX(BPP1.EFFDT)
+                       FROM PS_BEN_PROG_PARTIC BPP1
+                      WHERE BPP1.EMPLID = BPP.EMPLID
+                        AND BPP1.EMPL_RCD = BPP.EMPL_RCD
+                        AND BPP1.COBRA_EVENT_ID = BPP.COBRA_EVENT_ID
+                        AND BPP1.EFFDT <= $AsOfDate
+                     )
+   AND PJ.EMPLID = E.EMPLID
+   AND PJ.EMPL_RCD = E.EMPL_RCD
+   AND PJ.PRIMARY_JOB_APP = 'BN'
+   AND PJ.PRIMARY_JOB_IND = 'Y'
+   AND PJ.EFFDT <= $AsOfDate
+   AND PJ.EFFDT  = (SELECT MAX(PJ1.EFFDT)
+                      FROM PS_PRIMARY_JOBS PJ1
+                     WHERE PJ1.EMPLID = PJ.EMPLID
+                       AND PJ1.EMPL_RCD = PJ.EMPL_RCD
+                       AND PJ1.PRIMARY_JOB_APP = PJ.PRIMARY_JOB_APP
+                       AND PJ1.EFFDT <= $AsOfDate
+                   )
+   AND J.EMPLID = E.EMPLID
+   AND J.EMPL_RCD = E.EMPL_RCD
+   AND J.EFFDT <= $AsOfDate
+   AND J.EFFDT  = (SELECT MAX(J1.EFFDT)
+                     FROM PS_JOB J1
+                    WHERE J1.EMPLID = J.EMPLID
+                      AND J1.EMPL_RCD = J.EMPL_RCD
+                      AND J1.EFFDT <= $AsOfDate
+                  )
+   AND J.EFFSEQ = (SELECT MAX(J2.EFFSEQ)
+                     FROM PS_JOB J2
+                    WHERE J2.EMPLID = J.EMPLID
+                      AND J2.EMPL_RCD = J.EMPL_RCD
+                      AND J2.EFFDT = J.EFFDT)
+   AND E.EMPLID = A.EMPLID
+   AND G.EMPLID = E.EMPLID
+   AND G.ORG_INSTANCE_ERN = E.ORG_INSTANCE_ERN
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 1X-EE-Enrollments
+!--------------------------------
+! Note: Some date fields that we want to populate
+!       with NULL are omitted from the INSERT statements. This is
+!       intentional, and done to prevent DB2 syntax errors.
+
+Do Display-Start-Time('1X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG,  BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ HB.EMPLID, HB.EMPL_RCD, HB.COBRA_EVENT_ID, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, COVRG_CD, ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, HB.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, ' '
+FROM PS_HEALTH_BENEFIT HB,
+     PS_BN_SNAP_JOB BRN
+WHERE HB.EMPLID = BRN.EMPLID
+  AND HB.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND HB.COBRA_EVENT_ID = BRN.COBRA_EVENT_ID
+  AND HB.EFFDT  = (SELECT MAX(HB1.EFFDT)
+                     FROM PS_HEALTH_BENEFIT HB1
+                    WHERE HB1.EMPLID = HB.EMPLID
+                      AND HB1.EMPL_RCD = HB.EMPL_RCD
+                      AND HB1.COBRA_EVENT_ID = HB.COBRA_EVENT_ID
+                      AND HB1.PLAN_TYPE = HB.PLAN_TYPE
+                      AND HB1.BENEFIT_NBR = HB.BENEFIT_NBR
+                      AND HB1.EFFDT <= $AsOfDate
+                  )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 1X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('1X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.COVERAGE_BEGIN_DT)
+                          FROM PS_HEALTH_BENEFIT A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_HEALTH_BENEFIT B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND B.COBRA_EVENT_ID = A.COBRA_EVENT_ID
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '1%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 1X-Dep-Enrollments
+!---------------------------------
+Do Display-Start-Time('1X-Dep-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ HD.EMPLID, HD.EMPL_RCD, HD.COBRA_EVENT_ID, HD.DEPENDENT_BENEF,
+ HD.PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ HB.COVERAGE_ELECT, COVRG_CD, ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, HD.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ HD.HLTH_PROVIDER_ID, HD.PREVIOUSLY_SEEN, ' '
+FROM PS_HEALTH_DEPENDNT HD,
+     PS_HEALTH_BENEFIT HB,
+     PS_BN_SNAP_JOB BRN
+WHERE HD.EMPLID = HB.EMPLID
+  AND HD.EMPL_RCD = HB.EMPL_RCD
+  AND HD.PLAN_TYPE = HB.PLAN_TYPE
+  AND HD.BENEFIT_NBR = HB.BENEFIT_NBR
+  AND HD.EFFDT = HB.EFFDT
+  AND HD.COBRA_EVENT_ID = HB.COBRA_EVENT_ID
+  AND HB.EMPLID = BRN.EMPLID
+  AND HB.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND HB.COBRA_EVENT_ID = BRN.COBRA_EVENT_ID
+  AND HB.EFFDT  = (SELECT MAX(HB1.EFFDT)
+                     FROM PS_HEALTH_BENEFIT HB1
+                    WHERE HB1.EMPLID = HB.EMPLID
+                      AND HB1.EMPL_RCD = HB.EMPL_RCD
+                      AND HB1.COBRA_EVENT_ID = HB.COBRA_EVENT_ID
+                      AND HB1.PLAN_TYPE = HB.PLAN_TYPE
+                      AND HB1.BENEFIT_NBR = HB.BENEFIT_NBR
+                      AND HB1.EFFDT <= $AsOfDate
+                  )
+
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 1X-DOrig-Enrollments
+!---------------------------------
+Do Display-Start-Time('1X-DOrig-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT A.COVERAGE_BEGIN_DT
+                             FROM PS_HEALTH_BENEFIT A
+                             WHERE A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                              AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                              AND A.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                              AND A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                              AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                              AND A.EFFDT =
+                                  (SELECT MIN(B.EFFDT)
+                                     FROM PS_HEALTH_BENEFIT B,
+                                    PS_HEALTH_DEPENDNT C
+                                    WHERE B.PLAN_TYPE   = A.PLAN_TYPE
+                                  AND B.BENEFIT_NBR     = A.BENEFIT_NBR
+                                  AND B.EMPLID          = A.EMPLID
+                                  AND B.EMPL_RCD        = A.EMPL_RCD
+                                  AND B.COBRA_EVENT_ID  = A.COBRA_EVENT_ID
+                                  AND B.BENEFIT_PLAN    = A.BENEFIT_PLAN
+                                  AND B.COVERAGE_ELECT  = 'E'
+                                  AND C.PLAN_TYPE       = B.PLAN_TYPE
+                                  AND C.BENEFIT_NBR     = B.BENEFIT_NBR
+                                  AND C.EMPLID          = B.EMPLID
+                                  AND C.EMPL_RCD        = B.EMPL_RCD
+                                  AND C.COBRA_EVENT_ID  = B.COBRA_EVENT_ID
+                                  AND C.EFFDT           = B.EFFDT
+                                  AND C.DEPENDENT_BENEF = PS_BN_SNAP_PLAN.DEPENDENT_BENEF
+                            ! We need earliest enrollment dt for most recent CONTINUOUS coverage.
+                            ! This code checks that there are no parent HEALTH_BENEFIT rows for which
+                            ! there are no matching child HEALTH_DEPENDNT rows for this dependent
+                            ! ie, there are no gaps in coverage between the selected effdt and
+                            ! the snapshot as of date:
+                                  AND NOT EXISTS
+                                    (SELECT 'X'
+                                       FROM PS_HEALTH_BENEFIT D
+                                      WHERE D.PLAN_TYPE  = B.PLAN_TYPE
+                                    AND D.BENEFIT_NBR    = B.BENEFIT_NBR
+                                    AND D.EMPLID         = B.EMPLID
+                                    AND D.EMPL_RCD       = B.EMPL_RCD
+                                    AND D.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                                    AND D.BENEFIT_PLAN   = B.BENEFIT_PLAN
+                                    AND D.COVERAGE_ELECT = 'E'
+                                    AND D.EFFDT          > B.EFFDT
+                                    AND D.EFFDT          < PS_BN_SNAP_PLAN.EFFDT
+                                    AND D.EFFDT NOT IN
+                                      (SELECT E.EFFDT
+                                         FROM PS_HEALTH_BENEFIT E,
+                                        PS_HEALTH_DEPENDNT G
+                                        WHERE E.PLAN_TYPE   = D.PLAN_TYPE
+                                      AND E.BENEFIT_NBR     = D.BENEFIT_NBR
+                                      AND E.EMPLID          = D.EMPLID
+                                      AND E.EMPL_RCD        = D.EMPL_RCD
+                                      AND E.COBRA_EVENT_ID  = D.COBRA_EVENT_ID
+                                      AND E.BENEFIT_PLAN    = D.BENEFIT_PLAN
+                                      AND E.COVERAGE_ELECT  = 'E'
+                                      AND E.EFFDT           > B.EFFDT
+                                      AND E.EFFDT           < PS_BN_SNAP_PLAN.EFFDT
+                                      AND G.PLAN_TYPE       = E.PLAN_TYPE
+                                      AND G.BENEFIT_NBR     = E.BENEFIT_NBR
+                                      AND G.EMPLID          = E.EMPLID
+                                      AND G.EMPL_RCD        = E.EMPL_RCD
+                                      AND G.COBRA_EVENT_ID  = E.COBRA_EVENT_ID
+                                      AND G.DEPENDENT_BENEF = C.DEPENDENT_BENEF
+                                      AND E.EFFDT           = G.EFFDT
+                                      )
+                                    )
+                            ! Dependent has not switched plans, waived cover or been dropped
+                            ! between the enrollment date and the snapshot as of date:
+                                  AND NOT EXISTS
+                                    (SELECT 'X'
+                                       FROM PS_HEALTH_BENEFIT F
+                                      WHERE F.PLAN_TYPE  = B.PLAN_TYPE
+                                    AND F.BENEFIT_NBR    = B.BENEFIT_NBR
+                                    AND F.EMPLID         = B.EMPLID
+                                    AND F.EMPL_RCD       = B.EMPL_RCD
+                                    AND F.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                                    AND (F.BENEFIT_PLAN  <> B.BENEFIT_PLAN
+                                         OR F.COVERAGE_ELECT <> 'E')
+                                    AND F.EFFDT          > B.EFFDT
+                                    AND F.EFFDT          < PS_BN_SNAP_PLAN.EFFDT
+                                    )
+                                  )
+                       )
+
+WHERE PLAN_TYPE LIKE '1%'
+    AND DEPENDENT_BENEF <> ' '
+    AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+
+!--------------------------------
+Begin-Procedure 1X-Positive-Terms
+!--------------------------------
+
+Do Display-Start-Time('1X-Positive-Terms (CovrgCd)')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET COVRG_CD = (SELECT B.COVRG_CD
+                         FROM PS_HEALTH_BENEFIT B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_HEALTH_BENEFIT B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_HEALTH_BENEFIT C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_HEALTH_BENEFIT C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.COBRA_EVENT_ID = C.COBRA_EVENT_ID
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+
+Do Display-Start-Time('1X-Positive-Terms (BePlan)')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_HEALTH_BENEFIT B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_HEALTH_BENEFIT B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_HEALTH_BENEFIT C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_HEALTH_BENEFIT C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.COBRA_EVENT_ID = C.COBRA_EVENT_ID
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 2X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('2X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ L.EMPLID, L.EMPL_RCD, 0, ' ',
+ L.PLAN_TYPE, BRN.EFFDT, 'N', L.BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, L.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, L.FLAT_AMOUNT, L.FACTOR_XSALARY, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_LIFE_ADD_BEN L,
+     PS_BN_SNAP_JOB BRN
+WHERE L.EMPLID = BRN.EMPLID
+  AND L.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND L.COVERAGE_ELECT <> 'T'
+  AND BRN.COBRA_EVENT_ID = 0
+  AND L.EFFDT  = (SELECT MAX(L1.EFFDT)
+                    FROM PS_LIFE_ADD_BEN L1
+                   WHERE L1.EMPLID = L.EMPLID
+                     AND L1.EMPL_RCD = L.EMPL_RCD
+                     AND L1.PLAN_TYPE = L.PLAN_TYPE
+                     AND L1.BENEFIT_NBR = L.BENEFIT_NBR
+                     AND L1.EFFDT <= $AsOfDate
+                 )
+
+END-SQL
+End-Procedure
+
+!-------------------------------------
+Begin-Procedure 2X-Update-Add-Coverage
+!-------------------------------------
+
+
+Do Display-Start-Time('2X-Update-Add-Coverage')
+BEGIN-SQL  On-Error = SQL-Error
+
+UPDATE PS_BN_SNAP_PLAN set LIFE_ADD_COVRG =  (SELECT LP.LIFE_ADD_COVRG FROM PS_LIFE_ADD_TBL LP WHERE
+LP.PLAN_TYPE =PS_BN_SNAP_PLAN.PLAN_TYPE
+AND LP.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+AND LP.EFFDT  = (SELECT MAX(LP1.EFFDT)
+                     FROM PS_LIFE_ADD_TBL LP1
+                    WHERE LP1.PLAN_TYPE = LP.PLAN_TYPE
+                      AND LP1.BENEFIT_PLAN = LP.BENEFIT_PLAN
+                      AND LP1.EFFDT <=$asofDate) )
+
+WHERE EXISTS (SELECT 'X' FROM  PS_LIFE_ADD_TBL LP2
+WHERE LP2.PLAN_TYPE =PS_BN_SNAP_PLAN.PLAN_TYPE
+AND LP2.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+AND LP2.EFFDT  = (SELECT MAX(LP3.EFFDT)
+                     FROM PS_LIFE_ADD_TBL LP3
+                    WHERE LP3.PLAN_TYPE = LP2.PLAN_TYPE
+                      AND LP3.BENEFIT_PLAN = LP2.BENEFIT_PLAN
+                      AND LP3.EFFDT <= $asofDate))
+
+AND PLAN_TYPE LIKE '2%' AND COVERAGE_ELECT <>  'T'  AND COBRA_EVENT_ID  = 0
+
+
+END-SQL
+
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 2X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('2X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.COVERAGE_BEGIN_DT)
+                          FROM PS_LIFE_ADD_BEN A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_LIFE_ADD_BEN B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '2%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+
+!-----------------------------------
+Begin-Procedure 2X-Plan-Defined-Covg
+!-----------------------------------
+Do Display-Start-Time('2X-Plan-Defined-Covg')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET FLAT_AMOUNT = (SELECT D.FLAT_AMOUNT
+                        FROM PS_LIFE_ADD_TBL D
+                       WHERE D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                         AND D.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                         AND D.EFFDT = (SELECT MAX(D1.EFFDT)
+                                          FROM PS_LIFE_ADD_TBL D1
+                                         WHERE D1.PLAN_TYPE = D.PLAN_TYPE
+                                           AND D1.BENEFIT_PLAN = D.BENEFIT_PLAN
+                                           AND D1.EFFDT <= $AsOfDate
+                                        )
+                      )
+
+ , FACTOR_XSALARY = (SELECT E.FACTOR_XSALARY
+                       FROM PS_LIFE_ADD_TBL E
+                      WHERE E.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                        AND E.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                        AND E.EFFDT = (SELECT MAX(E1.EFFDT)
+                                         FROM PS_LIFE_ADD_TBL E1
+                                        WHERE E1.PLAN_TYPE = E.PLAN_TYPE
+                                          AND E1.BENEFIT_PLAN = E.BENEFIT_PLAN
+                                          AND E1.EFFDT <= $AsOfDate
+                                       )
+                    )
+ WHERE PLAN_TYPE LIKE '2%'
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF = ' '
+   AND LIFE_ADD_COVRG IN ('1','2')
+
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 2X-Dep-Enrollments
+!---------------------------------
+Do Display-Start-Time('2X-Dep-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ L.EMPLID, L.EMPL_RCD, 0, LD.DEPENDENT_BENEF,
+ L.PLAN_TYPE, BRN.EFFDT, 'N', L.BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', LP.LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, L.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ LD.BENEF_PCT, LD.FLAT_AMOUNT, 0, LD.EXCESS, LD.CONTINGENT,
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_LIFE_ADD_TBL LP,
+     PS_LIFE_ADD_BENEFC LD,
+     PS_LIFE_ADD_BEN L,
+     PS_BN_SNAP_JOB BRN
+WHERE LP.PLAN_TYPE = L.PLAN_TYPE
+  AND LP.BENEFIT_PLAN = L.BENEFIT_PLAN
+  AND LP.EFFDT  = (SELECT MAX(LP1.EFFDT)
+                     FROM PS_LIFE_ADD_TBL LP1
+                    WHERE LP1.PLAN_TYPE = LP.PLAN_TYPE
+                      AND LP1.BENEFIT_PLAN = LP.BENEFIT_PLAN
+                      AND LP1.EFFDT <= $AsOfDate)
+  AND LD.EMPLID = L.EMPLID
+  AND LD.EMPL_RCD = L.EMPL_RCD
+  AND LD.PLAN_TYPE = L.PLAN_TYPE
+  AND LD.BENEFIT_NBR = L.BENEFIT_NBR
+  AND LD.EFFDT = L.EFFDT
+  AND L.EMPLID = BRN.EMPLID
+  AND L.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND L.EFFDT  = (SELECT MAX(L1.EFFDT)
+                    FROM PS_LIFE_ADD_BEN L1
+                   WHERE L1.EMPLID = L.EMPLID
+                     AND L1.EMPL_RCD = L.EMPL_RCD
+                     AND L1.PLAN_TYPE = L.PLAN_TYPE
+                     AND L1.BENEFIT_NBR = L.BENEFIT_NBR
+                     AND L1.EFFDT <= $AsOfDate
+                 )
+
+END-SQL
+End-Procedure
+
+!-----------------------------------
+Begin-Procedure 2X-DepLife-Plan-Covg
+!-----------------------------------
+Do Display-Start-Time('2X-DepLife-Plan-Covg')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET FLAT_AMOUNT = (SELECT D.FLAT_AMOUNT
+                        FROM PS_LIFE_ADD_TBL D
+                       WHERE D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                         AND D.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                         AND D.EFFDT = (SELECT MAX(D1.EFFDT)
+                                          FROM PS_LIFE_ADD_TBL D1
+                                         WHERE D1.PLAN_TYPE = D.PLAN_TYPE
+                                           AND D1.BENEFIT_PLAN = D.BENEFIT_PLAN
+                                           AND D1.EFFDT <= $AsOfDate
+                                        )
+                     )
+ WHERE PLAN_TYPE IN ('24','25')
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF <> ' '
+   AND FLAT_AMOUNT = 0
+
+END-SQL
+End-Procedure
+
+!--------------------------------------
+Begin-Procedure 2X-DepLife-EE-Spec-Covg
+!--------------------------------------
+Do Display-Start-Time('2X-DepLife-EE-Spec-Covg')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET FLAT_AMOUNT = (SELECT D.FLAT_AMOUNT
+                        FROM PS_LIFE_ADD_BEN D
+                       WHERE D.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                         AND D.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                         AND D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                         AND D.EFFDT = PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                         AND D.COVERAGE_ELECT = PS_BN_SNAP_PLAN.COVERAGE_ELECT
+                     )
+ WHERE PLAN_TYPE IN ('24','25')
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF <> ' '
+   AND FLAT_AMOUNT = 0
+
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 2X-EE-Terminations
+!--------------------------------
+Do Display-Start-Time('2X-EE-Terminations')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ L.EMPLID, L.EMPL_RCD, 0, ' ',
+ L.PLAN_TYPE, BRN.EFFDT, 'N', L.BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, L.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, L.FLAT_AMOUNT, L.FACTOR_XSALARY, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_LIFE_ADD_BEN L,
+     PS_BN_SNAP_JOB BRN
+WHERE L.EMPLID = BRN.EMPLID
+  AND L.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND L.COVERAGE_ELECT = 'T'
+  AND L.EFFDT  = (SELECT MAX(L1.EFFDT)
+                    FROM PS_LIFE_ADD_BEN L1
+                   WHERE L1.EMPLID = L.EMPLID
+                     AND L1.EMPL_RCD = L.EMPL_RCD
+                     AND L1.PLAN_TYPE = L.PLAN_TYPE
+                     AND L1.BENEFIT_NBR = L.BENEFIT_NBR
+                     AND L1.EFFDT <= $AsOfDate
+                 )
+
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 2X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('2X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_LIFE_ADD_BEN B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_LIFE_ADD_BEN B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_LIFE_ADD_BEN C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_LIFE_ADD_BEN C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 3X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('3X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ DIS.EMPLID, DIS.EMPL_RCD, 0, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DIS.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_DISABILITY_BEN DIS,
+     PS_BN_SNAP_JOB BRN
+WHERE DIS.EMPLID = BRN.EMPLID
+  AND DIS.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND DIS.EFFDT  = (SELECT MAX(DIS1.EFFDT)
+                     FROM PS_DISABILITY_BEN DIS1
+                    WHERE DIS1.EMPLID = DIS.EMPLID
+                      AND DIS1.EMPL_RCD = DIS.EMPL_RCD
+                      AND DIS1.PLAN_TYPE = DIS.PLAN_TYPE
+                      AND DIS1.BENEFIT_NBR = DIS.BENEFIT_NBR
+                      AND DIS1.EFFDT <= $AsOfDate
+                   )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 3X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('3X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.COVERAGE_BEGIN_DT)
+                          FROM PS_DISABILITY_BEN A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_DISABILITY_BEN B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '3%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+
+!--------------------------------
+Begin-Procedure 3X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('3X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_DISABILITY_BEN B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_DISABILITY_BEN B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_DISABILITY_BEN C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_DISABILITY_BEN C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 4X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('4X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ S.EMPLID, S.EMPL_RCD, 0, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, S.EFFDT,
+ 0, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_SAVINGS_PLAN S,
+     PS_BN_SNAP_JOB BRN
+WHERE S.EMPLID = BRN.EMPLID
+  AND S.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND S.EFFDT  = (SELECT MAX(S1.EFFDT)
+                     FROM PS_SAVINGS_PLAN S1
+                    WHERE S1.EMPLID = S.EMPLID
+                      AND S1.EMPL_RCD = S.EMPL_RCD
+                      AND S1.PLAN_TYPE = S.PLAN_TYPE
+                      AND S1.BENEFIT_NBR = S.BENEFIT_NBR
+                      AND S1.EFFDT <= $AsOfDate
+                  )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 4X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('4X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.COVERAGE_BEGIN_DT)
+                          FROM PS_SAVINGS_PLAN A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_SAVINGS_PLAN B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '4%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 4X-Dep-Enrollments
+!---------------------------------
+Do Display-Start-Time('4X-Dep-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ S.EMPLID, S.EMPL_RCD, 0, SD.DEPENDENT_BENEF,
+ S.PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, S.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ SD.BENEF_PCT, 0, 0, ' ', ' ',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_SAVINGS_BENEFIC SD,
+     PS_SAVINGS_PLAN S,
+     PS_BN_SNAP_JOB BRN
+WHERE SD.EMPLID = S.EMPLID
+  AND SD.EMPL_RCD = S.EMPL_RCD
+  AND SD.PLAN_TYPE = S.PLAN_TYPE
+  AND SD.BENEFIT_NBR = S.BENEFIT_NBR
+  AND SD.EFFDT = S.EFFDT
+  AND S.EMPLID = BRN.EMPLID
+  AND S.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND S.EFFDT  = (SELECT MAX(S1.EFFDT)
+                    FROM PS_SAVINGS_PLAN S1
+                   WHERE S1.EMPLID = S.EMPLID
+                     AND S1.EMPL_RCD = S.EMPL_RCD
+                     AND S1.PLAN_TYPE = S.PLAN_TYPE
+                     AND S1.BENEFIT_NBR = S.BENEFIT_NBR
+                     AND S1.EFFDT <= $AsOfDate
+                 )
+
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 4X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('4X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_SAVINGS_PLAN B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_SAVINGS_PLAN B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_SAVINGS_PLAN C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_SAVINGS_PLAN C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 6X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('6X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ S.EMPLID, S.EMPL_RCD, S.COBRA_EVENT_ID, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, S.EFFDT,
+ ANNUAL_PLEDGE, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_FSA_BENEFIT S,
+     PS_BN_SNAP_JOB BRN
+WHERE S.EMPLID = BRN.EMPLID
+  AND S.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND S.EFFDT  = (SELECT MAX(S1.EFFDT)
+                    FROM PS_FSA_BENEFIT S1
+                   WHERE S1.EMPLID = S.EMPLID
+                     AND S1.EMPL_RCD = S.EMPL_RCD
+                     AND S1.PLAN_TYPE = S.PLAN_TYPE
+                     AND S1.BENEFIT_NBR = S.BENEFIT_NBR
+                     AND S1.EFFDT <= $AsOfDate
+                 )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 6X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('6X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.COVERAGE_BEGIN_DT)
+                          FROM PS_FSA_BENEFIT A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_FSA_BENEFIT B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND B.COBRA_EVENT_ID = A.COBRA_EVENT_ID
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '6%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 6X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('6X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_FSA_BENEFIT B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_FSA_BENEFIT B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_FSA_BENEFIT C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_FSA_BENEFIT C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.COBRA_EVENT_ID = C.COBRA_EVENT_ID
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 7X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('7X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ S.EMPLID, S.EMPL_RCD, 0, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', S.EFFDT,
+ COVERAGE_ELECT_DT, S.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_RTRMNT_PLAN S,
+     PS_BN_SNAP_JOB BRN
+WHERE S.EMPLID = BRN.EMPLID
+  AND S.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND S.EFFDT  = (SELECT MAX(S1.EFFDT)
+                    FROM PS_RTRMNT_PLAN S1
+                   WHERE S1.EMPLID = S.EMPLID
+                     AND S1.EMPL_RCD = S.EMPL_RCD
+                     AND S1.PLAN_TYPE = S.PLAN_TYPE
+                     AND S1.BENEFIT_NBR = S.BENEFIT_NBR
+                     AND S1.EFFDT <= $AsOfDate
+                 )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 7X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('7X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.EFFDT)
+                          FROM PS_RTRMNT_PLAN A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_RTRMNT_PLAN B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '7%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 7X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('7X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_RTRMNT_PLAN B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_RTRMNT_PLAN B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_RTRMNT_PLAN C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_RTRMNT_PLAN C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 8X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('8X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ S.EMPLID, S.EMPL_RCD, 0, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', S.EFFDT,
+ COVERAGE_ELECT_DT, S.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ 0, 0, 0,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_PENSION_PLAN S,
+     PS_BN_SNAP_JOB BRN
+WHERE S.EMPLID = BRN.EMPLID
+  AND S.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND S.EFFDT  = (SELECT MAX(S1.EFFDT)
+                    FROM PS_PENSION_PLAN S1
+                   WHERE S1.EMPLID = S.EMPLID
+                     AND S1.EMPL_RCD = S.EMPL_RCD
+                     AND S1.PLAN_TYPE = S.PLAN_TYPE
+                     AND S1.BENEFIT_NBR = S.BENEFIT_NBR
+                     AND S1.EFFDT <= $AsOfDate
+                 )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 8X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('8X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.EFFDT)
+                          FROM PS_PENSION_PLAN A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_PENSION_PLAN B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '8%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 8X-Dep-Enrollments
+!---------------------------------
+Do Display-Start-Time('8X-Dep-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ L.EMPLID, L.EMPL_RCD, 0, LD.DEPENDENT_BENEF,
+ L.PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', L.EFFDT,
+ COVERAGE_ELECT_DT, L.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ LD.BENEF_PCT, LD.FLAT_AMOUNT, 0, LD.EXCESS, LD.CONTINGENT,
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_PENSION_BENEFC LD,
+     PS_PENSION_PLAN L,
+     PS_BN_SNAP_JOB BRN
+WHERE LD.EMPLID = L.EMPLID
+  AND LD.EMPL_RCD = L.EMPL_RCD
+  AND LD.PLAN_TYPE = L.PLAN_TYPE
+  AND LD.BENEFIT_NBR = L.BENEFIT_NBR
+  AND LD.EFFDT = L.EFFDT
+  AND L.EMPLID = BRN.EMPLID
+  AND L.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND L.EFFDT  = (SELECT MAX(L1.EFFDT)
+                    FROM PS_PENSION_PLAN L1
+                   WHERE L1.EMPLID = L.EMPLID
+                     AND L1.EMPL_RCD = L.EMPL_RCD
+                     AND L1.PLAN_TYPE = L.PLAN_TYPE
+                     AND L1.BENEFIT_NBR = L.BENEFIT_NBR
+                     AND L1.EFFDT <= $AsOfDate
+                 )
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 8X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('8X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_PENSION_PLAN B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_PENSION_PLAN B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_PENSION_PLAN C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_PENSION_PLAN C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 9X-EE-Enrollments
+!--------------------------------
+Do Display-Start-Time('9X-EE-Enrollments')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ S.EMPLID, S.EMPL_RCD, 0, ' ',
+ PLAN_TYPE, BRN.EFFDT, 'N', BENEFIT_PLAN,
+ ' ', ' ', ' ',
+ COVERAGE_ELECT, ' ', ' ', S.EFFDT,
+ COVERAGE_ELECT_DT, S.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ 0, 0, 0, 'N', 'N',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_VACATION_BEN S,
+     PS_BN_SNAP_JOB BRN
+WHERE S.EMPLID = BRN.EMPLID
+  AND S.EMPL_RCD = BRN.BENEFIT_RCD_NBR
+  AND BRN.COBRA_EVENT_ID = 0
+  AND S.EFFDT  = (SELECT MAX(S1.EFFDT)
+                    FROM PS_VACATION_BEN S1
+                   WHERE S1.EMPLID = S.EMPLID
+                     AND S1.EMPL_RCD = S.EMPL_RCD
+                     AND S1.PLAN_TYPE = S.PLAN_TYPE
+                     AND S1.BENEFIT_NBR = S.BENEFIT_NBR
+                     AND S1.EFFDT <= $AsOfDate
+                 )
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure 9X-Orig-Enrollment
+!---------------------------------
+Do Display-Start-Time('9X-Orig-Enrollment')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = (SELECT MIN(A.EFFDT)
+                          FROM PS_VACATION_BEN A
+                         WHERE A.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND A.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND A.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND A.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND A.EFFDT <= PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT
+                           AND NOT EXISTS (SELECT 'X'
+                                             FROM PS_VACATION_BEN B
+                                            WHERE B.PLAN_TYPE = A.PLAN_TYPE
+                                              AND B.BENEFIT_NBR = A.BENEFIT_NBR
+                                              AND B.EMPLID = A.EMPLID
+                                              AND B.EMPL_RCD = A.EMPL_RCD
+                                              AND (B.BENEFIT_PLAN <> A.BENEFIT_PLAN
+                                                   OR B.COVERAGE_ELECT <> 'E')
+                                              AND B.EFFDT > A.EFFDT
+                                              AND B.EFFDT < PS_BN_SNAP_PLAN.EFFDT))
+WHERE PLAN_TYPE LIKE '9%'
+  AND DEPENDENT_BENEF = ' '
+  AND COVERAGE_ELECT = 'E'
+END-SQL
+End-Procedure
+
+!--------------------------------
+Begin-Procedure 9X-Positive-Terms
+!--------------------------------
+Do Display-Start-Time('9X-Positive-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET BENEFIT_PLAN = (SELECT B.BENEFIT_PLAN
+                         FROM PS_VACATION_BEN B
+                        WHERE B.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                          AND B.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                          AND B.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                          AND B.COVERAGE_ELECT = 'E'
+                          AND B.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                          AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                                           FROM PS_VACATION_BEN B1
+                                          WHERE B1.EMPLID = B.EMPLID
+                                            AND B1.EMPL_RCD = B.EMPL_RCD
+                                            AND B1.PLAN_TYPE = B.PLAN_TYPE
+                                            AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                                            AND B1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+                      )
+WHERE EXISTS (SELECT 'X'
+                FROM PS_VACATION_BEN C
+               WHERE C.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                 AND C.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                 AND C.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                 AND C.COVERAGE_ELECT = 'E'
+                 AND C.BENEFIT_PLAN <> PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                 AND C.EFFDT = (SELECT MAX(C1.EFFDT)
+                                  FROM PS_VACATION_BEN C1
+                                 WHERE C1.EMPLID = C.EMPLID
+                                   AND C1.EMPL_RCD = C.EMPL_RCD
+                                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                                   AND C1.BENEFIT_NBR = C.BENEFIT_NBR
+                                   AND C1.EFFDT < PS_BN_SNAP_PLAN.DEDUCTION_BEGIN_DT)
+             )
+   AND DEPENDENT_BENEF = ' '
+   AND COVERAGE_ELECT = 'T'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 1X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('1X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ B.COVRG_CD, ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_HEALTH_BENEFIT B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_HEALTH_BENEFIT B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '1%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 2X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('2X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', LP.LIFE_ADD_COVRG,
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_LIFE_ADD_TBL LP,
+     PS_LIFE_ADD_BEN B,
+     PS_BN_SNAP_PLAN A
+WHERE LP.PLAN_TYPE = B.PLAN_TYPE
+  AND LP.BENEFIT_PLAN = B.BENEFIT_PLAN
+  AND LP.EFFDT = (SELECT MAX(LP1.EFFDT)
+                    FROM PS_LIFE_ADD_TBL LP1
+                   WHERE LP1.PLAN_TYPE = LP.PLAN_TYPE
+                     AND LP1.BENEFIT_PLAN = LP.BENEFIT_PLAN
+                     AND LP1.EFFDT <= $AsOfDate)
+  AND A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_LIFE_ADD_BEN B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '2%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 3X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('3X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_DISABILITY_BEN B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_DISABILITY_BEN B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '3%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 4X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('4X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_SAVINGS_PLAN B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_SAVINGS_PLAN B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '4%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 6X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('6X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_FSA_BENEFIT B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_FSA_BENEFIT B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '6%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 7X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('7X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_RTRMNT_PLAN B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_RTRMNT_PLAN B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '7%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 8X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('8X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_PENSION_PLAN B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_PENSION_PLAN B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '8%'
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure 9X-Implied-Terms
+!-------------------------------
+Do Display-Start-Time('9X-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_TMP1
+(EMPLID, DEPENDENT_BENEF, BENEFIT_RCD_NBR, COBRA_EVENT_ID,
+ PLAN_TYPE, EFFDT, BENEFIT_PLAN, COVERAGE_ELECT,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT)
+SELECT
+ A.EMPLID, A.DEPENDENT_BENEF, A.BENEFIT_RCD_NBR, A.COBRA_EVENT_ID,
+ A.PLAN_TYPE, A.EFFDT, B.BENEFIT_PLAN, 'T',
+ ' ', ' ', ' ',
+ ' ', ' ',
+ A.COVERAGE_BEGIN_DT, A.COVERAGE_ELECT_DT, A.DEDUCTION_BEGIN_DT
+FROM PS_VACATION_BEN B,
+     PS_BN_SNAP_PLAN A
+WHERE A.EMPLID = B.EMPLID
+  AND A.BENEFIT_RCD_NBR = B.EMPL_RCD
+  AND A.PLAN_TYPE = B.PLAN_TYPE
+  AND A.BENEFIT_PLAN <> B.BENEFIT_PLAN
+  AND B.COVERAGE_ELECT = 'E'
+  AND B.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_VACATION_BEN B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.EMPL_RCD
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.BENEFIT_NBR = B.BENEFIT_NBR
+                    AND B1.EFFDT < A.DEDUCTION_BEGIN_DT)
+  AND A.DEPENDENT_BENEF = ' '
+  AND A.COVERAGE_ELECT IN ('E','W')
+  AND A.PLAN_TYPE LIKE '9%'
+END-SQL
+End-Procedure
+
+!--------------------------------------
+Begin-Procedure 1x-Implied-Term-Dep
+!--------------------------------------
+Do Display-Start-Time('1X-Implied-Term-Dep')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG,
+ COVERAGE_BEGIN_DT, COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+DISTINCT A.EMPLID, B.BENEFIT_RCD_NBR , A.COBRA_EVENT_ID, A.DEPENDENT_BENEF,
+ A.PLAN_TYPE, B.EFFDT, 'N', B.BENEFIT_PLAN,
+ B.SETID, B.VENDOR_ID, B.GROUP_NBR,
+ 'T', B.COVRG_CD, ' ',
+ C.COVERAGE_BEGIN_DT, C.COVERAGE_ELECT_DT, C.EFFDT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, ' ', ' ',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_BN_SNAP_PLAN B,
+     PS_HEALTH_DEPENDNT A,
+     PS_HEALTH_BENEFIT C,
+     PS_HEALTH_BENEFIT D
+WHERE B.EMPLID = A.EMPLID
+  AND B.BENEFIT_RCD_NBR = A.EMPL_RCD
+  AND B.COBRA_EVENT_ID = A.COBRA_EVENT_ID
+  AND B.PLAN_TYPE = A.PLAN_TYPE
+  AND D.EMPLID = A.EMPLID
+  AND D.EMPL_RCD = A.EMPL_RCD
+  AND D.COBRA_EVENT_ID = A.COBRA_EVENT_ID
+  AND D.PLAN_TYPE = A.PLAN_TYPE
+  AND D.EFFDT = A.EFFDT
+  AND D.BENEFIT_PLAN = B.BENEFIT_PLAN
+  AND A.EMPLID = C.EMPLID
+  AND A.EMPL_RCD = C.EMPL_RCD
+  AND A.COBRA_EVENT_ID = C.COBRA_EVENT_ID
+  AND A.PLAN_TYPE = C.PLAN_TYPE
+  AND A.EFFDT < C.EFFDT
+  AND A.EFFDT = (SELECT MAX(C1.EFFDT)
+                   FROM PS_HEALTH_BENEFIT C1
+                 WHERE C1.EMPLID = C.EMPLID
+                   AND C1.EMPL_RCD = C.EMPL_RCD
+                   AND C1.COBRA_EVENT_ID = C.COBRA_EVENT_ID
+                   AND C1.PLAN_TYPE = C.PLAN_TYPE
+                   AND C1.EFFDT < C.EFFDT)
+
+  AND B.DEDUCTION_BEGIN_DT >= (SELECT MAX(B1.EFFDT)
+                   FROM PS_HEALTH_DEPENDNT B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.BENEFIT_RCD_NBR
+                    AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.DEPENDENT_BENEF = A.DEPENDENT_BENEF
+                    AND B1.EFFDT < B.DEDUCTION_BEGIN_DT)
+  AND B.PLAN_TYPE LIKE '1%'
+  AND B.DEPENDENT_BENEF = ' '
+  AND ((B.COVERAGE_ELECT = 'T'
+                    AND NOT EXISTS (SELECT 'X' FROM PS_HEALTH_BENEFIT C1
+                    WHERE C1.EMPLID = B.EMPLID
+                    AND C1.EMPL_RCD = B.BENEFIT_RCD_NBR
+                    AND C1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND C1.PLAN_TYPE = B.PLAN_TYPE
+                    AND C1.EFFDT < B.DEDUCTION_BEGIN_DT
+                    AND C1.EFFDT > A.EFFDT
+                    AND C1.COVERAGE_ELECT = 'E'))
+  OR (B.COVERAGE_ELECT = 'E'
+                    AND NOT EXISTS (SELECT 'X' FROM PS_BN_SNAP_PLAN C1
+                    WHERE C1.EMPLID = B.EMPLID
+                    AND C1.BENEFIT_RCD_NBR= B.BENEFIT_RCD_NBR
+                    AND C1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND C1.PLAN_TYPE = B.PLAN_TYPE
+                    AND C1.COVERAGE_ELECT = 'T'
+                    AND C1.DEPENDENT_BENEF = ' ')
+                    AND NOT EXISTS (SELECT 'X' FROM PS_BN_SNAP_PLAN C1
+                    WHERE C1.EMPLID = B.EMPLID
+                    AND C1.BENEFIT_RCD_NBR= B.BENEFIT_RCD_NBR
+                    AND C1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND C1.PLAN_TYPE = B.PLAN_TYPE
+                    AND C1.COVERAGE_ELECT = 'E'
+                    AND C1.DEPENDENT_BENEF = B.DEPENDENT_BENEF
+                    AND C1.DEDUCTION_BEGIN_DT = A.EFFDT)
+                    AND NOT EXISTS (SELECT 'X' FROM PS_HEALTH_BENEFIT C1
+                    WHERE C1.EMPLID = B.EMPLID
+                    AND C1.EMPL_RCD = B.BENEFIT_RCD_NBR
+                    AND C1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND C1.PLAN_TYPE = B.PLAN_TYPE
+                    AND C1.EFFDT < B.DEDUCTION_BEGIN_DT
+                    AND C1.EFFDT > A.EFFDT
+                    AND C1.COVERAGE_ELECT <> 'E')
+                    AND NOT EXISTS (SELECT 'X' FROM PS_HEALTH_DEPENDNT C1
+                    WHERE C1.EMPLID = B.EMPLID
+                    AND C1.EMPL_RCD = B.BENEFIT_RCD_NBR
+                    AND C1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND C1.PLAN_TYPE = B.PLAN_TYPE
+                    AND C1.DEPENDENT_BENEF = A.DEPENDENT_BENEF
+                    AND C1.EFFDT = B.DEDUCTION_BEGIN_DT)))
+  AND EXISTS (SELECT 'X' FROM PS_HEALTH_DEPENDNT H1 WHERE
+                        H1.EMPLID = B.EMPLID
+                    AND H1.EMPL_RCD = B.BENEFIT_RCD_NBR
+                    AND H1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND H1.PLAN_TYPE = B.PLAN_TYPE
+                    AND H1.DEPENDENT_BENEF = A.DEPENDENT_BENEF
+                    AND H1.EFFDT < B.DEDUCTION_BEGIN_DT)
+  AND A.EFFDT = (SELECT MAX(B1.EFFDT)
+                   FROM PS_HEALTH_DEPENDNT B1
+                  WHERE B1.EMPLID = B.EMPLID
+                    AND B1.EMPL_RCD = B.BENEFIT_RCD_NBR
+                    AND B1.COBRA_EVENT_ID = B.COBRA_EVENT_ID
+                    AND B1.PLAN_TYPE = B.PLAN_TYPE
+                    AND B1.DEPENDENT_BENEF = A.DEPENDENT_BENEF
+                    AND B1.EFFDT < B.DEDUCTION_BEGIN_DT)
+END-SQL
+End-Procedure
+
+!-----------------------------------
+Begin-Procedure Insert-Implied-Terms
+!-----------------------------------
+Do Display-Start-Time('Insert-Implied-Terms')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PLAN
+(EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, DEPBEN_RIDER_FLG, BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ ANNUAL_PLEDGE, FLAT_DED_AMT, PCT_GROSS,
+ FLAT_DED_AMT_ATAX, PCT_GROSS_ATAX,
+ VOLUNTARY_AMT, VOLUNTARY_PCT,
+ VACN_HOURS, VACN_BUY_FLAT_AMT, VACN_SELL_FLAT_AMT,
+ BENEF_PCT, FLAT_AMOUNT, FACTOR_XSALARY, EXCESS, CONTINGENT,
+ DED_CUR,
+ CALCULATED_BASE, PREMIUM_BASE,
+ HLTH_PROVIDER_ID, PREVIOUSLY_SEEN, CALC_RULES_ID)
+SELECT
+ EMPLID, BENEFIT_RCD_NBR, COBRA_EVENT_ID, DEPENDENT_BENEF,
+ PLAN_TYPE, EFFDT, 'N', BENEFIT_PLAN,
+ SETID, VENDOR_ID, GROUP_NBR,
+ COVERAGE_ELECT, COVRG_CD, LIFE_ADD_COVRG, COVERAGE_BEGIN_DT,
+ COVERAGE_ELECT_DT, DEDUCTION_BEGIN_DT,
+ 0, 0, 0,
+ 0, 0,
+ 0, 0,
+ 0, 0, 0,
+ 0, 0, 0, ' ', ' ',
+ 0,
+ 0, 0,
+ ' ', ' ', ' '
+FROM PS_BN_SNAP_TMP1
+END-SQL
+End-Procedure
+
+!----------------------------------
+Begin-Procedure Update-Court-Orders
+!----------------------------------
+Do Display-Start-Time('Court-Orders')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET DEPBEN_RIDER_FLG = 'Y'
+ WHERE EXISTS (SELECT 'X'
+                 FROM PS_DEPBEN_RIDER R
+                WHERE R.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                  AND R.DEPENDENT_BENEF = PS_BN_SNAP_PLAN.DEPENDENT_BENEF
+                  AND R.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                  AND R.EFF_STATUS = 'A'
+                  AND R.START_DT <= $AsOfDate
+                  AND R.END_DT >= $AsOfDate
+                  AND R.RIDER_TYPE = 'C')
+AND DEPENDENT_BENEF <> ' '
+END-SQL
+End-Procedure
+
+!------------------------------
+Begin-Procedure Set-Vendor-Info
+!------------------------------
+Do Display-Start-Time('Set-Vendor-Info')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET SETID = (SELECT BP.SETID
+                  FROM PS_BENEF_PLAN_TBL BP
+                 WHERE BP.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND BP.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND BP.EFFDT <= $AsOfDate
+                   AND BP.EFFDT = (SELECT MAX(BP1.EFFDT)
+                                     FROM PS_BENEF_PLAN_TBL BP1
+                                    WHERE BP1.PLAN_TYPE = BP.PLAN_TYPE
+                                      AND BP1.BENEFIT_PLAN = BP.BENEFIT_PLAN
+                                      AND BP1.EFFDT <= $AsOfDate
+                                  )
+                )
+  , VENDOR_ID = (SELECT BP2.VENDOR_ID
+                  FROM PS_BENEF_PLAN_TBL BP2
+                 WHERE BP2.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND BP2.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND BP2.EFFDT <= $AsOfDate
+                   AND BP2.EFFDT = (SELECT MAX(BP3.EFFDT)
+                                     FROM PS_BENEF_PLAN_TBL BP3
+                                    WHERE BP3.PLAN_TYPE = BP2.PLAN_TYPE
+                                      AND BP3.BENEFIT_PLAN = BP2.BENEFIT_PLAN
+                                      AND BP3.EFFDT <= $AsOfDate
+                                  )
+                )
+  , GROUP_NBR = (SELECT BP4.GROUP_NBR
+                  FROM PS_BENEF_PLAN_TBL BP4
+                 WHERE BP4.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND BP4.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND BP4.EFFDT <= $AsOfDate
+                   AND BP4.EFFDT = (SELECT MAX(BP5.EFFDT)
+                                     FROM PS_BENEF_PLAN_TBL BP5
+                                    WHERE BP5.PLAN_TYPE = BP4.PLAN_TYPE
+                                      AND BP5.BENEFIT_PLAN = BP4.BENEFIT_PLAN
+                                      AND BP5.EFFDT <= $AsOfDate
+                                  )
+                )
+  WHERE EXISTS  (SELECT 'X'
+                  FROM PS_BENEF_PLAN_TBL BP6
+                 WHERE BP6.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND BP6.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND BP6.EFFDT <= $AsOfDate
+                   AND BP6.EFFDT = (SELECT MAX(BP7.EFFDT)
+                                     FROM PS_BENEF_PLAN_TBL BP7
+                                    WHERE BP7.PLAN_TYPE = BP6.PLAN_TYPE
+                                      AND BP7.BENEFIT_PLAN = BP6.BENEFIT_PLAN
+                                      AND BP7.EFFDT <= $AsOfDate
+                                  )
+                )
+    AND BENEFIT_PLAN <> ' '
+
+END-SQL
+End-Procedure
+
+!-----------------------------------
+Begin-Procedure Missing-GrpNbr-Check
+!-----------------------------------
+
+  let $FirstTime = 'Y'
+  let #NoGrpNbrCounter = 0
+
+BEGIN-SELECT DISTINCT on-error=SQL-error
+SNPPLN.BENEFIT_PLAN
+
+  if  $FirstTime = 'Y'
+     display ' '
+     display '*-------------------- Warning ----------------------*'
+     display 'The Benefit Plans listed below have no Group Number.'
+     display 'The HIPAA 834 Loop 2300 REF segment for those plans will not be generated.'
+     display 'Update the Benefit Plans and run the Snapshot process again.'
+     display ' '
+     let $FirstTime = 'N'
+  end-if
+
+  let $PlanNoGrpNbr = $PlanNoGrpNbr ||', '|| &SNPPLN.BENEFIT_PLAN
+  add 1 to #NoGrpNbrCounter
+
+  ! This will display 10 per line
+  if #NoGrpNbrCounter = 10
+     let $PlanNoGrpNbr = ltrim($PlanNoGrpNbr,', ')
+     display $PlanNoGrpNbr
+     let #NoGrpNbrCounter = 0
+     let $PlanNoGrpNbr = ''
+  end-if
+
+FROM PS_BN_SNAP_PLAN SNPPLN
+WHERE SNPPLN.COVERAGE_ELECT IN ('E','T')
+  AND SUBSTR(SNPPLN.PLAN_TYPE, 1, 1) = '1'
+  AND SNPPLN.GROUP_NBR = ' '
+  AND SNPPLN.BENEFIT_PLAN <> ' '
+ORDER BY SNPPLN.BENEFIT_PLAN
+
+END-SELECT
+  ! display last items (fewer than 10) that have not been displayed yet
+  if $PlanNoGrpNbr <> ''
+     let $PlanNoGrpNbr = ltrim($PlanNoGrpNbr,', ')
+     display $PlanNoGrpNbr
+     display ' '
+  end-if
+
+end-procedure
+
+!-------------------------------
+Begin-Procedure Update-NAPY-Date
+!-------------------------------
+Do Display-Start-Time('Update-NAPY-Date')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET PAY_END_DT = (SELECT MAX(D.PAY_END_DT)
+                       FROM PS_PAY_CHECK C,
+                            PS_PAY_DEDUCTION D,
+                            PS_BN_SNAP_JOB J
+                      WHERE D.COMPANY = C.COMPANY
+                        AND D.PAYGROUP = C.PAYGROUP
+                        AND D.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND D.PAY_END_DT = C.PAY_END_DT
+                        AND D.OFF_CYCLE = C.OFF_CYCLE
+                        AND D.SEPCHK = C.SEPCHK
+                        AND D.PAGE_NUM = C.PAGE_NUM
+                        AND D.LINE_NUM = C.LINE_NUM
+                        AND D.DED_CUR > 0
+                        AND D.DED_CLASS IN ('A','B')
+                        AND D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                        AND D.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                        AND C.PAYGROUP = J.PAYGROUP
+                        AND C.COMPANY = J.COMPANY
+                        AND C.EMPLID = J.EMPLID
+                        AND J.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                        AND J.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND J.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                        AND C.PAY_END_DT >= PS_BN_SNAP_PLAN.COVERAGE_BEGIN_DT
+                        AND C.PAY_END_DT <= $AsOfDate
+                    )
+ WHERE EXISTS  (SELECT D1.PAY_END_DT
+                  FROM PS_PAY_CHECK C1,
+                       PS_PAY_DEDUCTION D1,
+                       PS_BN_SNAP_JOB J1
+                 WHERE D1.COMPANY = C1.COMPANY
+                   AND D1.PAYGROUP = C1.PAYGROUP
+                   AND D1.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                   AND D1.PAY_END_DT = C1.PAY_END_DT
+                   AND D1.OFF_CYCLE = C1.OFF_CYCLE
+                   AND D1.SEPCHK = C1.SEPCHK
+                   AND D1.PAGE_NUM = C1.PAGE_NUM
+                   AND D1.LINE_NUM = C1.LINE_NUM
+                   AND D1.DED_CUR > 0
+                   AND D1.DED_CLASS IN ('A','B')
+                   AND D1.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND D1.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND C1.PAYGROUP = J1.PAYGROUP
+                   AND C1.COMPANY = J1.COMPANY
+                   AND C1.EMPLID = J1.EMPLID
+                   AND J1.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                   AND J1.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                   AND J1.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                   AND C1.PAY_END_DT >= PS_BN_SNAP_PLAN.COVERAGE_BEGIN_DT
+                   AND C1.PAY_END_DT <= $AsOfDate
+               )
+
+   AND 'NA' = (SELECT J2.PAY_SYSTEM_FLG
+                 FROM PS_BN_SNAP_JOB J2
+                WHERE J2.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                  AND J2.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                  AND J2.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID)
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF = ' '
+END-SQL
+End-Procedure
+
+!---------------------------------
+Begin-Procedure Update-NAPY-Amount
+!---------------------------------
+Do Display-Start-Time('Update-NAPY-Amount')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET DED_CUR    = (SELECT SUM(D.DED_CUR)
+                       FROM PS_PAY_CHECK C,
+                            PS_PAY_DEDUCTION D,
+                            PS_BN_SNAP_JOB J
+                      WHERE D.COMPANY = C.COMPANY
+                        AND D.PAYGROUP = C.PAYGROUP
+                        AND D.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND D.PAY_END_DT = C.PAY_END_DT
+                        AND D.OFF_CYCLE = C.OFF_CYCLE
+                        AND D.SEPCHK = C.SEPCHK
+                        AND D.PAGE_NUM = C.PAGE_NUM
+                        AND D.LINE_NUM = C.LINE_NUM
+                        AND D.DED_CUR > 0
+                        AND D.DED_CLASS IN ('A','B')
+                        AND D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                        AND D.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                        AND C.PAYGROUP = J.PAYGROUP
+                        AND C.COMPANY = J.COMPANY
+                        AND C.EMPLID = J.EMPLID
+                        AND J.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                        AND J.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND J.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                        AND C.PAY_END_DT = PS_BN_SNAP_PLAN.PAY_END_DT
+                    )
+ WHERE 'NA' = (SELECT J1.PAY_SYSTEM_FLG
+                 FROM PS_BN_SNAP_JOB J1
+                WHERE J1.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                  AND J1.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                  AND J1.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID)
+   AND PAY_END_DT IS NOT NULL
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF = ' '
+END-SQL
+End-Procedure
+
+!-----------------------------
+Begin-Procedure Update-PI-Date
+!-----------------------------
+Do Display-Start-Time('Update-PI-Date')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET PAY_END_DT = (SELECT MAX(D.PAY_END_DT)
+                       FROM PS_DED_CALC D,
+                            PS_BN_SNAP_JOB J
+                      WHERE D.COMPANY = J.COMPANY
+                        AND D.PAYGROUP = J.PAYGROUP
+                        AND D.EMPLID = J.EMPLID
+                        AND D.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND D.DED_CUR > 0
+                        AND D.DED_CLASS IN ('A','B')
+                        AND D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                        AND D.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                        AND J.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                        AND J.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND J.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                        AND D.PAY_END_DT >= PS_BN_SNAP_PLAN.COVERAGE_BEGIN_DT
+                        AND D.PAY_END_DT <= $AsOfDate
+                    )
+ WHERE EXISTS  (SELECT MAX(D1.PAY_END_DT)
+                  FROM PS_DED_CALC D1,
+                       PS_BN_SNAP_JOB J1
+                 WHERE D1.COMPANY = J1.COMPANY
+                   AND D1.PAYGROUP = J1.PAYGROUP
+                   AND D1.EMPLID = J1.EMPLID
+                   AND D1.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                   AND D1.DED_CUR > 0
+                   AND D1.DED_CLASS IN ('A','B')
+                   AND D1.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND D1.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND J1.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                   AND J1.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                   AND J1.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                   AND D1.PAY_END_DT >= PS_BN_SNAP_PLAN.COVERAGE_BEGIN_DT
+                   AND D1.PAY_END_DT <= $AsOfDate
+               )
+   AND 'PI' = (SELECT J2.PAY_SYSTEM_FLG
+                 FROM PS_BN_SNAP_JOB J2
+                WHERE J2.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                  AND J2.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                  AND J2.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID)
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF = ' '
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure Update-PI-Amount
+!-------------------------------
+Do Display-Start-Time('Update-PI-Amount')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET DED_CUR = (SELECT SUM(D.DED_CUR)
+                       FROM PS_DED_CALC D,
+                            PS_BN_SNAP_JOB J
+                      WHERE D.COMPANY = J.COMPANY
+                        AND D.PAYGROUP = J.PAYGROUP
+                        AND D.EMPLID = J.EMPLID
+                        AND D.EMPL_RCD = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND D.DED_CUR > 0
+                        AND D.DED_CLASS IN ('A','B')
+                        AND D.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                        AND D.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                        AND J.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                        AND J.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                        AND J.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                        AND D.PAY_END_DT = PS_BN_SNAP_PLAN.PAY_END_DT
+                    )
+ WHERE 'PI' = (SELECT J2.PAY_SYSTEM_FLG
+                 FROM PS_BN_SNAP_JOB J2
+                WHERE J2.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                  AND J2.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                  AND J2.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID)
+   AND PAY_END_DT IS NOT NULL
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF = ' '
+END-SQL
+End-Procedure
+
+!------------------------------------------
+Begin-Procedure Create-Dependent-Population
+!------------------------------------------
+! This is broken into two pieces - one for dependent/beneficiaries who have an
+! address different from the employee, and another for those that have the same
+! address as the employee. (Address data must be sourced from two different tables).
+Do Display-Start-Time('Create-Dependent-Population1')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PER
+(EMPLID,
+ DEPENDENT_BENEF, NAME_EFFDT, NAME, LAST_NAME, FIRST_NAME,
+ MIDDLE_NAME, NAME_SUFFIX, NAME_PREFIX, NATIONAL_ID, BIRTHDATE, DT_OF_DEATH, SEX,
+ MAR_STATUS, MAR_STATUS_DT, RELATIONSHIP, SMOKER, SMOKER_DT,
+ STUDENT, STUDENT_STATUS_DT, MEDICARE_A_IND, MEDICARE_B_IND, MEDICARE_ELIG_RSN, DISABLED,
+ ADDR_EFFDT, HOME_PHONE,
+ COUNTRY, ADDRESS1, ADDRESS2, ADDRESS3, ADDRESS4,
+ CITY, NUM1, NUM2, HOUSE_TYPE,
+ ADDR_FIELD1, ADDR_FIELD2, ADDR_FIELD3, COUNTY,
+ STATE, POSTAL, GEO_CODE, IN_CITY_LIMIT,
+ COUNTRY_OTHER, ADDRESS1_OTHER, ADDRESS2_OTHER, ADDRESS3_OTHER, ADDRESS4_OTHER,
+ CITY_OTHER, NUM1_OTHER, NUM2_OTHER, HOUSE_TYPE_OTHER,
+ STATE_OTHER, POSTAL_OTHER, GEO_CODE_OTHER, IN_CITY_LMT_OTHER,
+ ADDR_FIELD1_OTHER, ADDR_FIELD2_OTHER, ADDR_FIELD3_OTHER, COUNTY_OTHER)
+SELECT DISTINCT
+ DB.EMPLID, DB.DEPENDENT_BENEF, DN.EFFDT, DN.NAME, DN.LAST_NAME, DN.FIRST_NAME,
+ DN.MIDDLE_NAME, DN.NAME_SUFFIX, DN.NAME_PREFIX, ' ', DB.BIRTHDATE, DB.DT_OF_DEATH, DE.SEX,
+ DE.MAR_STATUS, DE.MAR_STATUS_DT, DE.RELATIONSHIP, DE.SMOKER, DE.SMOKER_DT,
+ DE.STUDENT, DE.STUDENT_STATUS_DT, 'N', 'N', ' ', DE.DISABLED,
+ DA.EFFDT, DB.PHONE,
+ DA.COUNTRY, DA.ADDRESS1, DA.ADDRESS2, DA.ADDRESS3, DA.ADDRESS4,
+ DA.CITY, DA.NUM1, DA.NUM2, DA.HOUSE_TYPE,
+ DA.ADDR_FIELD1, DA.ADDR_FIELD2, DA.ADDR_FIELD3, DA.COUNTY,
+ DA.STATE, DA.POSTAL, DA.GEO_CODE, DA.IN_CITY_LIMIT,
+ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+FROM PS_DEP_BEN DB,
+     PS_DEP_BEN_EFF DE,
+     PS_DEP_BEN_ADDR DA,
+     PS_DEP_BEN_NAME DN,
+     PS_BN_SNAP_PLAN P
+WHERE P.EMPLID = DB.EMPLID
+  AND P.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DN.EMPLID = DB.EMPLID
+  AND DE.EMPLID = DB.EMPLID
+  AND DE.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DE.EFFDT <= $AsOfDate
+  AND DE.EFFDT = ( SELECT MAX(DE1.EFFDT)
+                   FROM PS_DEP_BEN_EFF DE1
+                   WHERE DE1.EMPLID = DE.EMPLID
+                   AND DE1.DEPENDENT_BENEF = DE.DEPENDENT_BENEF
+                   AND DE1.EFFDT <= $AsOfDate)
+  AND DN.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DN.EFFDT <= $AsOfDate
+  AND DN.EFFDT = ( SELECT MAX(DN1.EFFDT)
+                   FROM PS_DEP_BEN_NAME DN1
+                   WHERE DN1.EMPLID = DN.EMPLID
+                   AND DN1.DEPENDENT_BENEF = DN.DEPENDENT_BENEF
+                   AND DN1.EFFDT <= $AsOfDate)
+  AND DA.EMPLID = DB.EMPLID
+  AND DA.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DA.EFFDT <= $AsOfDate
+  AND DA.EFFDT = ( SELECT MAX(DA1.EFFDT)
+                   FROM PS_DEP_BEN_ADDR DA1
+                   WHERE DA1.EMPLID = DA.EMPLID
+                   AND DA1.DEPENDENT_BENEF = DA.DEPENDENT_BENEF
+                   AND DA1.EFFDT <= $AsOfDate)
+  AND DA.SAME_ADDRESS_EMPL <> 'Y'
+  AND (P.PLAN_TYPE LIKE '1%' OR
+       P.PLAN_TYPE LIKE '2%' OR
+       P.PLAN_TYPE LIKE '4%' OR
+       P.PLAN_TYPE LIKE '8%')
+END-SQL
+
+Do Display-Start-Time('Create-Dependent-Population2')
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_PER
+(EMPLID,
+ DEPENDENT_BENEF, NAME_EFFDT, NAME, LAST_NAME, FIRST_NAME,
+ MIDDLE_NAME, NAME_SUFFIX, NAME_PREFIX, NATIONAL_ID, BIRTHDATE, DT_OF_DEATH, SEX,
+ MAR_STATUS, MAR_STATUS_DT, RELATIONSHIP, SMOKER, SMOKER_DT,
+ STUDENT, STUDENT_STATUS_DT, MEDICARE_A_IND, MEDICARE_B_IND, MEDICARE_ELIG_RSN, DISABLED,
+ ADDR_EFFDT, HOME_PHONE,
+ COUNTRY, ADDRESS1, ADDRESS2, ADDRESS3, ADDRESS4,
+ CITY, NUM1, NUM2, HOUSE_TYPE,
+ ADDR_FIELD1, ADDR_FIELD2, ADDR_FIELD3, COUNTY,
+ STATE, POSTAL, GEO_CODE, IN_CITY_LIMIT,
+ COUNTRY_OTHER, ADDRESS1_OTHER, ADDRESS2_OTHER, ADDRESS3_OTHER, ADDRESS4_OTHER,
+ CITY_OTHER, NUM1_OTHER, NUM2_OTHER, HOUSE_TYPE_OTHER,
+ STATE_OTHER, POSTAL_OTHER, GEO_CODE_OTHER, IN_CITY_LMT_OTHER,
+ ADDR_FIELD1_OTHER, ADDR_FIELD2_OTHER, ADDR_FIELD3_OTHER, COUNTY_OTHER)
+SELECT DISTINCT
+ DB.EMPLID, DB.DEPENDENT_BENEF, DN.EFFDT, DN.NAME, DN.LAST_NAME, DN.FIRST_NAME,
+ DN.MIDDLE_NAME, DN.NAME_SUFFIX, DN.NAME_PREFIX, ' ', DB.BIRTHDATE, DB.DT_OF_DEATH, DE.SEX,
+ DE.MAR_STATUS, DE.MAR_STATUS_DT, DE.RELATIONSHIP, DE.SMOKER, DE.SMOKER_DT,
+ DE.STUDENT, DE.STUDENT_STATUS_DT, 'N', 'N', ' ', DE.DISABLED,
+ DA.EFFDT, DB.PHONE,
+ PER.COUNTRY, PER.ADDRESS1, PER.ADDRESS2, PER.ADDRESS3, PER.ADDRESS4,
+ PER.CITY, PER.NUM1, PER.NUM2, PER.HOUSE_TYPE,
+ PER.ADDR_FIELD1, PER.ADDR_FIELD2, PER.ADDR_FIELD3, PER.COUNTY,
+ PER.STATE, PER.POSTAL, PER.GEO_CODE, PER.IN_CITY_LIMIT,
+ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+FROM PS_DEP_BEN DB,
+     PS_DEP_BEN_EFF DE,
+     PS_DEP_BEN_ADDR DA,
+     PS_DEP_BEN_NAME DN,
+     PS_BN_SNAP_PER PER,
+     PS_BN_SNAP_PLAN P
+WHERE P.EMPLID = DB.EMPLID
+  AND P.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND PER.EMPLID = DB.EMPLID
+  AND PER.DEPENDENT_BENEF = ' '
+  AND DN.EMPLID = DB.EMPLID
+  AND DE.EMPLID = DB.EMPLID
+  AND DE.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DE.EFFDT <= $AsOfDate
+  AND DE.EFFDT = ( SELECT MAX(DE1.EFFDT)
+                   FROM PS_DEP_BEN_EFF DE1
+                   WHERE DE1.EMPLID = DE.EMPLID
+                   AND DE1.DEPENDENT_BENEF = DE.DEPENDENT_BENEF
+                   AND DE1.EFFDT <= $AsOfDate)
+  AND DN.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DN.EFFDT <= $AsOfDate
+  AND DN.EFFDT = ( SELECT MAX(DN1.EFFDT)
+                   FROM PS_DEP_BEN_NAME DN1
+                   WHERE DN1.EMPLID = DN.EMPLID
+                   AND DN1.DEPENDENT_BENEF = DN.DEPENDENT_BENEF
+                   AND DN1.EFFDT <= $AsOfDate)
+  AND DA.EMPLID = DB.EMPLID
+  AND DA.DEPENDENT_BENEF = DB.DEPENDENT_BENEF
+  AND DA.EFFDT <= $AsOfDate
+  AND DA.EFFDT = ( SELECT MAX(DA1.EFFDT)
+                   FROM PS_DEP_BEN_ADDR DA1
+                   WHERE DA1.EMPLID = DA.EMPLID
+                   AND DA1.DEPENDENT_BENEF = DA.DEPENDENT_BENEF
+                   AND DA1.EFFDT <= $AsOfDate)
+  AND DA.SAME_ADDRESS_EMPL = 'Y'
+  AND (P.PLAN_TYPE LIKE '1%' OR
+       P.PLAN_TYPE LIKE '2%' OR
+       P.PLAN_TYPE LIKE '4%' OR
+       P.PLAN_TYPE LIKE '8%')
+END-SQL
+
+ ! To avoid DB2 syntax problems, we do a discrete SQL statement
+ ! to set the Effdt field to the $AsOfDate
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET EFFDT = $AsOfDate
+ WHERE DEPENDENT_BENEF <> ' '
+END-SQL
+
+End-Procedure
+
+!-------------------------------------------
+Begin-Procedure Set-Dependent-Medicare
+!-------------------------------------------
+Do Display-Start-Time('Set-Dependent-Medicare-Dates')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_EFFDT = (SELECT D.EFFDT
+                        FROM PS_BN_DEPBEN_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                        AND D.EFFDT = (SELECT MAX(D1.EFFDT)
+                 FROM PS_BN_DEPBEN_EFFDT D1
+                WHERE D1.EMPLID = PS_BN_SNAP_PER.EMPLID
+                AND D1.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                AND D1.EFFDT <= $AsOfDate))
+WHERE DEPENDENT_BENEF <> ' '
+END-SQL
+
+Do Display-Start-Time('Set-Dependent-Medicare-A-Indicator')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_A_IND = (SELECT D.MEDICARE_A_IND
+                        FROM PS_BN_DEPBEN_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                        AND D.EFFDT = PS_BN_SNAP_PER.MEDICARE_EFFDT)
+WHERE DEPENDENT_BENEF <> ' '
+AND MEDICARE_EFFDT IS NOT NULL
+END-SQL
+
+Do Display-Start-Time('Set-Dependent-Medicare-B-Indicator')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_B_IND = (SELECT D.MEDICARE_B_IND
+                        FROM PS_BN_DEPBEN_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                        AND D.EFFDT = PS_BN_SNAP_PER.MEDICARE_EFFDT)
+WHERE DEPENDENT_BENEF <> ' '
+AND MEDICARE_EFFDT IS NOT NULL
+END-SQL
+
+Do Display-Start-Time('Set-Dependent-Medicare-Eligibility-Reason')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET MEDICARE_ELIG_RSN = (SELECT D.MEDICARE_ELIG_RSN
+                        FROM PS_BN_DEPBEN_EFFDT D
+                       WHERE D.EMPLID = PS_BN_SNAP_PER.EMPLID
+                        AND D.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                        AND D.EFFDT = PS_BN_SNAP_PER.MEDICARE_EFFDT)
+WHERE DEPENDENT_BENEF <> ' '
+AND MEDICARE_EFFDT IS NOT NULL
+END-SQL
+
+End-Procedure
+
+!--------------------------------------
+Begin-Procedure Update-Dependent-Phone
+!--------------------------------------
+
+BEGIN-SELECT
+R.EMPLID
+R.SAME_PHONE_EMPL
+R.DEPENDENT_BENEF
+PH.PHONE_TYPE
+PH.PHONE
+K.EFFDT
+
+  Let $SAME_TYPE = &R.SAME_PHONE_EMPL
+  Let $EMPLID = &R.EMPLID
+  Let $DEPENDENT_BENEF = &R.DEPENDENT_BENEF
+  Let $PHONE_TYPE = &PH.PHONE_TYPE
+  Let $PHONE = &PH.PHONE
+
+ If $SAME_TYPE = 'Y' AND LTRIM(RTRIM($PHONE,' '),' ') <> ''
+   Do UPDATE_SAME
+ End-If
+
+FROM PS_BN_SNAP_PER K,PS_DEPENDENT_BENEF R,PS_PERSONAL_PHONE PH
+WHERE K.EMPLID           = R.EMPLID
+      AND K.EMPLID       = PH.EMPLID
+      AND K.DEPENDENT_BENEF = R.DEPENDENT_BENEF
+      AND R.PHONE_TYPE = PH.PHONE_TYPE
+      AND R.SAME_PHONE_EMPL = 'Y'
+      AND K.EFFDT = (SELECT MAX(C.EFFDT) FROM PS_BN_SNAP_PER C
+                  WHERE EMPLID = K.EMPLID
+                  AND DEPENDENT_BENEF = K.DEPENDENT_BENEF
+                  AND EFFDT <= $ASOFDATE)
+END-SELECT
+
+End-Procedure
+
+Begin-Procedure UPDATE_SAME
+
+BEGIN-SQL On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+ SET HOME_PHONE = $PHONE
+ WHERE EMPLID = &R.EMPLID
+ AND DEPENDENT_BENEF = &R.DEPENDENT_BENEF
+ AND EFFDT = &K.EFFDT
+END-SQL
+End-Procedure
+
+!-----------------------------------
+Begin-Procedure Update-Dependent-NID
+!-----------------------------------
+Do Display-Start-Time('Update-Dependent-NID')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET NATIONAL_ID = (SELECT N.NATIONAL_ID
+                        FROM PS_DEP_BENEF_NID N
+                       WHERE N.EMPLID = PS_BN_SNAP_PER.EMPLID
+                         AND N.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                         AND N.PRIMARY_NID = 'Y')
+ WHERE DEPENDENT_BENEF <> ' '
+   AND EXISTS (SELECT X.NATIONAL_ID
+                 FROM PS_DEP_BENEF_NID X
+                WHERE X.EMPLID = PS_BN_SNAP_PER.EMPLID
+                  AND X.DEPENDENT_BENEF = PS_BN_SNAP_PER.DEPENDENT_BENEF
+                  AND X.PRIMARY_NID = 'Y')
+END-SQL
+End-Procedure
+
+!-------------------------------
+Begin-Procedure Adjust-Addresses
+!-------------------------------
+! Due to varying data requirements, an "empty" address may be present
+! that has a Country Code specified, but no other address components.
+! This section clears the Country Code for empty addresses so they will
+! not be inadvertently included in carrier reporting.
+
+Do Display-Start-Time('Adjust-Main-Address')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET COUNTRY = ' '
+ WHERE COUNTRY <> ' '
+   AND ADDRESS1 = ' '
+   AND ADDRESS2 = ' '
+   AND ADDRESS3 = ' '
+   AND ADDRESS4 = ' '
+   AND CITY = ' '
+   AND COUNTY = ' '
+   AND STATE = ' '
+   AND POSTAL = ' '
+   AND NUM1 = ' '
+   AND NUM2 = ' '
+   AND HOUSE_TYPE = ' '
+   AND ADDR_FIELD1 = ' '
+   AND ADDR_FIELD2 = ' '
+   AND ADDR_FIELD3 = ' '
+   AND GEO_CODE = ' '
+   AND IN_CITY_LIMIT = ' '
+END-SQL
+
+Do Display-Start-Time('Adjust-Other-Address')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PER
+   SET COUNTRY_OTHER = ' '
+ WHERE COUNTRY_OTHER <> ' '
+   AND ADDRESS1_OTHER = ' '
+   AND ADDRESS2_OTHER = ' '
+   AND ADDRESS3_OTHER = ' '
+   AND ADDRESS4_OTHER = ' '
+   AND CITY_OTHER = ' '
+   AND COUNTY_OTHER = ' '
+   AND STATE_OTHER = ' '
+   AND POSTAL_OTHER = ' '
+   AND NUM1_OTHER = ' '
+   AND NUM2_OTHER = ' '
+   AND HOUSE_TYPE_OTHER = ' '
+   AND ADDR_FIELD1_OTHER = ' '
+   AND ADDR_FIELD2_OTHER = ' '
+   AND ADDR_FIELD3_OTHER = ' '
+   AND GEO_CODE_OTHER = ' '
+   AND IN_CITY_LMT_OTHER = ' '
+END-SQL
+
+End-Procedure
+
+!-------------------------------------------
+ Begin-Procedure Update-Orig-Enrollment-Date
+!-------------------------------------------
+ Do Display-Start-Time('Update-Orig-Enrollment-Date')
+
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET ENROLLMENT_DT = COVERAGE_BEGIN_DT
+   WHERE PLAN_TYPE LIKE '1%'
+         AND ENROLLMENT_DT IS NULL
+END-SQL
+End-Procedure
+
+!---------------------------------
+ Begin-Procedure Update-Run-History
+!---------------------------------
+ Do Display-Start-Time('Update-Run-History')
+
+! Refresh the current Date/Time
+  Do Get-Current-DateTime
+  Move $AsOfToday    to  $RunDate
+  Move $SysDateTime  to  $RunDateTime
+
+! The following SQL can be used to eliminate multiple history
+! entries on the same day.
+! BEGIN-SQL  On-Error = SQL-Error
+! DELETE FROM PS_BN_SNAP_HIST
+! WHERE ASOFDATE = $AsOfDate
+!   AND RUNDATE = $RunDate
+!   AND BN_SNAP_HIST_TYPE = '1'
+! END-SQL
+
+BEGIN-SQL  On-Error = SQL-Error
+INSERT INTO PS_BN_SNAP_HIST
+(ASOFDATE
+,RUNDATE
+,RUNDTTM
+,BN_SNAP_HIST_TYPE
+,SETID
+,BN_EDI_PARTNER_ID
+,VENDOR_ID
+,PLAN_TYPE
+,OPRID
+,FILENAME
+,RECORD_COUNT
+,SCHED_ID)
+VALUES
+($AsOfDate
+,$RunDate
+,{DateTimeIn-Prefix}$RunDateTime{DateTimeIn-Suffix}
+,'1'
+,' '
+,' '
+,' '
+,' '
+,$Oprid
+,' '
+,0
+,' ')
+END-SQL
+End-Procedure
+
+
+!----------------------------------
+Begin-Procedure Display-Run-Options
+!----------------------------------
+ Display 'Run Options...'
+ Display '            Include 1X Plans: ' noline
+ Display $Include_1X
+ Display '            Include 2X Plans: ' noline
+ Display $Include_2X
+ Display '            Include 3X Plans: ' noline
+ Display $Include_3X
+ Display '            Include 4X Plans: ' noline
+ Display $Include_4X
+ Display '            Include 6X Plans: ' noline
+ Display $Include_6X
+ Display '            Include 7X Plans: ' noline
+ Display $Include_7X
+ Display '            Include 8X Plans: ' noline
+ Display $Include_8X
+ Display '            Include 9X Plans: ' noline
+ Display $Include_9X
+ Display '  Include Payroll Deductions: ' noline
+ Display $Include_Ded
+ Display '    Calculate 2X/3X Coverage: ' noline
+ Display $Include_Calc
+ Display '       Include Implied Terms: ' noline
+ Display $Include_Terms
+ Display '    Include Orig Enroll Date: ' noline
+ Display $Include_Orig
+ Display '                  As Of Date: ' noline
+ Display $AsOfDate
+ Display '                     User-Id: ' noline
+ Display $Oprid
+ Display ' '
+End-Procedure
+
+!---------------------------------
+Begin-Procedure Display-Start-Time($ProcName)
+!---------------------------------
+ Do Get-Current-DateTime
+ Let $Str = '...' || $ProcName
+ Let $Str = Rpad($Str,33,' ')
+ Let $Str = $Str || '(' || $_AsOfNow || ')'
+ Display $Str
+
+End-Procedure
+
+!---------------------------------
+Begin-Procedure Display-Statistics
+!---------------------------------
+
+ Display ' '
+ Display '*--------------- Detail Statistics -----------------*'
+BEGIN-SELECT
+COUNT(*)       &CountEmployees
+               Move &CountEmployees to #CountEmployees
+               Display 'Employees                  (BN_SNAP_PER): ' noline
+               Display #CountEmployees 999,999,999
+FROM PS_BN_SNAP_PER
+WHERE DEPENDENT_BENEF = ' '
+END-SELECT
+
+BEGIN-SELECT
+COUNT(*)       &CountDependents
+               Move &CountDependents to #CountDependents
+               Display 'Dependents & Beneficiaries (BN_SNAP_PER): ' noline
+               Display #CountDependents 999,999,999
+FROM PS_BN_SNAP_PER
+WHERE DEPENDENT_BENEF <> ' '
+END-SELECT
+
+BEGIN-SELECT
+COUNT(*)       &CountJobs
+               Move &CountJobs to #CountJobs
+               Display 'Job/Benefit Records        (BN_SNAP_JOB): ' noline
+               Display #CountJobs 999,999,999
+FROM PS_BN_SNAP_JOB
+END-SELECT
+
+BEGIN-SELECT
+PLAN_TYPE      &PlanType
+COUNT(*)       &CountPlanType
+               Move &CountPlanType to #CountPlanType
+               Add #CountPlanType to #TotalBNSnapPlan
+               Display 'Plan Type ' noline
+               Display &PlanType noline
+               Display '              (BN_SNAP_PLAN): ' noline
+               Display #CountPlanType 999,999,999
+FROM PS_BN_SNAP_PLAN
+GROUP BY PLAN_TYPE
+ORDER BY PLAN_TYPE
+END-SELECT
+ Display '*-------------- Summary Statistics -----------------*'
+ Add #CountEmployees to #TotalBNSnapPer
+ Add #CountDependents to #TotalBNSnapPer
+ Do Get-Current-DateTime
+ Move $AsOfNow to $EndTime
+ If $AsOfToday = $StartDate
+    ! Process started and ended on the same day
+    Do Subtract_Time_Time($EndTime, $StartTime, $RunDuration)
+ Else
+    ! Process started the previous day - add duration prior to next day
+    Do Subtract_Time_Time('23:59:59', $StartTime, $BeforeMidnight)
+    Do Add_Time_Duration($EndTime, $BeforeMidnight, $RunDuration, #AddlDays)
+ End-If
+ Display '                           (BN_SNAP_PER): ' noline
+ Display #TotalBNSnapPer 999,999,999
+ Display '                           (BN_SNAP_JOB): ' noline
+ Display #CountJobs 999,999,999
+ Display '                          (BN_SNAP_PLAN): ' noline
+ Display #TotalBNSnapPlan 999,999,999
+ Display '                 Run Duration (HH:MM:SS):    ' noline
+ If #AddlDays = 0
+    Display $RunDuration
+ Else
+    Display $RunDuration noline
+    Display ' (+' noline
+    Display #AddlDays 9 noline
+    Display ' day)'
+ End-If
+ Display '*---------------- End Statistics -------------------*'
+ Display ' '
+
+End-Procedure
+
+
+
+!***********************************************************************
+!           Cache and Coverage Calculation Procedures
+!***********************************************************************
+
+!---------------------------------
+Begin-Procedure Calculate-Coverage
+!---------------------------------
+Do Display-Start-Time('Calculate-Coverage')
+
+ Let $CachedEmplid = ''
+
+BEGIN-SELECT
+CC.EMPLID
+CC.BENEFIT_RCD_NBR
+CC.PLAN_TYPE
+CC.BENEFIT_PLAN
+CC.COVERAGE_ELECT
+CC.DEPENDENT_BENEF
+CC.CALC_RULES_ID
+CC.FLAT_AMOUNT
+CC.FACTOR_XSALARY
+
+           Move 0  to  #AccumCvgSalary
+           Move 0  to  #AccumPremSalary
+           Move 0  to  #CalculatedBase
+           Move 0  to  #PremiumBase
+
+           Move &CC.PLAN_TYPE  to  $PlanSeries
+           Let $PlanSeries = Substr($PlanSeries,1,1)
+
+           If &CC.EMPLID <> $CachedEmplid
+              If &CC.FACTOR_XSALARY > 0
+                 Do Load-Salary-Cache
+                 Move &CC.Emplid  to  $CachedEmplid
+              End-If
+           End-If
+
+           Do Get-Calc-Rule
+           Do Get-Plan
+
+           ! Note: CC.FACTOR_XSALARY and CC.FLAT_AMOUNT have been populated with
+           !       plan-defined coverage, or the employee-specified coverage.
+           !       We really don't need this info from the Plan Cache unless we
+           !       decide to take a different approach.
+
+           If &CC.FACTOR_XSALARY > 0  Or  $PlanSeries = '3'
+              Do Calculate-As-Of-Dates   ! Covrg_As_Of_Dt_YMD and Prem_As_Of_Dt_YMD
+
+              If $Combine_Mult_Sal = 'N'  Or  $Grp_Mthd = '1'
+                 ! We only need to get the salary of the primary job for this BRN
+                 ! in effect as of each of the "AsOf" dates.
+
+                 Let $Target_Dt_YMD = $Covrg_As_Of_Dt_YMD
+                 Do Get-Primary-Job-Salary
+                 Move #Salary  to  #AccumCvgSalary
+
+                 If $Prem_As_Of_Dt_YMD <> $Covrg_As_Of_Dt_YMD
+                    Let $Target_Dt_YMD = $Prem_As_Of_Dt_YMD
+                    Do Get-Primary-Job-Salary
+                    Move #Salary  to  #AccumPremSalary
+                 Else
+                    Move #AccumCvgSalary  to  #AccumPremSalary
+                 End-If
+              Else
+                 ! Combine Multiple Salaries
+                 Let $Target_Dt_YMD = $Covrg_As_Of_Dt_YMD
+                 Do Get-Combined-Salary
+                 Move #Salary  to  #AccumCvgSalary
+                 If $Prem_As_Of_Dt_YMD <> $Covrg_As_Of_Dt_YMD
+                    Let $Target_Dt_YMD = $Prem_As_Of_Dt_YMD
+                    Do Get-Combined-Salary
+                    Move #Salary  to  #AccumPremSalary
+                 Else
+                    Move #AccumCvgSalary  to  #AccumPremSalary
+                 End-If
+              End-If  ! Combine_Mult_Sal <> 'N'
+
+
+           End-If   ! Factor Plan - calculate coverage amount
+
+           ! At this point, we have the portion of the coverage that's based upon
+           ! the employee's salary (if any part of coverage is based upon salary).
+           If $PlanSeries = '3'
+              ! Disability Plan - apply the maximum monthly benefit, and adjust
+              ! the premium base if premium is based upon replacement salary.
+              Let #AnnlReplacement = (#Salary_Replace_Pct / 100) * #AccumCvgSalary
+              Let #MaxAnnlReplacement = #Maximum_Mo_Benefit * 12
+
+              If #AnnlReplacement > #MaxAnnlReplacement
+                 ! Adjust the Coverage Amount downward to meet the limit
+                 Let #AccumCvgSalary = #MaxAnnlReplacement / (#Salary_Replace_Pct / 100)
+                 Let #AccumCvgSalary = Round(#AccumCvgSalary,2)
+              End-If
+              Let #AnnlReplacement = (#Salary_Replace_Pct / 100) * #AccumPremSalary
+              If #AnnlReplacement > #MaxAnnlReplacement
+                 ! Adjust the Premium Basis Amount downward to meet the limit
+                 Let #AccumPremSalary = #MaxAnnlReplacement / (#Salary_Replace_Pct / 100)
+                 Let #AccumPremSalary = Round(#AccumPremSalary,2)
+              End-If
+              If $Use_Sal_Replace = 'Y'
+                 ! Premium is based on replacement salary, not covered salary.
+                 ! Reduce the premium basis to the "replacement amount".
+                 Let #AccumPremSalary = (#Salary_Replace_Pct / 100) * #AccumPremSalary
+                 Let #AccumPremSalary = Round(#AccumPremSalary,2)
+              End-If
+              ! We're now done with the Disability calculation - apply rounding rules next.
+
+           End-If
+
+           If $Use_Rounding_Rules = 'Y'
+              Let #CalculatedBase = #AccumCvgSalary
+              Let #PremiumBase = #AccumPremSalary
+              If $Round_Base = 'Y'
+                 Do Apply-Rounding-Rule(#CalculatedBase)
+                 Do Apply-Rounding-Rule(#PremiumBase)
+
+              End-If
+              If $Add_Flat_Option = 'B'
+                 ! Add flat amount before factoring salary
+                 Add &CC.FLAT_AMOUNT  to  #CalculatedBase
+                 Add &CC.FLAT_AMOUNT  to  #PremiumBase
+
+                 If &CC.FACTOR_XSALARY > 0
+                    Let #CalculatedBase = #CalculatedBase * &CC.FACTOR_XSALARY
+                    Let #PremiumBase = #PremiumBase * &CC.FACTOR_XSALARY
+                 End-If
+                 If $Round_Base_Flat = 'Y'
+                    Do Apply-Rounding-Rule(#CalculatedBase)
+                    Do Apply-Rounding-Rule(#PremiumBase)
+                 End-If
+              Else
+                 ! Add flat amount after factoring salary
+                 If &CC.FACTOR_XSALARY > 0
+                    Let #CalculatedBase = #CalculatedBase * &CC.FACTOR_XSALARY
+                    Let #PremiumBase = #PremiumBase * &CC.FACTOR_XSALARY
+                 End-If
+                 Let #CalculatedBase = #CalculatedBase + &CC.FLAT_AMOUNT
+                 Let #PremiumBase = #PremiumBase + &CC.FLAT_AMOUNT
+                 If $Round_Factored = 'Y'
+                    Do Apply-Rounding-Rule(#CalculatedBase)
+                    Do Apply-Rounding-Rule(#PremiumBase)
+                 End-If
+              End-If
+              If $Round_Final = 'Y'
+
+                    Do Apply-Rounding-Rule(#CalculatedBase)
+                    Do Apply-Rounding-Rule(#PremiumBase)
+              End-If
+
+           Else
+              ! No rounding rules
+
+              Let #CalculatedBase = #AccumCvgSalary
+              Let #PremiumBase = #AccumPremSalary
+              If $Add_Flat_Option = 'B'
+                 ! Add flat amount before factoring salary
+                 Let #CalculatedBase = &CC.FLAT_AMOUNT  +  #CalculatedBase
+                 Let #PremiumBase = &CC.FLAT_AMOUNT  +  #PremiumBase
+                 If &CC.FACTOR_XSALARY > 0
+                    ! Apply the Salary Factor
+                    Let #CalculatedBase = #CalculatedBase * &CC.FACTOR_XSALARY
+                    Let #PremiumBase = #PremiumBase * &CC.FACTOR_XSALARY
+                 End-If
+              Else
+                 ! Add flat amount after factoring salary
+                 If &CC.FACTOR_XSALARY > 0
+                    ! Apply the Salary Factor
+                    Let #CalculatedBase = #CalculatedBase * &CC.FACTOR_XSALARY
+                    Let #PremiumBase = #PremiumBase * &CC.FACTOR_XSALARY
+                 End-If
+                 ! Add the flat amount
+                 Let #CalculatedBase = &CC.FLAT_AMOUNT  +  #CalculatedBase
+                 Let #PremiumBase = &CC.FLAT_AMOUNT  +  #PremiumBase
+              End-If
+              Let #CalculatedBase = Round(#CalculatedBase,0)
+              Let #PremiumBase = Round(#PremiumBase,0)
+
+           End-If
+
+           If $PlanSeries = '2'
+
+              If #Coverage_Minimum > #CalculatedBase
+                 Move #Coverage_Minimum  to  #CalculatedBase
+              End-If
+              If #Coverage_Minimum > #PremiumBase
+                 Move #Coverage_Minimum  to  #PremiumBase
+              End-If
+              If #Coverage_Maximum > 0  And  #Coverage_Maximum < #CalculatedBase
+                 Move #Coverage_Maximum  to  #CalculatedBase
+              End-If
+              If #Coverage_Maximum > 0  And  #Coverage_Maximum < #PremiumBase
+                 Move #Coverage_Maximum  to  #PremiumBase
+              End-If
+           End-If
+
+           If #CalculatedBase > 99999999
+
+              Display 'WARNING: Calculated Coverage too large for Emplid: ' noline
+              Display &CC.EMPLID noline
+              Display ', Plan Type: ' noline
+              Display &CC.PLAN_TYPE noline
+              Display ', Amount: '  noline
+              Display #CalculatedBase 999,999,999.99
+              Move 0  to  #CalculatedBase
+
+
+           End-If
+           If #PremiumBase > 99999999
+
+              Display 'WARNING: Premium Basis       too large for Emplid: ' noline
+              Display &CC.EMPLID noline
+              Display ', Plan Type: ' noline
+              Display &CC.PLAN_TYPE noline
+              Display ', Amount: '  noline
+              Display #PremiumBase 999,999,999.99
+              Move 0  to  #PremiumBase
+
+
+           End-If
+
+           Do Update-Calculated-Coverage
+
+FROM PS_BN_SNAP_PLAN CC
+WHERE (CC.PLAN_TYPE LIKE '2%'  OR CC.PLAN_TYPE LIKE '3%')
+  AND COVERAGE_ELECT = 'E'
+  AND DEPENDENT_BENEF = ' '
+  AND CALC_RULES_ID <> ' '
+  AND LIFE_ADD_COVRG <> '5'
+ORDER BY CC.EMPLID
+END-SELECT
+
+! The next SQL statement plugs the Calculated & Premium Base with the Flat Amount
+! of coverage if there is no Calc Rule available.
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET CALCULATED_BASE = FLAT_AMOUNT,
+       PREMIUM_BASE = FLAT_AMOUNT
+ WHERE PLAN_TYPE LIKE '2%'
+   AND LIFE_ADD_COVRG <> '5'
+   AND FLAT_AMOUNT > 0
+   AND FACTOR_XSALARY = 0
+   AND CALC_RULES_ID = ' '
+   AND DEPENDENT_BENEF = ' '
+END-SQL
+
+End-Procedure
+
+!----------------------------------
+Begin-Procedure Set-2X-3X-Calc-Rule
+!----------------------------------
+Do Display-Start-Time('Set-2X-3X-Calc-Rule')
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+   SET CALC_RULES_ID = (SELECT C.CALC_RULES_ID
+                          FROM PS_BN_SNAP_JOB J,
+                               PS_BEN_DEFN_COST C,
+                               PS_BEN_DEFN_OPTN O
+                         WHERE C.BENEFIT_PROGRAM = O.BENEFIT_PROGRAM
+                           AND C.PLAN_TYPE = O.PLAN_TYPE
+                           AND C.OPTION_ID = O.OPTION_ID
+                           AND C.EFFDT = O.EFFDT
+                           AND C.COST_TYPE = 'P'
+                           AND O.BENEFIT_PROGRAM = J.BENEFIT_PROGRAM
+                           AND O.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                           AND O.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                           AND O.EFFDT <= $AsOfDate
+                           AND O.EFFDT = (SELECT MAX(O1.EFFDT)
+                                            FROM PS_BEN_DEFN_OPTN O1
+                                           WHERE O1.BENEFIT_PROGRAM = O.BENEFIT_PROGRAM
+                                             AND O1.PLAN_TYPE = O.PLAN_TYPE
+                                             AND O1.BENEFIT_PLAN = O.BENEFIT_PLAN
+                                             AND O1.EFFDT <= $AsOfDate
+                                         )
+                           AND J.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                           AND J.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                           AND J.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+                       )
+ WHERE EXISTS  (SELECT CX.CALC_RULES_ID
+                  FROM PS_BN_SNAP_JOB JX,
+                       PS_BEN_DEFN_COST CX,
+                       PS_BEN_DEFN_OPTN OX
+                 WHERE CX.BENEFIT_PROGRAM = OX.BENEFIT_PROGRAM
+                   AND CX.EFFDT = OX.EFFDT
+                   AND CX.PLAN_TYPE = OX.PLAN_TYPE
+                   AND CX.OPTION_ID = OX.OPTION_ID
+                   AND CX.COST_TYPE = 'P'
+                   AND OX.BENEFIT_PROGRAM = JX.BENEFIT_PROGRAM
+                   AND OX.EFFDT <= $AsOfDate
+                   AND OX.PLAN_TYPE = PS_BN_SNAP_PLAN.PLAN_TYPE
+                   AND OX.BENEFIT_PLAN = PS_BN_SNAP_PLAN.BENEFIT_PLAN
+                   AND OX.EFFDT = (SELECT MAX(OX1.EFFDT)
+                                    FROM PS_BEN_DEFN_OPTN OX1
+                                   WHERE OX1.BENEFIT_PROGRAM = OX.BENEFIT_PROGRAM
+                                     AND OX1.PLAN_TYPE = OX.PLAN_TYPE
+                                     AND OX1.BENEFIT_PLAN = OX.BENEFIT_PLAN
+                                     AND OX1.EFFDT <= $AsOfDate
+                                 )
+                   AND JX.EMPLID = PS_BN_SNAP_PLAN.EMPLID
+                   AND JX.BENEFIT_RCD_NBR = PS_BN_SNAP_PLAN.BENEFIT_RCD_NBR
+                   AND JX.COBRA_EVENT_ID = PS_BN_SNAP_PLAN.COBRA_EVENT_ID
+               )
+
+   AND (PLAN_TYPE LIKE '2%' OR PLAN_TYPE LIKE '3%')
+   AND COVERAGE_ELECT = 'E'
+   AND DEPENDENT_BENEF = ' '
+END-SQL
+End-Procedure
+
+!-----------------------------------------
+Begin-Procedure Update-Calculated-Coverage
+!-----------------------------------------
+Do Display-Start-Time('Update-Calculated-Coverage')
+
+
+BEGIN-SQL  On-Error = SQL-Error
+UPDATE PS_BN_SNAP_PLAN
+SET CALCULATED_BASE = #CalculatedBase
+,   PREMIUM_BASE = #PremiumBase
+WHERE EMPLID = &CC.EMPLID
+  AND PLAN_TYPE = &CC.PLAN_TYPE
+  AND BENEFIT_RCD_NBR = &CC.BENEFIT_RCD_NBR
+  AND COVERAGE_ELECT = &CC.COVERAGE_ELECT
+  AND DEPENDENT_BENEF = &CC.DEPENDENT_BENEF
+END-SQL
+
+End-Procedure
+
+
+!-------------------------------------
+Begin-Procedure Get-Primary-Job-Salary
+!-------------------------------------
+! Returns #Salary
+ Let #i = 1
+ Let #j = 0
+
+ While #i <= #SalaryEntries
+    Get #Benefit_Rcd_Nbr from SalaryTbl(#i) Benefit_Rcd_Nbr
+    If #Benefit_Rcd_Nbr = &CC.BENEFIT_RCD_NBR
+       Get $Effdt_YMD from SalaryTbl(#i) Effdt_YMD
+       Get $Primary_Job_Ind from SalaryTbl(#i) Primary_Job_Ind
+       If $Primary_Job_Ind = 'Y'
+          If $Effdt_YMD <= $AsOfDate_YMD
+             ! Note that we're dealing with two "AsOf" dates here,
+             ! the snapshot date (AsOfDate_YMD), and the
+             ! target date (Coverage or Premium as of date).
+             ! The job must exist as of the snapshot date, but
+             ! in the case of a new hire, it may not exist as
+             ! of the target date. When this happens, we use the
+             ! earliest date available.
+             ! This may be the row we want - save it in case we
+             ! can't find a row in effect as of our target date.
+             Let #j = #i
+             If $Effdt_YMD <= $Target_Dt_YMD
+                ! This row is in effect as of the target date - stop looking.
+                Break
+             End-If
+          End-If
+       End-If
+    Else
+       If #Benefit_Rcd_Nbr > &CC.BENEFIT_RCD_NBR
+          ! We've passed the target BRN - stop looking.
+          Break
+       End-If
+    End-If
+    Add 1  to  #i
+ End-While
+
+ If #j > 0
+
+    Do Get-Salary
+ Else
+    Let #Salary = 0
+ End-If
+End-Procedure
+
+!-------------------------------------
+Begin-Procedure Get-Combined-Salary
+!-------------------------------------
+! Returns #Salary
+! General procedure is to scan through the salary cache for each BRN.
+! If the row in effect meets the calc rule requirement, add it to
+! the returned #Salary.
+! The challenge here is to accommodate the situation in which a job is
+! not yet in effect as of the "target date", but is in effect as of the
+! "As Of Date".  An example of this is a new-hire, where the effective date of
+! the Hire is later than a frozen "coverage as of / premium as of" date, but
+! earlier than the Snapshot "As Of" date. When this occurs, we use the earliest
+! effective date in existence for this job.
+!
+ Let #i = 1               ! pointer to the current row
+ Let #j = 0               ! pointer to the candidate row that may contribute salary
+ Let #AccumSalary = 0
+ Let #SaveEmplRcd = 0     ! Empl Rcd of the current candidate row
+ Let $SaveEffdt_YMD = ' ' ! Effdt of the current candidate row
+ Let #SkpEmplRcd = -1     ! reset skip employee record no
+ let $FirstRow   = 'Y'    ! to mark first row
+
+
+ While #i <= #SalaryEntries
+   Get #TmpBenefitRcdNbr  from  SalaryTbl(#i) Benefit_Rcd_Nbr
+   Get #TmpEmplRcd from SalaryTbl(#i) Empl_Rcd
+   Get $TmpEffdt_YMD from SalaryTbl(#i) Effdt_YMD
+   Get $Empl_Status from SalaryTbl(#i) Empl_Status
+
+   If #i = 1
+      Move #TmpEmplRcd  to  #SaveEmplRcd
+   End-If
+
+   If #TmpEmplRcd <> #SaveEmplRcd
+      ! This is a new ERN.  Accumulate salary (if any) from last ERN.
+
+      Get #JEmplRcd from SalaryTbl(#j) Empl_Rcd
+
+
+      If #j > 0
+         If #JEmplRcd <> #SkpEmplRcd
+            Do Get-Salary
+            Add #Salary  to  #AccumSalary
+            Move 0  to #j
+         Else
+            Move 0  to #j
+         End-If
+      End-If
+   End-If
+
+   If $FirstRow = 'Y' Or #TmpEmplRcd <> #SaveEmplRcd
+      If $Eval_Actv = 'Y'
+         If $Empl_Status = 'A'  Or  $Empl_Status = 'L'
+            Or $Empl_Status = 'P'  Or  $Empl_Status = 'W'
+            Or  $Empl_Status = 'S'
+         Else
+            Move #TmpEmplRcd to #SkpEmplRcd
+         End-if
+      End-if
+    End-If
+   Move 'N' to $FirstRow
+
+
+   If $Grp_Mthd = '2'  And  #TmpBenefitRcdNbr > &CC.BENEFIT_RCD_NBR
+      ! Stop looking - we've passed the BRN for this enrollment
+      Break
+   End-If
+
+   If $Grp_Mthd = '3' Or #TmpBenefitRcdNbr = &CC.BENEFIT_RCD_NBR
+      ! This is an 'Eligible' ERN
+      If $Eval_Actv = 'N'  Or  $Empl_Status = 'A'  Or  $Empl_Status = 'L'
+            Or $Empl_Status = 'P'  Or  $Empl_Status = 'W'
+            Or  $Empl_Status = 'S'
+         ! Status is OK
+         If $TmpEffdt_YMD <= $AsOfDate_YMD
+            ! This row is in effect as of the "As Of" date. Maybe we can use it.
+            If #j > 0
+               ! We already have a candidate row in mind
+              If $SaveEffdt_YMD <= $Target_Dt_YMD  And  $SaveEffdt_YMD <> ' '
+                  ! The previous candidate already fits the bill - retain it.
+               Else
+                  ! This row is a "better fit" - it has an earlier effective date
+                  ! Make this our new candidate row.
+                  Move #i  to  #j
+                  Move $TmpEffdt_YMD  to  $SaveEffdt_YMD
+               End-If
+            Else
+               ! We don't have a candidate row yet - make this our new candidate.
+               Move #i  to  #j
+               Move $TmpEffdt_YMD  to  $SaveEffdt_YMD
+            End-If      ! We have a candidate row
+         End-If         ! Row is in effect as of the "As Of Date"
+      End-If            ! Empl_Status
+   End-If
+   Add 1  to  #i
+ End-While
+
+ Get #JEmplRcd from SalaryTbl(#j) Empl_Rcd
+ If #j > 0 and
+     #JEmplRcd <> #SkpEmplRcd
+     ! We have an "unprocessed" candidate row.
+     Do Get-Salary
+     Add #Salary  to  #AccumSalary
+ End-If
+
+ Move #AccumSalary  to  #Salary
+End-Procedure
+
+
+!-------------------------
+Begin-Procedure Get-Salary
+!-------------------------
+ Let #Job_ABBR = 0
+ Let #Salary = 0
+ Let #ABBR = 0
+ Get #Job_ABBR from SalaryTbl(#j) Annl_Benef_Base_Rt
+
+ If $Benefits_Base = '2'
+    If $Bn_Annl_Benbase_Cd = 'PRIM'
+       Move #Job_ABBR to #ABBR
+    Else
+       do Get-MABBR
+    end-if
+ End-If
+
+ If $Benefits_Base = '2' and #ABBR > 0
+    ! Use ABBR (if > 0)
+    Move #ABBR to #Salary
+ Else
+    ! Use Annual Rate
+    Get $Comp_Frequency from SalaryTbl(#j) Comp_Frequency
+    If RTrim($Comp_Frequency,' ') = 'H'
+       Get #Comprate from SalaryTbl(#j) Comprate
+       Get #Std_Hours from SalaryTbl(#j) Std_Hours
+       Get #StdHrs_Freq_Factor from SalaryTbl(#j) StdHrs_Freq_Factor
+       Let #Salary = #Comprate * #Std_Hours * #StdHrs_Freq_Factor
+       Let #Salary = Round(#Salary,2)
+    Else
+       Get #Annual_Rt from SalaryTbl(#j) Annual_Rt
+       Let #Salary = Round(#Annual_Rt,2)
+    End-If
+
+ End-If
+End-Procedure
+
+
+!-------------------------
+Begin-Procedure Get-MABBR
+!-------------------------
+BEGIN-SELECT
+BA.ANNL_BENEF_BASE_RT
+
+   Let #ABBR = &BA.ANNL_BENEF_BASE_RT
+FROM PS_BN_ANNL_BASE_RT BA
+WHERE BA.EMPLID = &CC.EMPLID
+  AND BA.EMPL_RCD = &CC.BENEFIT_RCD_NBR
+  AND BA.BN_ANNL_BENBASE_CD = $Bn_Annl_Benbase_Cd
+  AND EFFDT = (SELECT MAX(BA1.EFFDT)
+                 FROM PS_BN_ANNL_BASE_RT BA1
+                WHERE BA1.EMPLID = BA.EMPLID
+                  AND BA1.EMPL_RCD = BA.EMPL_RCD
+                  AND BA1.BN_ANNL_BENBASE_CD = BA.BN_ANNL_BENBASE_CD
+                  AND BA1.EFFDT <= $AsOfDate)
+END-SELECT
+End-Procedure
+
+
+!------------------------------------
+Begin-Procedure Load-Calc-Rules-Cache
+!------------------------------------
+Do Display-Start-Time('Load-Calc-Rules-Cache')
+
+ Move 0  to  #CalcRulesEntries
+
+BEGIN-SELECT
+CR.CALC_RULES_ID
+CR.COVERAGE_MINIMUM
+CR.COVERAGE_MAXIMUM
+CR.COMBINE_MULT_SAL
+CR.BENEFITS_BASE
+CR.BN_ANNL_BENBASE_CD
+CR.GRP_MTHD
+CR.EVAL_ACTV
+CR.COVRG_AS_OF_CD
+CR.COVRG_AS_OF_MM
+CR.COVRG_AS_OF_DD
+CR.PREM_AS_OF_CD
+CR.PREM_AS_OF_MM
+CR.PREM_AS_OF_DD
+CR.USE_ROUNDING_RULES
+CR.ROUND_UP_AMT
+CR.ROUND_TO
+CR.ROUND_BASE
+CR.ROUND_BASE_FLAT
+CR.ROUND_FACTORED
+CR.ROUND_FINAL
+CR.ADD_FLAT_OPTION
+
+   If #CalcRulesEntries < {CalcRulesMax}
+      Add 1  to  #CalcRulesEntries
+      Put &CR.CALC_RULES_ID into CalcRulesTbl(#CalcRulesEntries) Calc_Rules_Id
+      Put &CR.COVERAGE_MINIMUM into CalcRulesTbl(#CalcRulesEntries) Coverage_Minimum
+      Put &CR.COVERAGE_MAXIMUM into CalcRulesTbl(#CalcRulesEntries) Coverage_Maximum
+      Put &CR.COMBINE_MULT_SAL into CalcRulesTbl(#CalcRulesEntries) Combine_Mult_Sal
+      Put &CR.BENEFITS_BASE into CalcRulesTbl(#CalcRulesEntries) Benefits_Base
+      Put &CR.BN_ANNL_BENBASE_CD into CalcRulesTbl(#CalcRulesEntries) Bn_annl_Benbase_Cd
+      Put &CR.GRP_MTHD into CalcRulesTbl(#CalcRulesEntries) Grp_Mthd
+      Put &CR.EVAL_ACTV into CalcRulesTbl(#CalcRulesEntries) Eval_Actv
+      Put &CR.COVRG_AS_OF_CD into CalcRulesTbl(#CalcRulesEntries) Covrg_As_Of_Cd
+      Put &CR.COVRG_AS_OF_MM into CalcRulesTbl(#CalcRulesEntries) Covrg_As_Of_MM
+      Put &CR.COVRG_AS_OF_DD into CalcRulesTbl(#CalcRulesEntries) Covrg_As_Of_DD
+      Put &CR.PREM_AS_OF_CD into CalcRulesTbl(#CalcRulesEntries) Prem_As_Of_Cd
+      Put &CR.PREM_AS_OF_MM into CalcRulesTbl(#CalcRulesEntries) Prem_As_Of_MM
+      Put &CR.PREM_AS_OF_DD into CalcRulesTbl(#CalcRulesEntries) Prem_As_Of_DD
+      Put &CR.USE_ROUNDING_RULES into CalcRulesTbl(#CalcRulesEntries) Use_Rounding_Rules
+      Put &CR.ROUND_UP_AMT into CalcRulesTbl(#CalcRulesEntries) Round_Up_Amt
+      Put &CR.ROUND_TO into CalcRulesTbl(#CalcRulesEntries) Round_To
+      Put &CR.ROUND_BASE into CalcRulesTbl(#CalcRulesEntries) Round_Base
+      Put &CR.ROUND_BASE_FLAT into CalcRulesTbl(#CalcRulesEntries) Round_Base_Flat
+      Put &CR.ROUND_FACTORED into CalcRulesTbl(#CalcRulesEntries) Round_Factored
+      Put &CR.ROUND_FINAL into CalcRulesTbl(#CalcRulesEntries) Round_Final
+      Put &CR.ADD_FLAT_OPTION into CalcRulesTbl(#CalcRulesEntries) Add_Flat_Option
+   Else
+      Display 'Cache capacity exceeded for Calculation Rules'
+      STOP
+   End-If
+
+FROM PS_CALC_RULES_TBL CR
+WHERE EFFDT = (SELECT MAX(CR1.EFFDT)
+                 FROM PS_CALC_RULES_TBL CR1
+                WHERE CR1.CALC_RULES_ID = CR.CALC_RULES_ID
+                  AND CR1.EFFDT <= $AsOfDate)
+END-SELECT
+End-Procedure
+
+!------------------------------
+Begin-Procedure Load-Plan-Cache
+!------------------------------
+Do Display-Start-Time('Load-Plan-Cache')
+
+ Move 0  to  #PlanEntries
+
+BEGIN-SELECT
+L.PLAN_TYPE
+L.BENEFIT_PLAN
+L.LIFE_ADD_COVRG
+L.FLAT_AMOUNT
+L.FACTOR_XSALARY
+
+   If #PlanEntries < {PlanMax}
+      Add 1  to  #PlanEntries
+      Put &L.PLAN_TYPE into PlanTbl(#PlanEntries) Plan_Type
+      Put &L.BENEFIT_PLAN into PlanTbl(#PlanEntries) Benefit_Plan
+      Put &L.LIFE_ADD_COVRG into PlanTbl(#PlanEntries) Life_Add_Covrg
+      Put &L.FLAT_AMOUNT into PlanTbl(#PlanEntries) Flat_Amount
+      Put &L.FACTOR_XSALARY into PlanTbl(#PlanEntries) Factor_XSalary
+      Put 0 into PlanTbl(#PlanEntries) Salary_Replace_Pct
+      Put 0 into PlanTbl(#PlanEntries) Maximum_Mo_Benefit
+      Put ' ' into PlanTbl(#PlanEntries) Use_Sal_Replace
+
+   Else
+      Display 'Cache capacity exceeded for 2X/3X Plan Definitions'
+      STOP
+   End-If
+
+FROM PS_LIFE_ADD_TBL L
+WHERE EFFDT = (SELECT MAX(L1.EFFDT)
+                 FROM PS_LIFE_ADD_TBL L1
+                WHERE L1.PLAN_TYPE = L.PLAN_TYPE
+                  AND L1.BENEFIT_PLAN = L.BENEFIT_PLAN
+                  AND L1.EFFDT <= $AsOfDate)
+END-SELECT
+
+BEGIN-SELECT
+DIS.PLAN_TYPE
+DIS.BENEFIT_PLAN
+DIS.SALARY_REPLACE_PCT
+DIS.MAXIMUM_MO_BENEFIT
+DIS.USE_SAL_REPLACE
+
+   If #PlanEntries < {PlanMax}
+      Add 1  to  #PlanEntries
+      Put &DIS.PLAN_TYPE into PlanTbl(#PlanEntries) Plan_Type
+      Put &DIS.BENEFIT_PLAN into PlanTbl(#PlanEntries) Benefit_Plan
+      Put ' ' into PlanTbl(#PlanEntries) Life_Add_Covrg
+      Put 0 into PlanTbl(#PlanEntries) Flat_Amount
+      Put 0 into PlanTbl(#PlanEntries) Factor_XSalary
+      Put &DIS.SALARY_REPLACE_PCT into PlanTbl(#PlanEntries) Salary_Replace_Pct
+      Put &DIS.MAXIMUM_MO_BENEFIT into PlanTbl(#PlanEntries) Maximum_Mo_Benefit
+      Put &DIS.USE_SAL_REPLACE into PlanTbl(#PlanEntries) Use_Sal_Replace
+
+   Else
+      Display 'Cache capacity exceeded for 2X/3X Plan Definitions'
+      STOP
+   End-If
+
+FROM PS_DISBLTY_PLN_TBL DIS
+WHERE EFFDT = (SELECT MAX(DIS1.EFFDT)
+                 FROM PS_DISBLTY_PLN_TBL DIS1
+                WHERE DIS1.PLAN_TYPE = DIS.PLAN_TYPE
+                  AND DIS1.BENEFIT_PLAN = DIS.BENEFIT_PLAN
+                  AND DIS1.EFFDT <= $AsOfDate)
+END-SELECT
+End-Procedure
+
+
+!--------------------------------
+Begin-Procedure Load-Salary-Cache
+!--------------------------------
+! Note that we load ALL salary history as far back as two years prior to
+! the "AsOfDate".
+
+ Move 0  to  #SalaryEntries
+ Move 999  to  #SaveERN
+ Move 'N'  to  $SkipThisERN
+
+BEGIN-SELECT
+EMPL.BENEFIT_RCD_NBR
+EMPL.EMPL_RCD
+SJ.EFFDT
+SJ.EMPL_STATUS
+SJ.ANNUAL_RT
+SJ.HOURLY_RT
+SJ.COMP_FREQUENCY
+SJ.COMPRATE
+SJ.ANNL_BENEF_BASE_RT
+SJ.STD_HOURS
+SJ.STD_HRS_FREQUENCY
+G.FREQ_ANNUAL_FACTOR
+F.FREQUENCY_TYPE
+F.FREQ_ANNUAL_FACTOR
+SPJ.PRIMARY_JOB_IND
+SPJ.PRIMARY_FLAG2
+
+   If &EMPL.EMPL_RCD <> #SaveERN
+      Move 'N'  to  $SkipThisERN
+      Move &EMPL.EMPL_RCD  to  #SaveERN
+   End-If
+
+   If $SkipThisERN = 'N'
+      If #SalaryEntries < {SalaryMax}
+         Add 1  to #SalaryEntries
+         Put &EMPL.BENEFIT_RCD_NBR  into  SalaryTbl(#SalaryEntries) Benefit_Rcd_Nbr
+         Put &EMPL.EMPL_RCD  into  SalaryTbl(#SalaryEntries) Empl_Rcd
+         Do Format-DateTime(&SJ.EFFDT, $Date_Out_YMD, {DEFCMP}, '', '')
+         Put $Date_Out_YMD  into  SalaryTbl(#SalaryEntries) Effdt_YMD
+         Put &SJ.EMPL_STATUS  into  SalaryTbl(#SalaryEntries) Empl_Status
+         Put &SJ.ANNUAL_RT  into  SalaryTbl(#SalaryEntries) Annual_Rt
+         Put &SJ.HOURLY_RT  into SalaryTbl(#SalaryEntries) Hourly_Rt
+         Put &SJ.COMP_FREQUENCY  into  SalaryTbl(#SalaryEntries) Comp_Frequency
+         Put &SJ.COMPRATE  into  SalaryTbl(#SalaryEntries) Comprate
+         Put &SJ.ANNL_BENEF_BASE_RT  into  SalaryTbl(#SalaryEntries) Annl_Benef_Base_Rt
+         Put &SJ.STD_HOURS  into  SalaryTbl(#SalaryEntries) Std_Hours
+         Put &SJ.STD_HRS_FREQUENCY  into  SalaryTbl(#SalaryEntries) Std_Hrs_Frequency
+         Put &F.FREQUENCY_TYPE into  SalaryTbl(#SalaryEntries) Frequency_Type
+         Put &F.FREQ_ANNUAL_FACTOR  into  SalaryTbl(#SalaryEntries) Freq_Annual_Factor
+         Put &G.FREQ_ANNUAL_FACTOR  into  SalaryTbl(#SalaryEntries) StdHrs_Freq_Factor
+         Put &SPJ.PRIMARY_JOB_IND  into  SalaryTbl(#SalaryEntries) Primary_Job_Ind
+         Put &SPJ.PRIMARY_FLAG2  into  SalaryTbl(#SalaryEntries) Primary_Flag2
+      Else
+         Display 'Cache capacity exceeded for Salary History'
+         STOP
+      End-If
+
+     Do Convert-To-DTU-Date(&SJ.EFFDT, $Date_DTU)
+      If $Date_DTU < $Earliest_Dt_DTU
+         Move 'Y' to $SkipThisERN
+      End-If
+   End-If
+
+FROM PS_PRIMARY_JOBS SPJ,
+     PS_FREQUENCY_TBL G,
+     PS_FREQUENCY_TBL F,
+     PS_JOB SJ,
+     PS_PER_ORG_ASGN EMPL
+WHERE SPJ.EMPLID = EMPL.EMPLID
+  AND SPJ.EMPL_RCD = EMPL.EMPL_RCD
+  AND SPJ.PRIMARY_JOB_APP = 'BN'
+  AND SPJ.EFFDT <= $AsOfDate
+  AND SPJ.EFFDT = (SELECT MAX(SPJ1.EFFDT)
+                    FROM PS_PRIMARY_JOBS SPJ1
+                   WHERE SPJ1.EMPLID = SPJ.EMPLID
+                     AND SPJ1.EMPL_RCD = SPJ.EMPL_RCD
+                     AND SPJ1.PRIMARY_JOB_APP = SPJ.PRIMARY_JOB_APP
+                     AND SPJ1.EFFDT <= $AsOfDate)
+  AND G.FREQUENCY_ID = SJ.STD_HRS_FREQUENCY
+  AND G.EFFDT <= $AsOfDate
+  AND G.EFFDT = (SELECT MAX(G1.EFFDT)
+                   FROM PS_FREQUENCY_TBL G1
+                  WHERE G1.FREQUENCY_ID = G.FREQUENCY_ID
+                    AND G1.EFFDT <= $AsOfDate)
+  AND F.FREQUENCY_ID = SJ.COMP_FREQUENCY
+  AND F.EFFDT <= $AsOfDate
+  AND F.EFFDT = (SELECT MAX(F1.EFFDT)
+                   FROM PS_FREQUENCY_TBL F1
+                  WHERE F1.FREQUENCY_ID = F.FREQUENCY_ID
+                    AND F1.EFFDT <= $AsOfDate)
+  AND SJ.EMPLID = EMPL.EMPLID
+  AND SJ.EMPL_RCD = EMPL.EMPL_RCD
+  AND SJ.EFFSEQ = (SELECT MAX(SJ2.EFFSEQ)
+                    FROM PS_JOB SJ2
+                   WHERE SJ2.EMPLID = SJ.EMPLID
+                     AND SJ2.EMPL_RCD = SJ.EMPL_RCD
+                     AND SJ2.EFFDT = SJ.EFFDT)
+  AND EMPL.EMPLID = &CC.EMPLID
+
+ORDER BY 1, 2, 3 DESC
+END-SELECT
+End-Procedure
+
+!----------------------------
+Begin-Procedure Get-Calc-Rule
+!----------------------------
+! Search the Calc Rule Cache looking for the requested Calc Rule.
+
+ Move 'N' to $CalcRuleFound
+
+ Move 1  to  #i
+
+ If &CC.CALC_RULES_ID = $SaveCalcRulesId
+    Move 'Y'  to  $CalcRuleFound
+ Else
+    While #i <= #CalcRulesEntries
+       Get $TmpCalcRulesId  from  CalcRulesTbl(#i) Calc_Rules_Id
+       If $TmpCalcRulesId = &CC.CALC_RULES_ID
+          Move 'Y'  to  $CalcRuleFound
+          Get #Coverage_Minimum from CalcRulesTbl(#i) Coverage_Minimum
+          Get #Coverage_Maximum from CalcRulesTbl(#i) Coverage_Maximum
+          Get $Combine_Mult_Sal from CalcRulesTbl(#i) Combine_Mult_Sal
+          Get $Benefits_Base from CalcRulesTbl(#i) Benefits_Base
+          Get $Bn_Annl_Benbase_Cd from CalcRulesTbl(#i) Bn_Annl_Benbase_Cd
+          Get $Grp_Mthd from CalcRulesTbl(#i) Grp_Mthd
+          Get $Eval_Actv from CalcRulesTbl(#i) Eval_Actv
+          Get $Covrg_As_Of_Cd from CalcRulesTbl(#i) Covrg_As_Of_Cd
+          Get #Covrg_As_Of_MM from CalcRulesTbl(#i) Covrg_As_Of_MM
+          Get #Covrg_As_Of_DD from CalcRulesTbl(#i) Covrg_As_Of_DD
+          Get $Prem_As_Of_Cd from CalcRulesTbl(#i) Prem_As_Of_Cd
+          Get #Prem_As_Of_MM from CalcRulesTbl(#i) Prem_As_Of_MM
+          Get #Prem_As_Of_DD from CalcRulesTbl(#i) Prem_As_Of_DD
+          Get $Use_Rounding_Rules from CalcRulesTbl(#i) Use_Rounding_Rules
+          Get #Round_Up_Amt from CalcRulesTbl(#i) Round_Up_Amt
+          Get #Round_To from CalcRulesTbl(#i) Round_To
+          Get $Round_Base from CalcRulesTbl(#i) Round_Base
+          Get $Round_Base_Flat from CalcRulesTbl(#i) Round_Base_Flat
+          Get $Round_Factored from CalcRulesTbl(#i) Round_Factored
+          Get $Round_Final from CalcRulesTbl(#i) Round_Final
+          Get $Add_Flat_Option from CalcRulesTbl(#i) Add_Flat_Option
+          Break
+       End-If
+       Add 1  to  #i
+    End-While
+ End-If
+
+ If $CalcRuleFound = 'N'
+    Display 'Calculation Rule ' noline
+    Display &CC.CALC_RULES_ID   noline
+    Display ' not found for Emplid: ' noline
+    Display &CC.EMPLID noline
+    Display ', Benefit Record: ' noline
+    Display &CC.BENEFIT_RCD_NBR 99 noline
+    Display ', Plan Type: ' noline
+    Display &CC.PLAN_TYPE
+    STOP
+ Else
+    Move &CC.CALC_RULES_ID  to  $SaveCalcRulesId
+ End-If
+End-Procedure
+
+!-----------------------
+Begin-Procedure Get-Plan
+!-----------------------
+! Search the Plan Cache looking for the requested Benefit Plan.
+
+ Move 'N' to $PlanFound
+
+ Move 1  to  #plan_ptr
+
+ If &CC.PLAN_TYPE = $SavePlanType And &CC.BENEFIT_PLAN = $SaveBenefitPlan
+    Move 'Y'  to  $PlanFound
+ Else
+    While #plan_ptr <= #PlanEntries
+       Get $TmpPlanType  from  PlanTbl(#plan_ptr) Plan_Type
+       If $TmpPlanType = &CC.PLAN_TYPE
+          Get $TmpBenefitPlan  from  PlanTbl(#plan_ptr) Benefit_Plan
+          If $TmpBenefitPlan = &CC.BENEFIT_PLAN
+             Move 'Y'  to  $PlanFound
+             Get $Life_Add_Covrg from PlanTbl(#plan_ptr) Life_Add_Covrg
+             Get #Flat_Amount from PlanTbl(#plan_ptr) Flat_Amount
+             Get #Factor_XSalary from PlanTbl(#plan_ptr) Factor_XSalary
+             Get #Salary_Replace_Pct from PlanTbl(#plan_ptr) Salary_Replace_Pct
+             Get #Maximum_Mo_Benefit from PlanTbl(#plan_ptr) Maximum_Mo_Benefit
+             Get $Use_Sal_Replace from PlanTbl(#plan_ptr) Use_Sal_Replace
+          End-If
+       End-If
+       Add 1  to  #plan_ptr
+    End-While
+ End-If
+
+ If $PlanFound = 'N'
+    Display 'Plan ' noline
+    Display &CC.BENEFIT_PLAN   noline
+    Display ' not found.'
+    STOP
+ Else
+    Move &CC.PLAN_TYPE  to  $SavePlanType
+    Move &CC.BENEFIT_PLAN  to  $SaveBenefitPlan
+ End-If
+End-Procedure
+
+!------------------------------------
+Begin-Procedure Calculate-As-Of-Dates
+!------------------------------------
+
+ Let $Covrg_As_Of_Dt_YMD = ' '
+ Let $Prem_As_Of_Dt_YMD = ' '
+
+ Do Format-DateTime($AsOFDate, $AsOfDate_YMD, {DEFCMP}, '', '')
+
+ If $Covrg_As_Of_Cd = 'L'
+    Let #Year = To_Number(Substr($AsOfDate_YMD,1,4))
+    Subtract  1  from #Year
+    Let $Covrg_As_Of_Dt_YMD = To_Char(#Year) || To_Char(#Covrg_As_Of_MM) || To_Char(#Covrg_As_Of_DD)
+ Else
+    If $Covrg_As_Of_Cd = 'T'
+       Let $Year = Substr($AsOfDate_YMD,1,4)
+       Let $Covrg_As_Of_Dt_YMD = $Year || To_Char(#Covrg_As_Of_MM) || To_Char(#Covrg_As_Of_DD)
+    Else
+       Move $AsOfDate_YMD  to  $Covrg_As_Of_Dt_YMD
+    End-If
+ End-If
+
+ If $Prem_As_Of_Cd = $Covrg_As_Of_Cd
+    Let $Prem_As_Of_Dt_YMD = $Covrg_As_Of_Dt_YMD
+ Else
+    If $Prem_As_Of_Cd = 'L'
+       Let #Year = To_Number(Substr($AsOfDate_YMD,1,4))
+       Subtract  1  from #Year
+       Let $Prem_As_Of_Dt_YMD = To_Char(#Year) || To_Char(#Prem_As_Of_MM) || To_Char(#Prem_As_Of_DD)
+    Else
+       If $Prem_As_Of_Cd = 'T'
+          Let $Year = Substr($AsOfDate_YMD,1,4)
+          Let $Prem_As_Of_Dt_YMD = $Year || To_Char(#Prem_As_Of_MM) || To_Char(#Prem_As_Of_DD)
+       Else
+          Move $AsOfDate_YMD  to  $Prem_As_Of_Dt_YMD
+       End-If
+    End-If
+ End-If
+End-Procedure
+
+!--------------------------------------------
+Begin-Procedure Apply-Rounding-Rule(:#Amount)
+!--------------------------------------------
+
+ If #_Round_To > 0
+
+    Let #RoundUnits = Trunc((#Amount / #_Round_To),0)
+    Let #Work = #RoundUnits * #_Round_To
+    If #_Round_Up_Amt <= (#Amount - #Work)
+       Add 1  to  #RoundUnits
+    End-If
+    Let #Amount = #RoundUnits * #_Round_To
+
+ End-If
+End-Procedure
+
+
+!****************************************************************
+#Include 'reset.sqc'     !Reset printer procedure
+#Include 'curdttim.sqc'  !Get-Current-DateTime procedure
+#Include 'datetime.sqc'  !Routines for date and time formatting
+#Include 'datemath.sqc'  !Routines for date arithmetic
+#Include 'timemath.sqc'  !Routines for date arithmetic
+#Include 'number.sqc'    !Routines to format numbers
+#Include 'stdapi.sqc'    !Update Process API
+#Include 'bnrunctl.sqc'  !Get application run control parameters
+#Include 'bngetval.sqc'  !Get BEN values mask routines
+#Include 'askaod.sqc'    !Routine for interactive As Of Date

@@ -1,0 +1,11 @@
+; Field definition file for table: ADORecordset
+ALB_Onhand	long		1
+AI_Partno	string	15	string sample value
+AI_Description	string	45	string sample value
+AI_PartType	string	5	string sample value
+AI_OEMPartno	string	15	string sample value
+AI_Required	long		1
+BaseLoc	string	10	string sample value
+SatLoc	string	10	string sample value
+AL_Abrv	string	10	string sample value
+AL_Location_Name	string	45	string sample value

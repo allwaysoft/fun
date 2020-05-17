@@ -1,0 +1,460 @@
+5.2	SQL Loader
+SQL*Loader is a bulk loader utility used for moving data from external files into the Oracle database.  SQL*Loader supports various load formats, selective loading, and multi-table loads.
+
+•	One can load data into an Oracle database by using the sqlldr (sqlload on some platforms) utility. Invoke the utility without arguments to get a list of available parameters. Look at the following example:
+
+	sqlldr scott/tiger control=loader.ctl
+
+This sample control file (loader.ctl) will load an external data file containing delimited data:
+        load data
+          infile 'c:\data\mydata.csv'
+		  into table emp
+                ( empno, empname, sal, deptno )
+                 separated by ","
+The mydata.csv file may look like this:
+	10001,"Scott Tiger", 1000, 40
+	10002,"Frank Naude", 500, 20
+
+•	Another Sample control file with in-line data formatted as fix length records. The trick is to specify "*" as the name of the data file, and use BEGINDATA to start the data section in the control file.
+
+        load data
+          infile *
+          replace
+          into table departments
+          (  dept     position (02:05) char(4),
+             deptname position (08:27) char(20)
+          )
+        begindata
+          COSC  COMPUTER SCIENCE
+          ENGL  ENGLISH LITERATURE
+          MATH  MATHEMATICS
+          POLY  POLITICAL SCIENCE
+
+
+•	One can skip header records or continue an interrupted load (for example if you run out of space) by specifying the "SKIP n" keyword. "n" specifies the number of logical rows to skip. Look at this example:
+
+   LOAD DATA (SKIP 5)
+   INFILE *
+   INTO TABLE load_positional_data
+   (  data1 POSITION(1:5),
+      data2 POSITION(6:15)
+   )
+   BEGINDATA
+   11111AAAAAAAAAA
+   22222BBBBBBBBBB
+
+
+•	If you are continuing a multiple table direct path load, you may need to use the CONTINUE_LOAD clause instead of the SKIP parameter. CONTINUE_LOAD allows you to specify a different number of rows to skip for each of the tables you are loading.
+
+
+•	Data can be modified as it loads into the Oracle Database. Note that this only applies for the conventional load path and not for direct path loads.
+
+EX-1:
+
+   LOAD DATA
+   INFILE *
+   INTO TABLE modified_data
+   (  rec_no                      "my_db_sequence.nextval",
+      region                      CONSTANT '31',
+      time_loaded                 "to_char(SYSDATE, 'HH24:MI')",
+      data1        POSITION(1:5)  ":data1/100",
+      data2        POSITION(6:15) "upper(:data2)",
+      data3        POSITION(16:22)"to_date(:data3, 'YYMMDD')"
+   )
+   BEGINDATA
+   11111AAAAAAAAAA991201
+   22222BBBBBBBBBB990112
+
+
+        EX-2:
+   LOAD DATA
+   INFILE 'mail_orders.txt'
+   BADFILE 'bad_orders.txt'
+   APPEND
+   INTO TABLE mailing_list
+   FIELDS TERMINATED BY ","
+   (  addr,
+      city,
+      state,
+      zipcode,
+      mailing_addr   "decode(:mailing_addr, null, :addr, :mailing_addr)",
+      mailing_city   "decode(:mailing_city, null, :city, :mailing_city)",
+      mailing_state
+   )
+
+•	Load data into multiple tables at once:
+
+
+Look at the following control file:
+  LOAD DATA
+   INFILE *
+   REPLACE
+   INTO TABLE emp
+        WHEN empno != ' '
+   ( empno  POSITION(1:4)   INTEGER EXTERNAL,
+     ename  POSITION(6:15)  CHAR,
+     deptno POSITION(17:18) CHAR,
+     mgr    POSITION(20:23) INTEGER EXTERNAL
+   )
+   INTO TABLE proj
+        WHEN projno != ' '
+   (  projno POSITION(25:27) INTEGER EXTERNAL,
+      empno  POSITION(1:4)   INTEGER EXTERNAL
+   )
+
+Selectively load only the records that one need:
+Look at this example, (01) is the first character, (30:37) are characters 30 to 37:
+
+   LOAD DATA
+   INFILE  'mydata.dat' BADFILE  'mydata.bad' DISCARDFILE 'mydata.dis'
+   APPEND
+   INTO TABLE my_selective_table
+   WHEN (01) <> 'H' and (01) <> 'T' and (30:37) = '19991217'
+   (
+      region              CONSTANT '31',
+      service_key         POSITION(01:11)   INTEGER EXTERNAL,
+      call_b_no           POSITION(12:29)   CHAR
+   )
+
+
+•	Skip certain columns while loading data
+One cannot use POSTION(x:y) with delimited data. Luckily, from Oracle 8i one can specify FILLER columns. FILLER columns are used to skip columns/fields in the load file, ignoring fields that one does not want. Look at this example:
+
+        LOAD DATA
+        TRUNCATE INTO TABLE T1
+        FIELDS TERMINATED BY ','
+        ( field1,
+          field2 FILLER,
+          field3
+        )
+
+
+Load Multi-line records:
+
+One can create one logical record from multiple physical records using one of the following two clauses: 
+•	CONCATENATE: - use when SQL*Loader should combine the same number of physical records together to form one logical record. 
+•	CONTINUEIF - use if a condition indicates that multiple records should be treated as one. Eg. by having a '#' character in column 1. 
+
+Commit only at the end of the load file:
+
+One cannot, but by setting the ROWS= parameter to a large value, committing can be reduced. Make sure you have big rollback segments ready when you use a high value for ROWS=.
+
+Performance of SQL loader:
+
+1.	A very simple but easily overlooked hint is not to have any indexes and/or constraints (primary key) on your load tables during the load process. This will significantly slow down load times even with ROWS= set to a high value.
+2.	Add the following option in the command line: DIRECT=TRUE. This will effectively bypass most of the RDBMS processing. However, there are cases when you can't use direct load. Refer to chapter 8 on Oracle server Utilities manual.
+3.	Turn off database logging by specifying the UNRECOVERABLE option. This option can only be used with direct data loads.
+4.	Run multiple load jobs concurrently.
+
+Load images, sound clips and documents
+
+SQL*Loader can load data from a "primary data file", SDF (Secondary Data file - for loading nested tables and VARRAYs) or LOBFILE. The LOBFILE method provides an easy way to load documents, images and audio clips into BLOB and CLOB columns. Look at this example: 
+Given the following table: 
+
+CREATE TABLE image_table (
+        image_id   NUMBER(5),
+        file_name  VARCHAR2(30),
+        image_data BLOB);
+
+
+Control File:
+
+LOAD DATA
+INFILE *
+INTO TABLE image_table
+REPLACE
+FIELDS TERMINATED BY ','
+(
+ image_id   INTEGER(5),
+ file_name  CHAR(30),
+ image_data LOBFILE (file_name) TERMINATED BY EOF
+)
+BEGINDATA
+001,image1.gif
+002,image2.jpg
+
+Difference between conventional and direct path loader: 
+
+The conventional path loader essentially loads the data by using standard INSERT statements. The direct path loader (DIRECT=TRUE) bypasses much of the logic involved with that, and loads directly into the Oracle data files. More information about the restrictions of direct path loading can be obtained from the Utilities Users Guide.
+
+
+SOLUTIONS TO COMMON SQL*LOADER QUESTIONS
+
+This article describes a number of common questions on SQL*Loader, and gives simple examples which solve these common issues.
+
+============================================================================
+                           IMPLIED DECIMAL PLACES
+============================================================================
+
+1.  How do you load an implied decimal place into the database?
+
+Example:
+=======
+
+Let us take an example of a bank account, the data contains a transaction
+type, an account number, and a dollar amount.  The last column is a
+numeric value with an implied decimal place (100.73, 75.25, and 20.00):
+
+   DEPOSIT     10015  10073
+   DEPOSIT     10020   7525
+   WITHDRAWAL  10015   2000
+
+We want to load the data into the following table:
+
+   SQL> CREATE TABLE register
+     2  (tx_type CHAR(15),
+     3   acct NUMBER,
+     4   amt NUMBER);
+
+The control file would look like:
+
+   LOAD DATA
+   INFILE 'month.dat'
+   INTO TABLE register
+   (tx_type POSITION(1:10),
+    acct    POSITION(13:17),
+    amt     POSITION(20:24)  ":amt/100"
+   )
+
+After we run SQL*Loader, our table data looks like:
+
+   SQL> SELECT * FROM register;
+
+   TX_TYPE               ACCT        AMT
+   --------------- ---------- ----------
+   DEPOSIT              10015     100.73
+   DEPOSIT              10020      75.25
+   WITHDRAWAL           10015         20
+
+How this works:
+==============
+
+SQL*Loader simply builds an insert statement which looks like:
+
+   INSERT INTO register (tx_type,acct,amt)
+       VALUES (:data1, :data2, ":amt/100");
+
+So, for every AMT loaded, we divide it by 100.
+
+See chapter 6 of the Utilities Guide "Applying SQL Operators to Fields".
+
+Restrictions:
+============
+
+This method cannot be used with DIRECT PATH Loader.
+
+============================================================================
+                         LOADING DATABASE SEQUENCES
+============================================================================
+
+2.  How do you load a database sequence into a table?
+
+Example-I:
+=========
+
+In the first example, all of the fields are located in the datafile based
+on position, which makes this easier.  Another example below covers data that
+
+is comma delimited.
+
+We want to load the data into the following table:
+
+   SQL> CREATE TABLE load_db_seq_positional
+     2  (seq_number NUMBER,
+     3   data1 NUMBER,
+     4   data2 CHAR(15) );
+
+We will use the following sequence:
+
+   SQL> CREATE SEQUENCE db_seq
+     2    START WITH 1
+     3    INCREMENT BY 1;
+
+The control file would look like:
+
+   LOAD DATA
+   INFILE *
+   INTO TABLE load_db_seq_positional
+   (seq_number "db_seq.nextval"
+    data1 POSITION(1:5),
+    data2 POSITION(6:15),
+   )
+   BEGINDATA
+   11111AAAAAAAAAA
+   22222BBBBBBBBBB
+
+After we run SQL*Loader, our table data looks like:
+
+   SQL> SELECT * FROM load_db_seq_positional;
+
+   SEQ_NUMBER      DATA1 DATA2
+   ---------- ---------- ---------------
+            1      11111 AAAAAAAAAA
+            2      22222 BBBBBBBBBB
+
+Example-II:
+==========
+
+In this example, the data fields are comma delimited. The key here is that
+since fields are delimited, SQL*Loader will expect to find values for the
+field SEQ_NUMBER in the data file.  Since such entries do not exist, what
+we must do is to put the SEQ_NUMBER field as the last field in the control
+file, and then use the TRAILING NULLCOLS clause to indicate to Loader that
+on some lines (in this case all), there may be "trailing columns" which are
+null, or non-existent.
+
+Here is the similar create table statetement, we will use the same sequence:
+
+   SQL> CREATE TABLE load_db_seq_delimited
+     2  (seq_number NUMBER,
+     3   data1 NUMBER,
+     4   data2 CHAR(15));
+
+The control file would look like:
+
+   LOAD DATA
+   INFILE *
+   INTO TABLE load_db_seq_delimited
+   FIELDS TERMINATED BY ","
+   TRAILING NULLCOLS
+   (data1,
+    data2,
+    seq_number "db_seq.nextval"
+   )
+   BEGINDATA
+   11111,AAAAAAAAAA
+   22222,BBBBBBBBBB
+
+After we run SQL*Loader, our table data looks like:
+
+   SQL> SELECT * FROM load_db_seq_delimited;
+
+   SEQ_NUMBER      DATA1 DATA2
+   ---------- ---------- ---------------
+            3      11111 AAAAAAAAAA
+            4      22222 BBBBBBBBBB
+
+How this works:
+==============
+
+SQL*Loader simply builds an insert statement which looks like:
+
+   INSERT INTO load_db_seq_delimited (data1,data2,seq_number)
+      VALUES (:data1, :data2, "db_seq.nextval");
+
+See chapter 6 of the Utilities Guide "Applying SQL Operators to Fields".
+
+Restrictions:
+============
+
+Both of these methods cannot be used with DIRECT PATH Loader.
+
+============================================================================
+                LOADING USERNAME OF USER RUNNING SQL*LOADER
+============================================================================
+
+3.  How do you load the username of the user running the SQL*Loader session?
+
+Example-I:
+=========
+
+In this example, all of the fields are located in the datafile based
+on position, which makes this easier.  Another example below, which is
+slightly more difficult, covers data that is comma delimited. Both methods
+take advantage of the "USER" pseudo-variable.  If you prefer to use the
+Oracle User ID number, you could use "UID" instead.
+
+We want to load the data into the following table:
+
+   SQL> CREATE TABLE load_user_positional
+     2  (username CHAR(30),
+     3   data1 NUMBER,
+     4   data2 CHAR(15) );
+
+The control file would look like:
+
+   LOAD DATA
+   INFILE *
+   INTO TABLE load_user_positional
+   (username "USER"
+    data1 POSITION(1:5),
+    data2 POSITION(6:15),
+   )
+   BEGINDATA
+   11111AAAAAAAAAA
+   22222BBBBBBBBBB
+
+If we run SQL*Loader as scott:
+
+$ SQLLDR scott/tiger load_user_d.ctl
+
+Our table data looks like:
+
+   SQL> SELECT * FROM load_user_positional;
+
+         USERNAME      DATA1 DATA2
+   -------------- ---------- ---------------
+            SCOTT      11111 AAAAAAAAAA
+            SCOTT      22222 BBBBBBBBBB
+
+Example-II:
+==========
+
+In this example, the data fields are comma delimited. The key here is that
+since fields are delimited, SQL*Loader will expect to find values for the
+field USERNAME in the data file.  Since such entries do not exist, then we
+must put the USERNAME field as the last field in the control file, and then
+use the TRAILING NULLCOLS clause to indicate to SQL*Loader that on some lines
+
+(in this case all), there may be "trailing columns" which are null, or
+non-existent.
+
+Here is the similar create statetement:
+
+   SQL> CREATE TABLE load_user_delimited
+     2  (username CHAR(30),
+     3   data1 NUMBER,
+     4   data2 CHAR(15) );
+
+The control file would look like:
+
+   LOAD DATA
+   INFILE *
+   INTO TABLE load_user_delimited
+   FIELDS TERMINATED BY ","
+   TRAILING NULLCOLS
+   (data1,
+    data2,
+    username "USER"
+   )
+   BEGINDATA
+   11111,AAAAAAAAAA
+   22222,BBBBBBBBBB
+
+If we run SQL*Loader as jack:
+
+$ SQLLDR jack/jack load_user_d.ctl
+
+Our table data looks like:
+
+   SQL> SELECT * FROM load_user_delimited;
+
+         USERNAME      DATA1 DATA2
+   -------------- ---------- ---------------
+             JACK      11111 AAAAAAAAAA
+             JACK      22222 BBBBBBBBBB
+
+How this works:
+==============
+
+SQL*Loader simply builds an insert statement which looks like:
+
+   INSERT INTO load_user_delimited (data1,data2,seq_number)
+         VALUES (:data1, :data2, "user");
+
+See chapter 6 of the Utilities Guide "Applying SQL Operators to Fields".
+
+Restrictions:
+============
+
+Both of these methods cannot be used with DIRECT PATH Loader.

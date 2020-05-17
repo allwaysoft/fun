@@ -1,0 +1,59 @@
+
+SQL*Loader: Release 11.2.0.2.0 - Production on Tue Dec 4 14:44:12 2012
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Control File:   C:\MISC\ORACLE\SQL\PSoft\PSHrms\wrong_pay\wk46bad.ctl
+Data File:      C:\MISC\ORACLE\SQL\PSoft\PSHrms\wrong_pay\wk46bad.csv
+  Bad File:     C:\MISC\ORACLE\SQL\PSoft\PSHrms\wrong_pay\wk46bad.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table TESTW46, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+EARN                                FIRST     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(:earn))"
+EMPNO                                NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(:empno))"
+DATE1                                NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(:date1))"
+HRS                                  NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(to_char(:hrs, '9999990.00')))"
+RATE                                 NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(to_char(:rate, '9999990.00')))"
+AMOUNT                               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "ltrim(rtrim(to_char(:amount, '9999990.00')))"
+
+
+Table TESTW46:
+  2695 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                  99072 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:          2695
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Tue Dec 04 14:44:12 2012
+Run ended on Tue Dec 04 14:44:32 2012
+
+Elapsed time was:     00:00:11.23
+CPU time was:         00:00:00.14

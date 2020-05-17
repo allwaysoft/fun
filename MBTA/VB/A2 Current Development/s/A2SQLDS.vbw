@@ -1,0 +1,13 @@
+A2SQLObjAttrs = 169, 19, 758, 1083, C
+A2SQLObjType = 36, 0, 625, 1068, C
+A2SQLDataSource = 26, 0, 1140, 812, 
+A2SQLObjTypes = 154, 389, 743, 740, 
+A2SQLLookupTypes = 0, 0, 589, 1083, C
+A2SQLLookupType = 22, 0, 798, 1075, C
+A2SQLLookupTypeParms = 44, 389, 633, 740, 
+A2SQLLookupTypeParm = 66, 389, 655, 740, 
+A2SQLConst = 110, 389, 699, 740, 
+A2SQLObjAttr = 22, 389, 611, 740, 
+A2SQLSysLiaison = 22, 178, 704, 740, 
+A2SQLObjSet = -16, -10, 732, 442, C
+A2SQLWeakRef = 28, -7, 838, 440, 

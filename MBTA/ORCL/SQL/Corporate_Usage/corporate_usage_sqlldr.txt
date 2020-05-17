@@ -1,0 +1,3 @@
+C:\MISC\ORACLE\SQL\Corporate_Usage
+
+sqlldr userid=mbta@nwcdprod control= "C:\MISC\oracle\SQL\Corporate_Usage\corporate_usage.ctl"

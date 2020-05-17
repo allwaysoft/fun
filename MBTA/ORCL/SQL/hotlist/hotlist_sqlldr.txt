@@ -1,0 +1,5 @@
+cd C:\MISC\SQL\hotlist
+
+sqlldr userid=mbta@nwcdprod control= "C:\MISC\SQL\hotlist\hotlist.ctl"
+
+Check the log file if all the data is imported to tha table.

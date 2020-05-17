@@ -1,0 +1,335 @@
+Statspack Implementation and Configuration :
+--------------------------------------------------
+
+1. Create the tablespace to hold the Statspack tables
+
+create tablespace statspack_data
+datafile '+HRPRDDATA' size 500M
+autoextend on maxsize 2G
+extent management local uniform size 1M
+segment space management auto;
+
+2. Login to sqlplus as sysdba and run the $ORACLE_HOME/rdbms/admin/spcreate.sql script to create the PERFSTAT 
+
+schema. The script runs three scripts: 
+spcuser.sql to create the PERFSTAT user 
+spctab.sql to create the Statspack tables and synonyms 
+spcpkg.sql to create the statistic gathering packages
+
+SQL> @spcreate.sql
+ 
+Choose the PERFSTAT user's password
+-----------------------------------
+Not specifying a password will result in the installation FAILING
+ 
+Enter value for perfstat_password:
+ 
+Provide a password for the PERFSTAT user and hit enter.
+ 
+Choose the Default tablespace for the PERFSTAT user
+---------------------------------------------------
+Below is the list of online tablespaces in this database which can
+store user data.  Specifying the SYSTEM tablespace for the user's
+default tablespace will result in the installation FAILING, as
+using SYSTEM for performance data is not supported.
+ 
+Choose the PERFSTAT users's default tablespace.  This is the tablespace
+in which the STATSPACK tables and indexes will be created.
+ 
+TABLESPACE_NAME                CONTENTS  STATSPACK DEFAULT TABLESPACE
+------------------------------ --------- ----------------------------
+EXAMPLE                        PERMANENT
+STATSPACK_DATA                 PERMANENT
+SYSAUX                         PERMANENT *
+USERS                          PERMANENT
+ 
+Pressing <return> will result in STATSPACK's recommended default
+tablespace (identified by *) being used.
+ 
+Enter value for default_tablespace: STATSPACK_DATA
+
+Choose the Temporary tablespace for the PERFSTAT user
+-----------------------------------------------------
+Below is the list of online tablespaces in this database which can
+store temporary data (e.g. for sort workareas).  Specifying the SYSTEM
+tablespace for the user's temporary tablespace will result in the
+installation FAILING, as using SYSTEM for workareas is not supported.
+ 
+Choose the PERFSTAT user's Temporary tablespace.
+ 
+TABLESPACE_NAME                CONTENTS  DB DEFAULT TEMP TABLESPACE
+------------------------------ --------- --------------------------
+TEMP                           TEMPORARY *
+ 
+Pressing <return> will result in the database's default Temporary
+tablespace (identified by *) being used.
+ 
+Enter value for temporary_tablespace:
+
+
+--- Please provide the PERFSTAT default tablespace and temporary tablespace information. Once you select the 
+
+temporary table space the PERFSTAT user and all the objects owned by PERFSTAT will be created.
+
+Logs of the execution are written to spcuser.lis, spctab.lis and spcpkg.lis provided there are no errors we have 
+
+encountered while installing Statspack.
+
+3. Once the statspack is installed successfully, how to take the snapshot of the database. We can take the snapshot 
+
+of the database using the STATSPACK.SNAP procedure.  There are five snap shot levels (0, 5, 6, 7, 10) with 5 being 
+
+the default. Details of levels can be found in the documentation and from stats$level_description
+
+
+SQL> select * from stats$level_description;
+ 
+SNAP_LEVEL  DESCRIPTION
+----------  --------------------------------------------------------------------
+         0  This level captures general statistics, including rollback segment, 
+            row cache, SGA, system events, background events, session events, 
+            system statistics, wait statistics, lock statistics, and Latch 
+            information
+ 
+         5  This level includes capturing high resource usage SQL Statements, 
+            along with all data captured by lower levels
+ 
+         6  This level includes capturing SQL plan and SQL plan usage 
+            information for high resource usage SQL Statements, along with all 
+            data captured by lower levels
+ 
+         7  This level captures segment level statistics, including logical and 
+            physical reads, row lock, itl and buffer busy waits, along with all 
+            data captured by lower levels
+ 
+        10  This level includes capturing Child Latch statistics, along with 
+            all data captured by lower levels
+ 
+SQL>
+
+If you want to take a snapshot at a different level you can pass in the desired level using the i_snap_level 
+
+parameter. Here is an example to take the snapshot for the snap level 7 below
+
+SQL> exec statspack.snap(i_snap_level => 7);
+ 
+PL/SQL procedure successfully completed.
+ 
+SQL>
+
+If you would like to change the default level from 5 to 7 you can do so with STATSPACK.MODIFY_STATSPACK_PARAMETER 
+
+using the i_snap_level and i_modify_parameter parameters.
+
+SQL> exec statspack.modify_statspack_parameter(i_snap_level=>7, i_modify_parameter=>’true’);
+ 
+PL/SQL procedure successfully completed.
+ 
+SQL>
+
+***NOTE >>>>The higher snapshot levels require more time and resources to execute than the lower snapshot levels.
+
+4. How to Automate the Snapshot Collection?
+
+Automating the collection of snapshots through out the day provides useful information to aid in detecting the 
+
+source of performance related issues. Care should be taken that the snapshots are not taken so frequently that the 
+
+collections become a source of problems and not so far apart that it is difficult to obtain useful information.
+
+Below is a schedule and job to collect Statspack snap shots every 20 minutes. This schedule will make collections at 
+
+10, 30 and 50 after the hour. The choice of 10 before and after the hour is used to avoid collecting at the same 
+
+time AWR data is collected which defaults to every hour.
+
+SQL> BEGIN
+  2    DBMS_SCHEDULER.CREATE_SCHEDULE(
+  3     schedule_name => 'perfstat.statspack_every20',
+  4     repeat_interval => 'FREQ=MINUTELY;BYMINUTE=10,30,50');
+  5
+  6    DBMS_SCHEDULER.CREATE_JOB(
+  7     job_name => 'perfstat.sp_snapshot',
+  8     job_type => 'STORED_PROCEDURE',
+  9     job_action => 'perfstat.statspack.snap',
+ 10     schedule_name => 'perfstat.statspack_every20',
+ 11     comments => 'Statspack collection');
+ 12
+ 13    DBMS_SCHEDULER.ENABLE('perfstat.sp_snapshot');
+ 14  END;
+ 15  /
+ 
+PL/SQL procedure successfully completed.
+ 
+SQL>
+
+For Setting the Statspack to take the snapshot every 10 minutes, here is the script below :
+
+SQL> BEGIN
+  2    DBMS_SCHEDULER.CREATE_SCHEDULE(
+  3     schedule_name => 'perfstat.statspack_every10',
+  4     repeat_interval => 'FREQ=MINUTELY;BYMINUTE=5,15,25,35,45,55');
+  5
+  6    DBMS_SCHEDULER.CREATE_JOB(
+  7     job_name => 'perfstat.sp_snapshot',
+  8     job_type => 'STORED_PROCEDURE',
+  9     job_action => 'perfstat.statspack.snap',
+ 10     schedule_name => 'perfstat.statspack_every10',
+ 11     comments => 'Statspack collection');
+ 12
+ 13    DBMS_SCHEDULER.ENABLE('perfstat.sp_snapshot');
+ 14  END;
+ 15  /
+ 
+PL/SQL procedure successfully completed.
+ 
+SQL>
+
+The above command will take the snapshot after every 10 and 20 minutes respectively and schedules a batch job to 
+
+automatically take the snapshot of the database.
+
+5. How to run the Statspack Report from the database
+
+There are two types a reports you can run: 
+-	 Instance report
+-	 SQL Report.
+
+$ORACLE_HOME\rdbms\admin\spreport.sql is used to generate an instance level report. For an instance level report the 
+
+beginning and ending snapshot id and the name of the output report are required.
+
+SQL> @spreport
+ 
+Current Instance
+~~~~~~~~~~~~~~~~
+?   DB Id    DB Name     Inst Num Instance
+----------- ------------ -------- ------------
+ 1253224498 ORCL                1 orcl
+ 
+1 row selected.
+ 
+SP2-0311: string expected but not found
+ 
+ 
+Instances in this Statspack schema
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+   DB Id    Inst Num DB Name      Instance     Host
+----------- -------- ------------ ------------ ------------
+ 1253224498        1 ORCL         orcl         ODWIN
+ 
+Using 1253224498 for database Id
+Using          1 for instance number
+ 
+ 
+Specify the number of days of snapshots to choose from
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Entering the number of days (n) will result in the most recent
+(n) days of snapshots being listed.  Pressing <return> without
+specifying a number lists all completed snapshots.
+ 
+ 
+ 
+Listing all Completed Snapshots
+ 
+                                                       Snap
+Instance     DB Name        Snap Id   Snap Started    Level Comment
+------------ ------------ --------- ----------------- ----- --------------------
+orcl         ORCL                 4 10 Aug 2010 13:10     5
+                                  5 10 Aug 2010 13:30     5
+                                  6 10 Aug 2010 13:50     5
+                                  7 10 Aug 2010 14:10     5
+ 
+ 
+Specify the Begin and End Snapshot Ids
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enter value for begin_snap: 4
+Begin Snapshot Id specified: 4
+ 
+Enter value for end_snap: 5
+End   Snapshot Id specified: 5
+ 
+ 
+ 
+Specify the Report Name
+~~~~~~~~~~~~~~~~~~~~~~~
+The default report file name is sp_4_5.  To use this name,
+press <return> to continue, otherwise enter an alternative.
+ 
+Enter value for report_name: testreport.txt
+
+The above command will create the Instance Report named testreport.txt
+
+After viewing the instance report you might want to look deeper at a particular SQL statement from the report. The 
+
+script ORACLE_HOME/rdbms/admin/sprepsql.sql can be used to generate an SQL report. In addition to the beginning and 
+
+ending snapshot id and output file name the SQL Hash value is required.
+
+6. How to maintain the snapshot in the database ?
+
+We can remove a snapshot or a range of snapshots using ORACLE_HOME/rdbms/admin/sppurge.sql
+
+SQL> @sppurge
+ 
+ 
+Database Instance currently connected to
+========================================
+ 
+                                Instance
+   DB Id    DB Name    Inst Num Name
+----------- ---------- -------- ----------
+ 1253224498 ORCL              1 orcl
+ 
+ 
+Snapshots for this database instance
+====================================
+ 
+                               Base-  Snap
+ Snap Id   Snapshot Started    line? Level Host            Comment
+-------- --------------------- ----- ----- --------------- --------------------
+       1  10 Aug 2010 12:12:59           5 ODWIN
+       2  10 Aug 2010 12:23:23           5 ODWIN
+       3  10 Aug 2010 12:50:06           5 ODWIN
+ 
+ 
+Warning
+~~~~~~~
+sppurge.sql deletes all snapshots ranging between the lower and
+upper bound Snapshot Id's specified, for the database instance
+you are connected to.  Snapshots identified as Baseline snapshots
+which lie within the snapshot range will not be purged.
+ 
+It is NOT possible to rollback changes once the purge begins.
+ 
+You may wish to export this data before continuing.
+ 
+ 
+Specify the Lo Snap Id and Hi Snap Id range to purge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Enter value for losnapid: 1
+Using 1 for lower bound.
+ 
+Enter value for hisnapid: 2
+Using 2 for upper bound.
+ 
+Deleting snapshots 1 - 2.
+ 
+Number of Snapshots purged: 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+Purge of specified Snapshot range complete.
+ 
+ 
+SQL>
+
+We can remove all snapshots using ORACLE_HOME/rdbms/admin/sptrunc.sql
+
+7. How to Uninstall the Statspack ?
+
+If you decide you do not need Statspack installed any more you can remove/uninstall Statspack with 
+
+ORACLE_HOME/rdbms/admin/spdrop.sql. The spdrop.sql needs to be executed by sys or user with with SYSDBA. Remember to 
+
+remove any jobs you might have created to manage the Statspack environment.

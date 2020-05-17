@@ -1,0 +1,111 @@
+select count(*)
+  2    from ( select rownum rnum
+  3             from all_objects
+  4            where rownum <= to_date('&1') - to_date('&2')+1 )
+  5   where to_char( to_date('&2')+rnum-1, 'DY' ) 
+                not in ( 'SAT', 'SUN' )
+  6     and not exists 
+        ( select null from exclude_dates where no_work =
+                 trunc(to_date('&2')+rnum-1) )
+
+
+
+
+
+
+-- 3 MINS
+SELECT
+    /*+
+        ORDERED
+        USE_HASH    (sub)
+        INDEX        (sub    XIE1SalesDetail)
+        USE_NL        (mcm)
+        USE_NL        (st)
+        INDEX        (mcm    XIE5MiscCardMovement)
+        INDEX        (sd        XIE8SalesDetail)
+        INDEX        (st        XPKSalesTransaction)
+        USE_NL        (tvm)
+        USE_NL        (sta)
+    */
+     1--:QueryID
+    ,1
+    ,sta.Name                                                                    --    Station
+    ,sum(decode(sd.Machinebooking||':'||sd.Cancellation,'1:1',1,'0:0',1,-1))
+  ,20--:ndays
+FROM
+     SalesDetail            sd
+    ,SalesDetail            sub
+    ,MiscCardMovement        mcm
+    ,SalesTransaction        st
+    ,TVMTable                tvm
+    ,tvmStation                sta
+WHERE        1=1
+--
+--    Join conditions
+--
+    AND    sub.DeviceClassId       (+)    = sd.DeviceClassId
+    AND    sub.DeviceId               (+)    = sd.DeviceId
+    AND    sub.Uniquemsid             (+)    = sd.Uniquemsid
+    AND    sub.SalestransactionNo    (+)    = sd.SalesTransactionNo
+    AND    sub.SalesDetailEvSequNo    (+)    = sd.SalesDetailEvSequNo    +1
+    AND    sub.CorrectionCounter    (+)    = sd.CorrectionCounter
+    AND    sub.PartitioningDate    (+)    = sd.PartitioningDate
+
+    AND    mcm.DeviceClassId           = sd.DeviceClassId
+    AND    mcm.DeviceId                   = sd.DeviceId
+    AND    mcm.Uniquemsid                 = sd.Uniquemsid
+    AND    mcm.SalestransactionNo        = sd.SalesTransactionNo
+    AND    mcm.SequenceNo                = Decode    (sub.SalesDetailEvSequNo
+                                                    ,NULL    ,sd.SalesDetailEvSequNo
+                                                ,sub.SalesDetailEvSequNo
+                                                )
+    AND    mcm.CorrectionCounter        = sd.CorrectionCounter
+    AND    mcm.PartitioningDate        = sd.PartitioningDate
+    AND    mcm.TimeStamp                = sd.CreaDate
+
+    AND    sd.DeviceID                    = st.DeviceID
+    AND    sd.DeviceClassID            = st.DeviceClassID
+    AND    sd.UniqueMSID                = st.UniqueMSID
+    AND    sd.SalesTransactionNo        = st.SalesTransactionNo
+    AND    sd.PartitioningDate            = st.PartitioningDate
+    AND    tvm.TVMID            =    st.DeviceID
+    AND    tvm.DeviceClassID    =    st.DeviceClassID
+  
+    AND    sta.StationID     (+)    =    tvm.TVMTariffLocationID
+
+--
+--    Filter conditions
+--
+
+    AND    mcm.MovementType    IN     (7,20)
+
+    AND    sd.ArticleNo                >     100000
+    AND    sd.CorrectionFlag            =     0
+    AND    sd.RealStatisticArticle        =     0
+    AND    sd.TempBooking                =     0
+    AND sd.ArticleNo                <>     607900100
+    AND sub.ArticleNo            (+)    =    607900100
+    AND    st.TestSaleFlag                =     0
+  -- Exclude holidays and weekends with the below condition
+  AND (to_char(sd.creadate, 'D') not in ('1','7')
+       or trunc(sd.creadate) not in (select dateis from holiday_mbta where dateis between trunc(to_date('2007-10-01-00-00-01','YYYY-MM-DD-HH24-MI-SS')) and trunc(to_date('2007-11-01-00-00-01','YYYY-MM-DD-HH24-MI-SS')))
+      ) 
+    AND    mcm.DeviceClassID        IN    (
+                                        SELECT
+                                            DeviceClassID
+                                        FROM
+                                            DeviceClass
+                                        WHERE    DeviceClassType    IN    (5            --    Fareboxes
+                                                                      )
+                                    )
+--
+--    Parameter conditions
+--
+
+    AND    sd.CreaDate            >= to_date('2007-10-01-00-00-01','YYYY-MM-DD-HH24-MI-SS')
+    AND    sd.CreaDate            <= to_date('2007-11-01-00-00-01','YYYY-MM-DD-HH24-MI-SS')
+    AND    sd.PartitioningDate    >= to_date('2007-11-01-00-00-01','YYYY-MM-DD-HH24-MI-SS')
+    AND    sd.PartitioningDate    <  to_date('2007-12-01-00-00-01','YYYY-MM-DD-HH24-MI-SS')
+    AND    1=1
+GROUP    BY
+    sta.NAME

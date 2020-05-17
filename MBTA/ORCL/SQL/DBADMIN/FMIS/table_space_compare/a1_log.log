@@ -1,0 +1,66 @@
+
+SQL*Loader: Release 11.2.0.2.0 - Production on Fri Nov 16 12:13:38 2012
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Control File:   C:\MISC\ORACLE\SQL\DBADMIN\FMIS\table_space_compare\a.ctl
+Data File:      C:\MISC\ORACLE\SQL\DBADMIN\FMIS\table_space_compare\a1.txt
+  Bad File:     C:\MISC\ORACLE\SQL\DBADMIN\FMIS\table_space_compare\a1_bad.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 0
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table DBADMIN.T, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+A                                   FIRST     *   ,    |  CHARACTER            
+    SQL string for column : "substr(:a,1,3999)"
+B                                    NEXT     *   ,    |  CHARACTER            
+    SQL string for column : "substr(:a,4000,7999)"
+C                                    NEXT     *   ,    |  CHARACTER            
+    SQL string for column : "substr(:a,8000,length(:a))"
+
+Record 1: Discarded - all columns null.
+Record 6: Discarded - all columns null.
+Record 8: Discarded - all columns null.
+Record 9: Discarded - all columns null.
+Record 11: Discarded - all columns null.
+Record 13: Rejected - Error on table DBADMIN.T, column A.
+Field in data file exceeds maximum length
+Record 15: Discarded - all columns null.
+Record 17: Discarded - all columns null.
+Record 18: Rejected - Error on table DBADMIN.T, column A.
+Field in data file exceeds maximum length
+
+MAXIMUM ERROR COUNT EXCEEDED - Above statistics reflect partial run.
+
+Table DBADMIN.T:
+  9 Rows successfully loaded.
+  2 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  7 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                  49536 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          0
+Total logical records read:            18
+Total logical records rejected:         2
+Total logical records discarded:        7
+
+Run began on Fri Nov 16 12:13:38 2012
+Run ended on Fri Nov 16 12:13:41 2012
+
+Elapsed time was:     00:00:01.36
+CPU time was:         00:00:00.09

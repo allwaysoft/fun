@@ -1,0 +1,50 @@
+
+SQL*Loader: Release 9.2.0.1.0 - Production on Sat Nov 13 13:04:17 2010
+
+Copyright (c) 1982, 2002, Oracle Corporation.  All rights reserved.
+
+Control File:   C:\MISC\SQL\police_report\police_id_numbers.ctl
+Data File:      C:\MISC\SQL\police_report\police_id_numbers.txt
+  Bad File:     C:\MISC\SQL\police_report\police_id_bad.txt
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 1
+Errors allowed: 1
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table MBTA_TEMP_POLICE_INFORMATION, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+POLICE_ID                           FIRST     *   ,  O(") CHARACTER            
+POLICE_NAME                          NEXT     *   ,  O(") CHARACTER            
+POLICE_SERIALNO                      NEXT     *   ,  O(") CHARACTER            
+
+
+Table MBTA_TEMP_POLICE_INFORMATION:
+  280 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                  49536 bytes(64 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          1
+Total logical records read:           280
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Sat Nov 13 13:04:17 2010
+Run ended on Sat Nov 13 13:04:21 2010
+
+Elapsed time was:     00:00:03.81
+CPU time was:         00:00:00.06

@@ -1,0 +1,134 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Tue Dec 29 12:20:12 2009
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+Control File:   D:\cm\2006\Conversion\cadcustom_jcdeta_files\cadcustom_jcdeta_ac.ctl
+Data File:      \\Accounting\D\CAD-USER\CMIC.CONV\dcjcdetail.ac.txt
+  Bad File:     D:\cm\2006\Conversion\cadcustom_jcdeta_files\DCJCDETA_ac.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 3
+Errors allowed: 50
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table DA.DC_JCDETAIL, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+DC_ROWNUM                                                 SEQUENCE (MAX, 1)
+JCDT_REF_DATE                       FIRST     *   ,  O(") DATE YYYYMMDD        
+JCDT_POST_DATE                       NEXT     *   ,  O(") DATE YYYYMMDD        
+JCDT_BCH_NUM                         NEXT     *   ,  O(") CHARACTER            
+JCDT_UNIT                            NEXT     *   ,  O(") CHARACTER            
+JCDT_AMT                             NEXT     *   ,  O(") CHARACTER            
+JCDT_TYPE_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_TYPE_CODE)))"
+JCDT_JOB_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_JOB_CODE)))"
+JCDT_JOB_CTRL_CODE                   NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_JOB_CTRL_CODE)))"
+JCDT_REF_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_REF_CODE)))"
+JCDT_SRC_COMM_CODE                   NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_SRC_COMM_CODE)))"
+JCDT_SRC_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_SRC_CODE)))"
+JCDT_COMP_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_COMP_CODE)))"
+JCDT_DSRC_COMP_CODE                  NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_DSRC_COMP_CODE)))"
+JCDT_DSRC_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_DSRC_CODE)))"
+JCDT_JOUR_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_JOUR_CODE)))"
+JCDT_WM_CODE                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_WM_CODE)))"
+JCDT_SRC_DESC                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:JCDT_SRC_DESC))"
+JCDT_CAT_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_CAT_CODE)))"
+JCDT_CAT_CTRL_CODE                   NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_CAT_CTRL_CODE)))"
+JCDT_DEPT_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_DEPT_CODE)))"
+JCDT_REF_DESC                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:JCDT_REF_DESC))"
+JCDT_PHS_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_PHS_CODE)))"
+JCDT_PHS_CTRL_CODE                   NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_PHS_CTRL_CODE)))"
+JCDT_ACC_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_ACC_CODE)))"
+JCDT_INV_NUM                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_INV_NUM)))"
+JCDT_BILL_AMT                        NEXT     *   ,  O(") CHARACTER            
+JCDT_WBSV_CODE1                      NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_WBSV_CODE1)))"
+JCDT_WBSV_CODE2                      NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_WBSV_CODE2)))"
+JCDT_WBSV_CODE3                      NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_WBSV_CODE3)))"
+JCDT_WBSV_CODE4                      NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_WBSV_CODE4)))"
+JCDT_INV_BCH_NUM                     NEXT     *   ,  O(") CHARACTER            
+JCDT_AR_INV_NUM                      NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_AR_INV_NUM)))"
+JCDT_UNBILLED_REV_AMT                NEXT     *   ,  O(") CHARACTER            
+JCDT_SEC_PAY_RUN                     NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_SEC_PAY_RUN)))"
+JCDT_JB_DRAW_NUM                     NEXT     *   ,  O(") CHARACTER            
+JCDT_JB_REVISION_NUM                 NEXT     *   ,  O(") CHARACTER            
+JCDT_JB_DEFER_BILLING_FLAG           NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_JB_DEFER_BILLING_FLAG)))"
+JCDT_HOME_COMP_CODE                  NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_HOME_COMP_CODE)))"
+JCDT_HOME_DEPT_CODE                  NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_HOME_DEPT_CODE)))"
+JCDT_REV_GENERATED_AMT               NEXT     *   ,  O(") CHARACTER            
+JCDT_CURR_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_CURR_CODE)))"
+JCDT_EXCHG_CURR_CODE                 NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_EXCHG_CURR_CODE)))"
+JCDT_EXCHG_RATE                      NEXT     *   ,  O(") CHARACTER            
+JCDT_EXCHG_AMT                       NEXT     *   ,  O(") CHARACTER            
+JCDT_BILL_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_BILL_CODE)))"
+JCDT_BILL_CODE_UPDATE_FLAG           NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_BILL_CODE_UPDATE_FLAG)))"
+JCDT_POST_OVERHD_FLAG                NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_POST_OVERHD_FLAG)))"
+JCDT_JB_DEFERRAL_DRAW_NUM            NEXT     *   ,  O(") CHARACTER            
+JCDT_JB_DEFERRAL_REVISION_NUM        NEXT     *   ,  O(") CHARACTER            
+JCDT_SRC_CODE2                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:JCDT_SRC_CODE2)))"
+
+value used for ROWS parameter changed from 64 to 19
+
+Table DA.DC_JCDETAIL:
+  756441 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 245537 bytes(19 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          3
+Total logical records read:        756441
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Tue Dec 29 12:20:12 2009
+Run ended on Tue Dec 29 12:21:48 2009
+
+Elapsed time was:     00:01:35.74
+CPU time was:         00:00:18.28

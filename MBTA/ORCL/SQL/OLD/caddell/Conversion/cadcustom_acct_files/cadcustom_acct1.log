@@ -1,0 +1,113 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Tue Dec 29 09:32:39 2009
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+Control File:   D:\cm\2006\Conversion\cadcustom_acct_files\cadcustom_acct1.ctl
+Data File:      \\Accounting\D\CAD-USER\CMIC.CONV\DCACCNT.1.txt
+  Bad File:     D:\cm\2006\Conversion\cadcustom_acct_files\DCACCNT1.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 3
+Errors allowed: 50
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table DA.DC_ACCOUNT, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+DC_ROWNUM                                                 SEQUENCE (MAX, 1)
+ACC_CONSCHART_CODE                  FIRST     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_CONSCHART_CODE)))"
+ACC_CODE                             NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_CODE)))"
+ACC_NAME                             NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:ACC_NAME))"
+ACC_TYPE_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TYPE_CODE)))"
+ACC_CTRL_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_CTRL_CODE)))"
+ACC_LONG_CODE                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_LONG_CODE)))"
+ACC_SEQUENCE                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "replace(:ACC_SEQUENCE,' ',NULL)"
+ACC_WM_CODE                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_WM_CODE)))"
+ACC_NORMAL_BAL_CODE                  NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_NORMAL_BAL_CODE)))"
+ACC_SUBLEDG_CODE                     NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_SUBLEDG_CODE)))"
+ACC_SUMMARY_CODE                     NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_SUMMARY_CODE)))"
+ACC_OF_CONCATENATED_SEGMENTS         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:ACC_OF_CONCATENATED_SEGMENTS))"
+ACC_INTER_COMP_ACC_FLAG              NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_INTER_COMP_ACC_FLAG)))"
+ACC_HIER                             NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:ACC_HIER))"
+ACC_LEVEL_CODE                       NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "replace(:ACC_LEVEL_CODE,' ',NULL)"
+ACC_LOW_FLAG                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_LOW_FLAG)))"
+ACC_TAV_CODE1                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_CODE1)))"
+ACC_TAV_CODE2                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_CODE2)))"
+ACC_TAV_CODE3                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_CODE3)))"
+ACC_TAV_CODE4                        NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_CODE4)))"
+ACC_TAV_REQUIRED_FLAG1               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_REQUIRED_FLAG1)))"
+ACC_TAV_REQUIRED_FLAG2               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_REQUIRED_FLAG2)))"
+ACC_TAV_REQUIRED_FLAG3               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_REQUIRED_FLAG3)))"
+ACC_TAV_REQUIRED_FLAG4               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_REQUIRED_FLAG4)))"
+ACC_TAV_VALIDATED_FLAG1              NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_VALIDATED_FLAG1)))"
+ACC_TAV_VALIDATED_FLAG2              NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_VALIDATED_FLAG2)))"
+ACC_TAV_VALIDATED_FLAG3              NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_VALIDATED_FLAG3)))"
+ACC_TAV_VALIDATED_FLAG4              NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_VALIDATED_FLAG4)))"
+ACC_TAV_EDITABLE_FLAG1               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_EDITABLE_FLAG1)))"
+ACC_TAV_EDITABLE_FLAG2               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_EDITABLE_FLAG2)))"
+ACC_TAV_EDITABLE_FLAG3               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_EDITABLE_FLAG3)))"
+ACC_TAV_EDITABLE_FLAG4               NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:ACC_TAV_EDITABLE_FLAG4)))"
+
+value used for ROWS parameter changed from 64 to 30
+
+Table DA.DC_ACCOUNT:
+  173 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 248370 bytes(30 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          3
+Total logical records read:           173
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Tue Dec 29 09:32:39 2009
+Run ended on Tue Dec 29 09:32:39 2009
+
+Elapsed time was:     00:00:00.23
+CPU time was:         00:00:00.05

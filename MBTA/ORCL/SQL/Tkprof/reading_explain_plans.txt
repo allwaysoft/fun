@@ -1,0 +1,5 @@
+
+http://perumal.org/how-to-read-an-oracle-sql-execution-plan/
+http://asktom.oracle.com/pls/asktom/f?p=100:11:1644406741459401::::P11_QUESTION_ID:231814117467
+
+AND also, search my gmail for "execution plan", there is an example explain plan and diagram of how I interpreted it. (Two diff emails on the same day)

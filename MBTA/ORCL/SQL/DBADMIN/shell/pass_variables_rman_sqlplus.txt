@@ -1,0 +1,13 @@
+#
+# http://www.orafaq.com/faq/can_one_prevent_passwords_from_appearing_in_the_system_process_table     --hide passwords in shell script
+# 
+# http://gavinsoorma.com/2009/09/11g-rman-substitution-variables/         --passing varibale to rman 11g
+#
+# use \ to escape $ in sqlplus when using the SQL code in shell
+#
+# passing variables from shell to sqlplus see comment from Massimo Ruocchio in the followiong link https://forums.oracle.com/forums/thread.jspa?threadID=1001677
+# 
+# This script duplicates an oracle database from another oracle database
+#
+# This script writes the output to a log file located in that particular db log directory
+#

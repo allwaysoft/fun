@@ -1,0 +1,14 @@
+http://docs.oracle.com/cd/B28359_01/server.111/b28310/memory003.htm#ADMIN11011
+
+-- this view shows the memory_size used and the estimated time factory if we increase or decrease the current memory size. row with memory_size_factor=1 is the current
+-- db status for the memory being allocated.
+select * from v$memory_target_advice order by memory_size   
+
+
+select * from V$MEMORY_DYNAMIC_COMPONENTS 
+
+select * from v$streams_pool_advice order by streams_pool_size_factor
+
+select * from v$shared_pool_advice order by shared_pool_size_factor
+
+select * from v$sysstat

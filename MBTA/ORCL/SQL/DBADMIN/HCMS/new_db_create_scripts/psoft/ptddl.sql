@@ -1,0 +1,145 @@
+-- ****************************************************************** 
+-- ORACLE CONFIDENTIAL.  For authorized use only.  Except for as      
+-- expressly authorized by Oracle, do not disclose, copy, reproduce,  
+-- distribute, or modify.                                             
+-- ****************************************************************** 
+--                                                                    
+-- ******************************************************************
+-- ******************************************************************
+--
+--                          
+--
+--                                                                  
+--
+-- ******************************************************************
+
+REMARK * Use this script to create tablespaces for a PT8 PTDMO database
+REMARK * Change <drive> and <SID> to the appropriate values for your system
+
+set echo on
+spool /migration/admin/hordmo/logfiles/ptddl.log
+
+REMARK * This section comprises the tablespaces that are specific to TOOLS
+
+CREATE TABLESPACE PSIMAGE DATAFILE '/migration/oradata/hordmo/psimage.dbf' SIZE 250M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PSINDEX DATAFILE '/migration/oradata/hordmo/psindex.dbf' SIZE 2500M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTAPP DATAFILE '/migration/oradata/hordmo/ptapp.dbf' SIZE 40M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTPRC DATAFILE '/migration/oradata/hordmo/ptprc.dbf' SIZE 8M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTRPTS DATAFILE '/migration/oradata/hordmo/ptrpts.dbf' SIZE 10M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTTBL DATAFILE '/migration/oradata/hordmo/pttbl.dbf' SIZE 200M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PSWORK DATAFILE '/migration/oradata/hordmo/pswork.dbf' SIZE 6M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTLOCK DATAFILE '/migration/oradata/hordmo/ptlock.dbf' SIZE 6M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTAMSG DATAFILE '/migration/oradata/hordmo/ptamsg.dbf' SIZE 6M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTAPPE DATAFILE '/migration/oradata/hordmo/ptappe.dbf' SIZE 6M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTTLRG DATAFILE '/migration/oradata/hordmo/pttlrg.dbf' SIZE 80M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTTREE DATAFILE '/migration/oradata/hordmo/pttree.dbf' SIZE 6M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTWORK DATAFILE '/migration/oradata/hordmo/ptwork.dbf' SIZE 20M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTCMSTAR DATAFILE '/migration/oradata/hordmo/ptcmstar.dbf' SIZE 10M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTPRJWK DATAFILE '/migration/oradata/hordmo/ptprjwk.dbf' SIZE 10M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PTAUDIT DATAFILE '/migration/oradata/hordmo/ptaudit.dbf' SIZE 10M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+CREATE TABLESPACE PSIMGR DATAFILE '/migration/oradata/hordmo/psimgr.dbf' SIZE 20M
+EXTENT MANAGEMENT LOCAL AUTOALLOCATE
+SEGMENT SPACE MANAGEMENT AUTO
+/
+
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/psimage.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/psindex.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptapp.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptprc.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptrpts.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/pttbl.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/pswork.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptlock.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptamsg.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptappe.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/pttlrg.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/pttree.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptwork.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptcmstar.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptprjwk.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/ptaudit.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+REMARK ALTER DATABASE DATAFILE '/migration/oradata/hordmo/psimgr.dbf'
+REMARK AUTOEXTEND ON NEXT 5M MAXSIZE UNLIMITED
+REMARK /
+
+Spool Off

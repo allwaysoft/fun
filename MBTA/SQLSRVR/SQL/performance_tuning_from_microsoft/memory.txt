@@ -1,0 +1,120 @@
+/* This Sample Code is provided for the purpose of illustration only and is not intended 
+to be used in a production environment.  THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE 
+PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR 
+PURPOSE.  We grant You a nonexclusive, royalty-free right to use and modify the Sample Code
+and to reproduce and distribute the object code form of the Sample Code, provided that You 
+agree: (i) to not use Our name, logo, or trademarks to market Your software product in which
+the Sample Code is embedded; (ii) to include a valid copyright notice on Your software product
+in which the Sample Code is embedded; and (iii) to indemnify, hold harmless, and defend Us and
+Our suppliers from and against any claims or lawsuits, including attorneys’ fees, that arise or 
+result from the use or distribution of the Sample Code.
+*/
+-- top 10 consumers of memory from BPool 
+select  
+    top 10 type,  
+    sum(single_pages_kb) as [SPA Mem, Kb] 
+from  
+    sys.dm_os_memory_clerks 
+group by type  
+order by sum(single_pages_kb) desc
+
+
+-------------------------------------------------------
+
+
+-- amount of memory consumed by components 
+--outside the Buffer pool  
+-- note that we exclude single_pages_kb as 
+--they come from BPool 
+-- BPool is accounted for by the next query 
+select 
+    sum(multi_pages_kb  
+        + virtual_memory_committed_kb 
+        + shared_memory_committed_kb) as 
+[Overall used w/o BPool, Kb] 
+from  
+    sys.dm_os_memory_clerks  
+where  
+    type <> 'MEMORYCLERK_SQLBUFFERPOOL' 
+ 
+-- amount of memory consumed by BPool 
+-- note that currenlty only BPool uses AWE 
+select 
+    sum(multi_pages_kb  
+        + virtual_memory_committed_kb 
+        + shared_memory_committed_kb 
+        + awe_allocated_kb) as [Used by BPool with AWE, Kb] 
+from  
+    sys.dm_os_memory_clerks  
+where  
+    type = 'MEMORYCLERK_SQLBUFFERPOOL'
+
+-------------------------------------------------------
+
+
+-- Detailed memory
+
+declare @total_alloc bigint  
+declare @tab table ( 
+    type nvarchar(128) collate database_default  
+    ,allocated bigint 
+    ,virtual_res bigint 
+    ,virtual_com bigint 
+    ,awe bigint 
+    ,shared_res bigint 
+    ,shared_com bigint 
+    ,topFive nvarchar(128) 
+    ,grand_total bigint 
+); 
+-- note that this total excludes buffer pool  
+--committed memory as it represents the largest 
+--consumer which is normal 
+select 
+    @total_alloc =  
+        sum(single_pages_kb  
+            + multi_pages_kb  
+            + (CASE WHEN type <> 'MEMORYCLERK_SQLBUFFERPOOL'  
+                THEN virtual_memory_committed_kb  
+                ELSE 0 END)  
+            + shared_memory_committed_kb) 
+from  
+    sys.dm_os_memory_clerks  
+print  
+    'Total allocated (including from Buffer Pool): '  
+    + CAST(@total_alloc as varchar(10)) + ' Kb' 
+insert into @tab 
+select 
+    type 
+    ,sum(single_pages_kb + multi_pages_kb) as allocated 
+    ,sum(virtual_memory_reserved_kb) as vertual_res 
+    ,sum(virtual_memory_committed_kb) as virtual_com 
+    ,sum(awe_allocated_kb) as awe 
+    ,sum(shared_memory_reserved_kb) as shared_res  
+    ,sum(shared_memory_committed_kb) as shared_com 
+    ,case  when  ( 
+        (sum(single_pages_kb  
+            + multi_pages_kb  
+            + (CASE WHEN type <> 'MEMORYCLERK_SQLBUFFERPOOL'  
+                THEN virtual_memory_committed_kb  
+                ELSE 0 END)  
+            + shared_memory_committed_kb))/ 
+            (@total_alloc + 0.0)) >= 0.05  
+          then type  
+          else 'Other'  
+    end as topFive 
+    ,(sum(single_pages_kb  
+        + multi_pages_kb  
+        + (CASE WHEN type <> 'MEMORYCLERK_SQLBUFFERPOOL'  
+            THEN virtual_memory_committed_kb  
+            ELSE 0 END)  
+        + shared_memory_committed_kb)) as grand_total  
+from  
+    sys.dm_os_memory_clerks  
+group by type 
+order by (sum(single_pages_kb + multi_pages_kb 
++ (CASE WHEN type <>  
+'MEMORYCLERK_SQLBUFFERPOOL' THEN  
+virtual_memory_committed_kb ELSE 0 END) +  
+shared_memory_committed_kb)) desc 
+select  * from @tab

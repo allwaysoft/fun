@@ -1,0 +1,148 @@
+SQL> 
+SQL> CONNECT SYSTEM/manager@mvdb
+Connected.
+SQL> 
+SQL> 
+SQL> -- 1. Create materialized View administrator for replication
+SQL> -- =========================================================
+SQL> 
+SQL> 
+SQL> create user MVIEWADMIN identified by MVIEWADMIN;
+
+User created.
+
+SQL> 
+SQL> GRANT
+  2  	     COMMENT ANY TABLE,
+  3  	     SELECT ANY DICTIONARY,
+  4  	     LOCK ANY TABLE
+  5  TO mviewadmin;
+
+Grant succeeded.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> -- 2. Grant appropriate privileges to materialized view administrator
+SQL> -- ==================================================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_REPCAT_ADMIN.GRANT_ADMIN_ANY_SCHEMA (
+  3  	   username => 'mviewadmin');
+  4  END;
+  5  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 3. Register propagating the deferred transactions
+SQL> -- ===================================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_DEFER_SYS.REGISTER_PROPAGATOR (
+  3  	   username => 'mviewadmin');
+  4  END;
+  5  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 4. Connect as materialized view administrator
+SQL> -- =============================================
+SQL> 
+SQL> CONNECT mviewadmin/mviewadmin@mvdb
+Connected.
+SQL> 
+SQL> 
+SQL> -- 5. create database link to master site replication administrator
+SQL> -- ===========================================================================
+SQL> 
+SQL> CREATE DATABASE LINK nwcd.mbta.com
+  2    CONNECT TO repadmin IDENTIFIED BY repadmin;
+
+Database link created.
+
+SQL> 
+SQL> 
+SQL> -- 6. Connect as database user
+SQL> -- ===========================
+SQL> 
+SQL> CONNECT mbta/hallo@mvdb
+Connected.
+SQL> 
+SQL> 
+SQL> -- 7. Drop and recreate database link to master site replication administrator
+SQL> -- ===========================================================================
+SQL> 
+SQL> CREATE DATABASE LINK nwcd.mbta.com
+  2  	CONNECT TO repadmin IDENTIFIED BY repadmin;
+
+Database link created.
+
+SQL> 
+SQL> 
+SQL> 
+SQL> -- 8. Connect as materialized view administrator
+SQL> -- ==============================================
+SQL> 
+SQL> CONNECT mviewadmin/mviewadmin@mvdb
+Connected.
+SQL> 
+SQL> 
+SQL> -- 9. Create the materialized view replication group
+SQL> -- ==================================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_REPCAT.CREATE_MVIEW_REPGROUP (
+  3  	   gname => 'mbta_repg1',
+  4  	   master => 'nwcd.mbta.com',
+  5  	   propagation_mode => 'ASYNCHRONOUS');
+  6  END;
+  7  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 11. Create the refresh group (job)
+SQL> -- ==================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_REFRESH.MAKE (
+  3  	   name => 'mviewadmin.mbta_refg1',
+  4  	   list => '',
+  5  	   next_date => SYSDATE,
+  6  	   interval => 'SYSDATE + 2/(60*24)',
+  7  	   implicit_destroy => FALSE,
+  8  	   rollback_seg => '',
+  9  	   push_deferred_rpc => TRUE,
+ 10  	   refresh_after_errors => FALSE);
+ 11  END;
+ 12  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> -- 11. Change an existing refresh group
+SQL> -- ====================================
+SQL> 
+SQL> BEGIN
+  2  	DBMS_REFRESH.CHANGE (
+  3  	   name => 'mviewadmin.mbta_refg1',
+  4  	   next_date => SYSDATE,
+  5  	   interval => 'SYSDATE + 2/(60*24)',
+  6  	   implicit_destroy => FALSE,
+  7  	   rollback_seg => '',
+  8  	   push_deferred_rpc => TRUE,
+  9  	   refresh_after_errors => FALSE);
+ 10  END;
+ 11  /
+
+PL/SQL procedure successfully completed.
+
+SQL> 
+SQL> 
+SQL> SET ECHO OFF

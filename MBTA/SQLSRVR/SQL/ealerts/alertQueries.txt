@@ -1,0 +1,95 @@
+select route, (
+			select count(*) from 
+			servicealerts s2
+			where s2.mode = 'Subway'  
+			and s2.route=servicealerts.route
+			and s2.isclosed=0
+			) cnt,
+			(
+			select count(*) from 
+			servicealerts s1
+			where s1.mode = 'Subway'
+			and s1.route=servicealerts.route
+			and s1.Delay='Advisory'
+			and s1.isclosed=1
+			and dateexpired is not null
+			and dateexpired > getDate()
+			) advisories, 
+			mode
+	from servicealerts
+	where mode = 'Subway'
+	group by route, mode
+
+
+
+select  count(distinct servicealertid) as cnt,
+				(
+				select  count(distinct servicealertid) from 
+				servicealerts s1
+				where s1.mode='Silver Line' 
+				and s1.Delay='Advisory'
+				and s1.isclosed=1
+				and dateexpired is not null
+				and dateexpired > getDate()
+				) advisories
+	from servicealerts where mode='Silver Line'
+	and isclosed=0
+
+
+select route, messagepublic  from 
+		servicealerts s2
+		where s2.mode='Bus' 
+		and (s2.isclosed=0 or (s2.dateexpired is not null and s2.dateexpired > getDate()))
+		order by route
+
+select route, (
+		select count(*) from 
+		servicealerts s2
+		where s2.mode='Commuter Rail' 
+		and s2.route=servicealerts.route
+		and s2.isclosed=0
+		) cnt,
+		(
+		select count(*) from 
+		servicealerts s1
+		where s1.mode='Commuter Rail' 
+		and s1.route=servicealerts.route
+		and s1.Delay='Advisory'
+		and s1.isclosed=1
+		and dateexpired is not null
+		and dateexpired > getDate()
+		) advisories
+from servicealerts
+where mode='Commuter Rail'
+
+select count(distinct  servicealertid) as cnt,
+				(
+				select count(servicealertid) from 
+				servicealerts s1
+				where s1.mode='Boat' 
+				and s1.Delay='Advisory'
+				and dateexpired is not null
+				and dateexpired > getDate()
+				) advisories
+	from servicealerts where mode='Boat'
+	and isclosed=0
+
+
+
+select count(servicealertid) as num, substring(route,0,(charindex('(', route))) as station, line, s2.mode from  
+		servicealerts s2 inner join tblModeLineStationMaster on substring(s2.route,0,(charindex('(', s2.route))) = tblModeLineStationMaster.station 
+		where s2.mode in ('Elevator','Escalator','HP')
+		and ((s2.isclosed=0) or 
+		  (s2.Delay='Advisory' and dateexpired is not null
+				and dateexpired > getDate())) group by line, substring(route,0,(charindex('(', route))), s2.mode
+	order by line 
+
+
+The above query is run twice 
+
+
+
+
+
+
+

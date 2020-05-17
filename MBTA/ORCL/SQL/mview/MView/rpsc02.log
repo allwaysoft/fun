@@ -1,0 +1,290 @@
+SQL> 
+SQL> 
+SQL> -- Connect as database user
+SQL> -- =============================================
+SQL> 
+SQL> CONNECT mbta/hallo@mvdb
+Connected.
+SQL> 
+SQL> -- Remove all snapshots
+SQL> -- =============================================
+SQL> -- #1 ------------------------------------------
+SQL> drop snapshot  "MBTA"."ACCESSLEVEL";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ALARMACTION";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ALARMEVENT";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ALARMSERVERCONFIG";
+
+Materialized view dropped.
+
+SQL> -- #5 ------------------------------------------
+SQL> drop snapshot  "MBTA"."ALARMSERVERGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ALARMSERVERGROUP_ALARMEVENT";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ARTICLE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ARTICLE_RELEASE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."BALANCEGROUP";
+
+Materialized view dropped.
+
+SQL> -- #10 ------------------------------------------
+SQL> drop snapshot  "MBTA"."CASHTYPE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."COMPANY";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."CURRENCIES";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."DBCONNECTPARAMETER";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."DEFAULTSTATIONGROUP";
+
+Materialized view dropped.
+
+SQL> -- #15 ------------------------------------------
+SQL> drop snapshot  "MBTA"."DEVICECLASS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."DEVICECLASS_VERSIONS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."DEVICECONFIG";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."EVENT";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."EVENTGROUP";
+
+Materialized view dropped.
+
+SQL> -- #20 ------------------------------------------
+SQL> drop snapshot  "MBTA"."FEPDATA";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."FUNCTION";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."FUNCTIONGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."GRAPHICMAP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."GRAPHICPROPERTY";
+
+Materialized view dropped.
+
+SQL> -- #25 ------------------------------------------
+SQL> drop snapshot  "MBTA"."HARDWARECOMPONENTS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."JOBTABLE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."LOCKDEPENDENCIES";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."MASTERASSEMBLY";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."MENUTREE";
+
+Materialized view dropped.
+
+SQL> -- #30 ------------------------------------------
+SQL> drop snapshot  "MBTA"."MULTIMEDIAGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."ORAERR";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."PAYMENTCASHTYPE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."PAYMENTOPDATA";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."PERMDETAIL";
+
+Materialized view dropped.
+
+SQL> -- #35 ------------------------------------------
+SQL> drop snapshot  "MBTA"."PERMISSION";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."PREVIOUSPASSWORD";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."PREVIOUSPIN";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."RELEASE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."RELEASE_VERSIONS";
+
+Materialized view dropped.
+
+SQL> -- #40 ------------------------------------------
+SQL> drop snapshot  "MBTA"."ROUTES";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."SCHEDULEELEMENT";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."SCHEDULEGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."SCHEDULEGROUPELEMENTS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."SCTVMRELATION";
+
+Materialized view dropped.
+
+SQL> -- #45 ------------------------------------------
+SQL> drop snapshot  "MBTA"."SDRELEASE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."SDRELEASE_RELEASE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."STATIONCONTROLLER";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."STATUSOPTIONS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TABLEINFO";
+
+Materialized view dropped.
+
+SQL> -- #50 ------------------------------------------
+SQL> drop snapshot  "MBTA"."TARIFFVERSIONS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMFEPGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMNETCONFGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMSCHEDULEGROUPELEMENT";
+
+Materialized view dropped.
+
+SQL> -- #55 ------------------------------------------
+SQL> drop snapshot  "MBTA"."TVMSCHEDULEGROUPELEMENTS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMSTATION";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMTABLE";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."TVMVERSIONGROUP";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."UNIQUENUMBERS";
+
+Materialized view dropped.
+
+SQL> -- #60 ------------------------------------------
+SQL> drop snapshot  "MBTA"."USERDATA";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."USERGROUPS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."VERSIONGROUPLIST";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."VERSIONS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."WORKSTATIONGRP";
+
+Materialized view dropped.
+
+SQL> -- #65 ------------------------------------------
+SQL> drop snapshot  "MBTA"."WORKSTATIONS";
+
+Materialized view dropped.
+
+SQL> drop snapshot  "MBTA"."WSGRPCONTENTS";
+
+Materialized view dropped.
+
+SQL> 
+SQL> spool off

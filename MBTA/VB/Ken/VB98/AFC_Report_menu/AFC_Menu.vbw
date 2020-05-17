@@ -1,0 +1,11 @@
+Frm_Menu = 36, 0, 840, 768, C, 0, 0, 0, 0, C
+ModDB = 362, 0, 924, 768, C
+Frm_Report = 55, 99, 998, 859, C, 0, 0, 0, 0, C
+Frm_Incident_Counts = 7, 1, 1123, 824, C, 0, 0, 0, 0, C
+Frm_Calendar = 136, 117, 583, 940, C, 0, 0, 0, 0, C
+New_Incident_Counts = 0, 0, 0, 0, C, 0, 136, 930, 959, C
+Frm_Login = 131, 118, 926, 781, C, 0, 0, 0, 0, C
+Frm_Dev_Avail = 136, 117, 583, 780, C, 0, 0, 0, 0, C
+CrystalReport1 = 0, 0, 0, 0, C, 0, 0, 0, 0, C
+mdlPGBLutilities = 136, 117, 583, 780, C
+Frm_Probing = 211, 145, 931, 808, C, 0, 0, 0, 0, C

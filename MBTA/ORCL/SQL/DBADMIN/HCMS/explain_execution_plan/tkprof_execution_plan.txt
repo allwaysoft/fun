@@ -1,0 +1,270 @@
+
+TKPROF: Release 11.2.0.2.0 - Development on Thu Jul 26 12:13:16 2012
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Trace file: /u01/app/oracle/diag/rdbms/hrpay/hrpay/trace/hrpay_ora_29171_KP_Q3.trc
+Sort options: default
+
+********************************************************************************
+count    = number of times OCI procedure was executed
+cpu      = cpu time in seconds executing 
+elapsed  = elapsed time in seconds executing
+disk     = number of physical reads of buffers from disk
+query    = number of buffers gotten for consistent read
+current  = number of buffers gotten in current mode (usually for update)
+rows     = number of rows processed by the fetch or execute call
+********************************************************************************
+
+error connecting to database using: sysadm/***@hrprd
+
+EXPLAIN PLAN option disabled.
+********************************************************************************
+
+SQL ID: 14ys3d7nmvxbv Plan Hash: 0
+
+ALTER SESSION SET SQL_TRACE = TRUE
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        0      0.00       0.00          0          0          0           0
+Execute      1      0.00       0.00          0          0          0           0
+Fetch        0      0.00       0.00          0          0          0           0
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total        1      0.00       0.00          0          0          0           0
+
+Misses in library cache during parse: 0
+Misses in library cache during execute: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 65  
+********************************************************************************
+
+SQL ID: grwydz59pu6mc Plan Hash: 1028580536
+
+select text 
+from
+ view$ where rowid=:1
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        6      0.00       0.00          0          0          0           0
+Execute      6      0.00       0.00          0          0          0           0
+Fetch        6      0.00       0.00          0         12          0           6
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total       18      0.00       0.00          0         12          0           6
+
+Misses in library cache during parse: 0
+Optimizer mode: CHOOSE
+Parsing user id: SYS   (recursive depth: 1)
+Number of plan statistics captured: 1
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+         1          1          1  TABLE ACCESS BY USER ROWID VIEW$ (cr=1 pr=0 pw=0 time=34 us cost=1 size=15 card=1)
+
+********************************************************************************
+
+SELECT DISTINCT B.BUSINESS_UNIT, B.DEPTID, A.EMPLID, D.NAME_PSFORMAT, D.SEX
+, TO_CHAR(D.BIRTHDATE,'YYYY-MM-DD'), A.EMPL_STATUS, A.STEP, A.HOURLY_RT
+, A.COMP_FREQUENCY, A.COMPRATE, A.ANNL_BENEF_BASE_RT, A.POSITION_NBR
+, B.EFF_STATUS, B.DESCR, B.JOBCODE, E.DESCR, B.POSN_STATUS, B.BUDGETED_POSN
+, B.MAX_HEAD_COUNT, B.REPORTS_TO, B.STD_HOURS, B.UNION_CD, G.DESCRSHORT
+, B.REG_TEMP, B.FULL_PART_TIME, B.FTE, B.BENEFIT_PROGRAM, B.REPORT_DOTTED_LINE
+, B.PHONE, B.MB_SAFETY_SENSITIV, E.EFF_STATUS, E.SAL_ADMIN_PLAN, E.GRADE, E.MANAGER_LEVEL
+, E.JOB_FAMILY, E.MED_CHKUP_REQ, E.FLSA_STATUS, E.EEO4CODE, E.JOB_FUNCTION
+, D.ADDRESS1, D.CITY, D.STATE, D.POSTAL, F.MIN_RT_ANNUAL, F.MAX_RT_ANNUAL
+, H.BENEFIT_PROGRAM, A.ACTION, TO_CHAR(A.ACTION_DT,'YYYY-MM-DD'), A.ACTION_REASON
+, TO_CHAR(A.JOB_ENTRY_DT,'YYYY-MM-DD'), E.EEO_JOB_GROUP, TO_CHAR(I.HIRE_DT,'YYYY-MM-DD')
+, J.ETHNIC_GRP_CD, B.LOCATION, TO_CHAR(A.EFFDT,'YYYY-MM-DD'), A.EFFSEQ
+, A.GL_PAY_TYPE, D.ADDRESS2, TO_CHAR(SYSDATE,'YYYY-MM-DD'),B.POSITION_NBR
+,TO_CHAR(B.EFFDT,'YYYY-MM-DD'),E.SETID,E.JOBCODE,TO_CHAR(E.EFFDT,'YYYY-MM-DD'),G.UNION_CD
+,TO_CHAR(G.EFFDT,'YYYY-MM-DD')
+FROM PS_MB_JOB_VW A
+, PS_POSITION_DATA B
+, PS_MB_PERSONAL_VW D
+, PS_JOBCODE_TBL E
+, PS_SAL_GRADE_TBL F
+, PS_UNION_TBL G
+, PS_BEN_PROG_PARTIC H
+, PS_EMPLOYMENT I
+, PS_DIVERS_ETHNIC J
+WHERE G.UNION_CD = B.UNION_CD
+AND A.EMPL_STATUS IN ('A','L','P')
+AND A.EFFDT = (SELECT MAX(A_ED.EFFDT)
+FROM PS_MB_JOB_VW A_ED
+WHERE A.EMPLID = A_ED.EMPLID
+AND A.EMPL_RCD = A_ED.EMPL_RCD
+AND A_ED.EFFDT <= TO_DATE('2012-07-01','YYYY-MM-DD'))
+AND A.EFFSEQ = (SELECT MAX(A_ES.EFFSEQ)
+FROM PS_MB_JOB_VW A_ES
+WHERE A.EMPLID = A_ES.EMPLID
+AND A.EMPL_RCD = A_ES.EMPL_RCD
+AND A.EFFDT = A_ES.EFFDT)
+AND A.POSITION_NBR = B.POSITION_NBR
+AND B.EFFDT = (SELECT MAX(B_ED.EFFDT)
+FROM PS_POSITION_DATA B_ED
+WHERE B.POSITION_NBR = B_ED.POSITION_NBR
+AND B_ED.EFFDT <= TO_DATE('2012-07-01','YYYY-MM-DD'))
+AND A.EMPLID = D.EMPLID
+AND A.JOBCODE = E.JOBCODE
+AND E.EFFDT = (SELECT MAX(E_ED.EFFDT)
+FROM PS_JOBCODE_TBL E_ED
+WHERE E.SETID = E_ED.SETID
+AND E.JOBCODE = E_ED.JOBCODE
+AND E_ED.EFFDT <= A.EFFDT)
+AND F.EFFDT = (SELECT MAX(F_ED.EFFDT)
+FROM PS_SAL_GRADE_TBL F_ED
+WHERE F.SETID = F_ED.SETID
+AND F.SAL_ADMIN_PLAN = F_ED.SAL_ADMIN_PLAN
+AND F.GRADE = F_ED.GRADE
+AND F_ED.EFFDT <= A.EFFDT)
+AND F.GRADE = A.GRADE
+AND F.SAL_ADMIN_PLAN = A.SAL_ADMIN_PLAN
+AND G.EFFDT = (SELECT MAX(G_ED.EFFDT)
+FROM PS_UNION_TBL G_ED
+WHERE G.UNION_CD = G_ED.UNION_CD
+AND G_ED.EFFDT <= B.EFFDT)
+AND A.EMPLID = H.EMPLID
+AND H.EFFDT = (SELECT MAX(H_ED.EFFDT)
+FROM PS_BEN_PROG_PARTIC H_ED
+WHERE H.EMPLID = H_ED.EMPLID
+AND H.EMPL_RCD = H_ED.EMPL_RCD
+AND H.COBRA_EVENT_ID = H_ED.COBRA_EVENT_ID
+AND H_ED.EFFDT <= TO_DATE('2012-07-01','YYYY-MM-DD'))
+AND D.EMPLID = I.EMPLID
+AND D.EMPLID = J.EMPLID
+AND A.JOBCODE <> '200300'
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      1.28       1.33          0          0          0           0
+Execute      1      0.00       0.00          0          0          0           0
+Fetch      416   1490.27    1529.50      26083     280426          0        6223
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total      418   1491.55    1530.84      26083     280426          0        6223
+
+Misses in library cache during parse: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 65  
+Number of plan statistics captured: 1
+
+Rows (1st) Rows (avg) Rows (max)  Row Source Operation
+---------- ---------- ----------  ---------------------------------------------------
+      6223       6223       6223  SORT UNIQUE (cr=280426 pr=26083 pw=0 time=1529447343 us cost=33063203 size=513 card=1)
+      6224       6224       6224   FILTER  (cr=280426 pr=26083 pw=0 time=1079759275 us)
+ 835803797  835803797  835803797    HASH JOIN  (cr=27504 pr=25650 pw=0 time=1407859136 us cost=28610 size=6170784147 card=12028819)
+      5686       5686       5686     TABLE ACCESS FULL PS_JOBCODE_TBL (cr=332 pr=0 pw=0 time=5708 us cost=103 size=426450 card=5686)
+ 324287599  324287599  324287599     HASH JOIN  (cr=27172 pr=25650 pw=0 time=635922114 us cost=28391 size=2351699964 card=5369178)
+        91         91         91      TABLE ACCESS FULL PS_UNION_TBL (cr=6 pr=0 pw=0 time=163 us cost=3 size=1547 card=91)
+ 319381328  319381328  319381328      HASH JOIN  (cr=27166 pr=25650 pw=0 time=261950824 us cost=28336 size=1564908783 card=3717123)
+      2350       2350       2350       TABLE ACCESS FULL PS_SAL_GRADE_TBL (cr=60 pr=0 pw=0 time=941 us cost=17 size=79832 card=2348)
+  30922542   30922542   30922542       HASH JOIN  (cr=27106 pr=25650 pw=0 time=44744991 us cost=28283 size=1438526601 card=3717123)
+     11154      11154      11154        TABLE ACCESS FULL PS_POSITION_DATA (cr=625 pr=0 pw=0 time=15435 us cost=173 size=1159600 card=11150)
+   8495029    8495029    8495029        HASH JOIN  (cr=26481 pr=25650 pw=0 time=12004168 us cost=15750 size=248504564 card=878108)
+     50572      50572      50572         TABLE ACCESS FULL PS_BEN_PROG_PARTIC (cr=247 pr=0 pw=0 time=18277 us cost=70 size=1264025 card=50561)
+   2352362    2352362    2352362         HASH JOIN  (cr=26234 pr=25650 pw=0 time=6622384 us cost=10385 size=104885772 card=406534)
+    141567     141567     141567          TABLE ACCESS FULL PS_JOB (cr=12140 pr=12137 pw=0 time=902562 us cost=3319 size=5972872 card=61576)
+    172382     172382     172382          HASH JOIN  (cr=14094 pr=13513 pw=0 time=2186614 us cost=5472 size=24964499 card=155059)
+     26505      26505      26505           INDEX FAST FULL SCAN PS0NAMES (cr=224 pr=0 pw=0 time=16558 us cost=52 size=953928 card=26498)(object id 93414)
+    161027     161027     161027           HASH JOIN  (cr=13870 pr=13513 pw=0 time=1946012 us cost=4385 size=18705000 card=149640)
+     21395      21395      21395            INDEX FAST FULL SCAN PS_DIVERS_ETHNIC (cr=116 pr=0 pw=0 time=11659 us cost=25 size=299460 card=21390)(object id 75962)
+    164332     164332     164332            HASH JOIN  (cr=13754 pr=13513 pw=0 time=2148715 us cost=4358 size=18237633 card=164303)
+     23492      23492      23492             TABLE ACCESS FULL PS_PERSONAL_DATA (cr=1382 pr=1376 pw=0 time=26651 us cost=382 size=1385674 card=23486)
+    164332     164332     164332             HASH JOIN  (cr=12372 pr=12137 pw=0 time=1479790 us cost=3395 size=8543756 card=164303)
+     23515      23515      23515              INDEX FAST FULL SCAN PS_PER_ORG_INST (cr=109 pr=0 pw=0 time=10680 us cost=20 size=235090 card=23509)(object id 95231)
+    164332     164332     164332              HASH JOIN  (cr=12263 pr=12137 pw=0 time=1070255 us cost=3372 size=6900726 card=164303)
+     23515      23515      23515               INDEX FAST FULL SCAN PS1PER_ORG_ASGN (cr=123 pr=0 pw=0 time=10294 us cost=22 size=305617 card=23509)(object id 95214)
+    164332     164332     164332               TABLE ACCESS FULL PS_JOB (cr=12140 pr=12137 pw=0 time=631593 us cost=3348 size=4764787 card=164303)
+     39893      39893      39893    SORT AGGREGATE (cr=84576 pr=244 pw=0 time=2120823 us)
+    557580     557580     557580     INDEX RANGE SCAN PSAJOB (cr=84576 pr=244 pw=0 time=1785592 us cost=3 size=54 card=3)(object id 73181)
+     81981      81981      81981    SORT AGGREGATE (cr=122932 pr=0 pw=0 time=3272078 us)
+   1440335    1440335    1440335     FILTER  (cr=122932 pr=0 pw=0 time=3567993 us)
+   1440811    1440811    1440811      INDEX RANGE SCAN PSAJOB (cr=122807 pr=0 pw=0 time=1603761 us cost=3 size=72 card=4)(object id 73181)
+        60         60         60      SORT AGGREGATE (cr=125 pr=0 pw=0 time=1387 us)
+       463        463        463       INDEX RANGE SCAN PSAJOB (cr=125 pr=0 pw=0 time=888 us cost=3 size=72 card=4)(object id 73181)
+      7010       7010       7010    SORT AGGREGATE (cr=7036 pr=105 pw=0 time=461451 us)
+     17737      17737      17737     INDEX RANGE SCAN PS_BEN_PROG_PARTIC (cr=7036 pr=105 pw=0 time=430193 us cost=2 size=21 card=1)(object id 72953)
+      7010       7010       7010    SORT AGGREGATE (cr=6884 pr=38 pw=0 time=294384 us)
+      7508       7508       7508     INDEX RANGE SCAN PS_NAMES (cr=6884 pr=38 pw=0 time=253661 us cost=2 size=19 card=1)(object id 93413)
+      1462       1462       1462    SORT AGGREGATE (cr=1491 pr=21 pw=0 time=154688 us)
+      5815       5815       5815     INDEX RANGE SCAN PS_POSITION_DATA (cr=1491 pr=21 pw=0 time=145774 us cost=2 size=68 card=4)(object id 95656)
+      1236       1236       1236    SORT AGGREGATE (cr=1218 pr=20 pw=0 time=117571 us)
+      2835       2835       2835     INDEX RANGE SCAN PS_JOBCODE_TBL (cr=1218 pr=20 pw=0 time=109764 us cost=2 size=21 card=1)(object id 91615)
+       695        695        695    SORT AGGREGATE (cr=735 pr=5 pw=0 time=45947 us)
+      6421       6421       6421     INDEX RANGE SCAN PS_SAL_GRADE_TBL (cr=735 pr=5 pw=0 time=36300 us cost=2 size=22 card=1)(object id 102182)
+      7027       7027       7027    SORT AGGREGATE (cr=14070 pr=0 pw=0 time=99189 us)
+      8730       8730       8730     INDEX RANGE SCAN PSAJOB (cr=14070 pr=0 pw=0 time=61643 us cost=3 size=21 card=1)(object id 73181)
+      6990       6990       6990    SORT AGGREGATE (cr=13977 pr=0 pw=0 time=92754 us)
+      8644       8644       8644     INDEX RANGE SCAN PSAJOB (cr=13977 pr=0 pw=0 time=58727 us cost=3 size=21 card=1)(object id 73181)
+       327        327        327    SORT AGGREGATE (cr=3 pr=0 pw=0 time=4275 us)
+       354        354        354     INDEX RANGE SCAN PS_UNION_TBL (cr=3 pr=0 pw=0 time=2392 us cost=1 size=12 card=1)(object id 107974)
+
+********************************************************************************
+
+SQL ID: 0pgs023t72bmb Plan Hash: 0
+
+ALTER SESSION SET SQL_TRACE = FALSE
+
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        1      0.00       0.00          0          0          0           0
+Execute      1      0.00       0.00          0          0          0           0
+Fetch        0      0.00       0.00          0          0          0           0
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total        2      0.00       0.00          0          0          0           0
+
+Misses in library cache during parse: 1
+Optimizer mode: ALL_ROWS
+Parsing user id: 65  
+
+
+
+********************************************************************************
+
+OVERALL TOTALS FOR ALL NON-RECURSIVE STATEMENTS
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        2      1.28       1.33          0          0          0           0
+Execute      3      0.00       0.00          0          0          0           0
+Fetch      416   1490.27    1529.50      26083     280426          0        6223
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total      421   1491.55    1530.84      26083     280426          0        6223
+
+Misses in library cache during parse: 2
+Misses in library cache during execute: 1
+
+
+OVERALL TOTALS FOR ALL RECURSIVE STATEMENTS
+
+call     count       cpu    elapsed       disk      query    current        rows
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+Parse        6      0.00       0.00          0          0          0           0
+Execute      6      0.00       0.00          0          0          0           0
+Fetch        6      0.00       0.00          0         12          0           6
+------- ------  -------- ---------- ---------- ---------- ----------  ----------
+total       18      0.00       0.00          0         12          0           6
+
+Misses in library cache during parse: 0
+
+    3  user  SQL statements in session.
+    1  internal SQL statements in session.
+    4  SQL statements in session.
+    0  statements EXPLAINed in this session.
+********************************************************************************
+Trace file: /u01/app/oracle/diag/rdbms/hrpay/hrpay/trace/hrpay_ora_29171_KP_Q3.trc
+Trace file compatibility: 11.1.0.7
+Sort options: default
+
+       1  session in tracefile.
+       3  user  SQL statements in trace file.
+       1  internal SQL statements in trace file.
+       4  SQL statements in trace file.
+       4  unique SQL statements in trace file.
+     724  lines in trace file.
+    5078  elapsed seconds in trace file.
+
+

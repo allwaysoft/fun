@@ -1,0 +1,28 @@
+/* This Sample Code is provided for the purpose of illustration only and is not intended 
+to be used in a production environment.  THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE 
+PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR 
+PURPOSE.  We grant You a nonexclusive, royalty-free right to use and modify the Sample Code
+and to reproduce and distribute the object code form of the Sample Code, provided that You 
+agree: (i) to not use Our name, logo, or trademarks to market Your software product in which
+the Sample Code is embedded; (ii) to include a valid copyright notice on Your software product
+in which the Sample Code is embedded; and (iii) to indemnify, hold harmless, and defend Us and
+Our suppliers from and against any claims or lawsuits, including attorneys’ fees, that arise or 
+result from the use or distribution of the Sample Code.
+*/
+-- Parallelism and exec_context_id
+---- Parallel plans indicated by exec_context_id > 0
+select r.session_id,
+	r.request_id,
+	max(isnull(exec_context_id, 0)) as number_of_workers,
+	r.sql_handle,
+	r.statement_start_offset,
+	r.statement_end_offset,
+	r.plan_handle
+from sys.dm_exec_requests r
+	join sys.dm_os_tasks t on r.session_id = t.session_id
+	join sys.dm_exec_sessions s on r.session_id = s.session_id
+where s.is_user_process = 0x1
+group by r.session_id, r.request_id, r.sql_handle, r.plan_handle, 
+r.statement_start_offset, r.statement_end_offset
+having max(isnull(exec_context_id, 0)) > 0

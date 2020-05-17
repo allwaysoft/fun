@@ -1,0 +1,266 @@
+SQL> 
+SQL> --ACCEPT ADMIN CHAR PROMPT 'Enter name of PeopleSoft Owner ID: '
+SQL> --ACCEPT PASSWORD CHAR PROMPT 'Enter PeopleSoft Owner ID password:'
+SQL> --PROMPT
+SQL> --PROMPT Enter a desired default tablespace for this user.
+SQL> --PROMPT
+SQL> --PROMPT Please Note:  The tablespace must already exist
+SQL> --PROMPT		    If you are unsure, enter PSDEFAULT or SYSTEM
+SQL> --PROMPT
+SQL> --ACCEPT TSPACE CHAR PROMPT 'Enter desired default tablespace:'
+SQL> 
+SQL> 
+SQL> REMARK -- Create the PeopleSoft Administrator schema.
+SQL> 
+SQL> create user &&ADMIN identified by &PASSWORD default tablespace &TSPACE
+  2  temporary tablespace temp;
+Enter value for admin: PSADMN
+Enter value for password: PSADMN1
+Enter value for tspace: PSDEFAULT
+old   1: create user &&ADMIN identified by &PASSWORD default tablespace &TSPACE
+new   1: create user PSADMN identified by PSADMN1 default tablespace PSDEFAULT
+
+User created.
+
+SQL> grant PSADMIN TO &&ADMIN;
+old   1: grant PSADMIN TO &&ADMIN
+new   1: grant PSADMIN TO PSADMN
+
+Grant succeeded.
+
+SQL> 
+SQL> REMARK -- PeopleSoft Administrator needs unlimited tablespace in order to
+SQL> REMARK -- create the PeopleSoft application tablespaces and tables in Data
+SQL> REMARK -- Mover.  This system privilege can only be granted to schemas, not
+SQL> REMARK -- Oracle roles.
+SQL> 
+SQL> grant unlimited tablespace to &&ADMIN;
+old   1: grant unlimited tablespace to &&ADMIN
+new   1: grant unlimited tablespace to PSADMN
+
+Grant succeeded.
+
+SQL> 
+SQL> REMARK -- Run the commands below to create database synonyms.
+SQL> REMARK -- Modify the connect string appropriately for your organization.
+SQL> 
+SQL> connect system/sssdp
+Connected.
+SQL> 
+SQL> set echo off
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym created.
+
+
+Synonym dropped.
+
+CREATE TABLE SQLPLUS_PRODUCT_PROFILE AS
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+DROP TABLE PRODUCT_USER_PROFILE
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+ALTER TABLE SQLPLUS_PRODUCT_PROFILE ADD (LONG_VALUE LONG)
+                                         *
+ERROR at line 1:
+ORA-01430: column being added already exists in table 
+
+
+CREATE TABLE SQLPLUS_PRODUCT_PROFILE
+             *
+ERROR at line 1:
+ORA-00955: name is already used by an existing object 
+
+
+DROP TABLE PRODUCT_PROFILE
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+
+View dropped.
+
+
+View created.
+
+
+Grant succeeded.
+
+
+Synonym dropped.
+
+
+Synonym created.
+
+DROP SYNONYM PRODUCT_USER_PROFILE
+             *
+ERROR at line 1:
+ORA-01434: private synonym to be dropped does not exist 
+
+
+
+Synonym created.
+
+
+Synonym dropped.
+
+
+Synonym created.
+

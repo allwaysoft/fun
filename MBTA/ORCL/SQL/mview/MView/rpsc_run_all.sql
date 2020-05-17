@@ -1,0 +1,11 @@
+@X:\Mview\rpsc00_1.sql;
+@X:\Mview\rpsc01.sql;
+@X:\Mview\rpsc02.sql;
+@X:\Mview\rpsc03.sql;
+@X:\Mview\rpsc04.sql;
+@X:\Mview\rpsc05.sql;
+@X:\Mview\rpsc06.sql;
+@X:\Mview\rpsc07.sql;
+@X:\Mview\rpsc08.sql;
+@X:\Mview\rpsc09.sql;
+@X:\Mview\rpsc09_1.sql;

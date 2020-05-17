@@ -1,0 +1,92 @@
+
+SQL*Loader: Release 10.2.0.1.0 - Production on Wed Dec 30 17:31:32 2009
+
+Copyright (c) 1982, 2005, Oracle.  All rights reserved.
+
+Control File:   D:\cm\2006\Conversion\cadcustom_gledger_files\dcgledge.19.2008.13.ctl
+Data File:      \\Accounting\D\CAD-USER\CMIC.CONV\dcgledge.19.2008.13.txt
+  Bad File:     D:\cm\2006\Conversion\cadcustom_gledger_files\dcgledge.19.2008.13.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 3
+Errors allowed: 50
+Bind array:     64 rows, maximum of 256000 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table DA.DC_GLEDGER, loaded from every logical record.
+Insert option in effect for this table: TRUNCATE
+TRAILING NULLCOLS option in effect
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+DC_ROWNUM                                                 SEQUENCE (MAX, 1)
+GL_BCH_NUM                          FIRST     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_BCH_NUM)))"
+GL_COMP_CODE                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_COMP_CODE)))"
+GL_DEPT_CODE                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_DEPT_CODE)))"
+GL_ACC_CODE                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_ACC_CODE)))"
+GL_JOUR_CODE                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_JOUR_CODE)))"
+GL_SRC_CODE                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_SRC_CODE)))"
+GL_SRC_DESC                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:GL_SRC_DESC))"
+GL_REF_CODE                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_REF_CODE)))"
+GL_REF_DESC                          NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "rtrim(ltrim(:GL_REF_DESC))"
+GL_REF_DATE                          NEXT     *   ,  O(") DATE YYYYMMDD        
+GL_POST_DATE                         NEXT     *   ,  O(") DATE YYYYMMDD        
+GL_AMT                               NEXT     *   ,  O(") CHARACTER            
+GL_WM_CODE                           NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_WM_CODE)))"
+GL_NUM                               NEXT     *   ,  O(") CHARACTER            
+GL_ADJ_YR                            NEXT     *   ,  O(") CHARACTER            
+GL_ADJ_PER                           NEXT     *   ,  O(") CHARACTER            
+GL_DSRC_COMP_CODE                    NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_DSRC_COMP_CODE)))"
+GL_CURR_CODE                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_CURR_CODE)))"
+GL_TAV_CODE1                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_TAV_CODE1)))"
+GL_TAV_CODE2                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_TAV_CODE2)))"
+GL_TAV_CODE3                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_TAV_CODE3)))"
+GL_TAV_CODE4                         NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_TAV_CODE4)))"
+GL_EXCHG_CURR_CODE                   NEXT     *   ,  O(") CHARACTER            
+    SQL string for column : "upper(rtrim(ltrim(:GL_EXCHG_CURR_CODE)))"
+GL_EXCHG_RATE                        NEXT     *   ,  O(") CHARACTER            
+GL_EXCHG_AMT                         NEXT     *   ,  O(") CHARACTER            
+GL_PYOVERHEAD_FLAG                   NEXT     *   ,  O(") CHARACTER            
+
+value used for ROWS parameter changed from 64 to 38
+
+Table DA.DC_GLEDGER:
+  4 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 255778 bytes(38 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          3
+Total logical records read:             4
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Wed Dec 30 17:31:32 2009
+Run ended on Wed Dec 30 17:31:32 2009
+
+Elapsed time was:     00:00:00.09
+CPU time was:         00:00:00.04

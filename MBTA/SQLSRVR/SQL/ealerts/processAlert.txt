@@ -1,0 +1,234 @@
+set ANSI_NULLS ON
+set QUOTED_IDENTIFIER ON
+go
+
+
+
+
+
+ALTER PROCEDURE [dbo].[eAlerts_ProcessAlert]
+	-- Add the parameters for the stored procedure here
+		@Alerts_servicealertid nvarchar(5),
+		@Alerts_mode nvarchar(20),
+		@Alerts_route nvarchar(400),
+		@Alerts_delay nvarchar(20),
+		@Alerts_priority nvarchar(20),
+		@Alerts_timeofdelay nvarchar(100),
+		@Alerts_delaytime nvarchar(20),
+		@Alerts_delaycategory nvarchar(50),
+		@Alerts_delayreason nvarchar(50),
+		@Alerts_isclosed nvarchar(2) = null,
+		@Alerts_messagepublic nvarchar(3000) = null,
+		@Alerts_expiredate datetime = null,
+		@Alerts_dateclosed datetime = null,
+		@Alerts_datecreated datetime = null,
+		@Alerts_timecreated datetime = null,
+		@Alerts_talertid nvarchar(50),
+		@Alerts_originalid nvarchar(50) = null,
+		@Alerts_alerttype nvarchar(2) = null,
+		@Alerts_lineelevid nvarchar(20) = null,
+		@Alerts_isAdvisory nvarchar(20) = null
+AS
+
+BEGIN
+
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+	Declare @IsClosed int, @FinalAlertID nvarchar(50), @CloseElavatorEscalator int, @ElevEscalAdvisory int
+	
+/*
+Alerts_servicealertid: 0
+Alerts_mode: Elevator
+Alerts_route: South Station (918) - southbound platform to Silver Line lobby.
+Alerts_delay: 0
+Alerts_priority: 0
+Alerts_timeofdelay: PM Peak 3:30 PM - 6:30 PM
+Alerts_delaytime: 0
+Alerts_delaycategory: 0
+Alerts_delayreason: 0
+Alerts_isclosed: Y
+Alerts_messagepublic: Elevator: South Station (918) - southbound platform toSilver Line lobby. has returned to service
+Alerts_expiredate:
+Alerts_dateclosed: 12/06/2006
+Alerts_datecreated: 12/06/2006
+Alerts_timecreated: 17:07:48
+Alerts_talertid: 5877
+Alerts_originalid: 0
+Alerts_alerttype: E
+Alerts_lineelevid: 918 */
+
+	
+/*
+	If @Alerts_mode='Elevator' and @Alerts_isAdvisory='Y'
+		Set @ElevEscalAdvisory = 1
+	If @Alerts_mode='Escalator' and @Alerts_isAdvisory='Y'
+		Set @ElevEscalAdvisory = 1
+	If @Alerts_mode='HP' and @Alerts_isAdvisory='Y'
+		Set @ElevEscalAdvisory = 1
+
+	If @ElevEscalAdvisory = 1
+			begin 
+				if exists (Select ServiceAlertID from ServiceAlerts Where  Route=@Alerts_route and dateexpired > getdate())
+					begin 
+						update ServiceAlerts Set
+						Mode = @Alerts_mode,
+						Route = @Alerts_route,
+						[Delay] = @Alerts_delay,
+						Priority =@Alerts_priority ,
+						TimeOfDelay = @Alerts_timeofdelay,
+						DelayTime = @Alerts_delaytime,
+						DelayCategory = @Alerts_delaycategory,
+						DelayReason = @Alerts_delayreason,
+						MessagePublic = @Alerts_messagepublic,
+						MessagePrivate = '',
+						IsClosed = @IsClosed,
+						DateExpired = @Alerts_expiredate,
+						DateClosed = @Alerts_dateclosed,
+						DateCreated = @Alerts_datecreated,
+						TimeCreated = @Alerts_timecreated,
+						DateModified = GetDate()
+						where Route=@Alerts_route and dateexpired > getdate()
+					end 
+				else 
+					begin 
+					  insert into ServiceAlerts (
+								ServiceAlertID,
+								Mode,
+								Route,
+								[Delay],
+								Priority,
+								TimeOfDelay,
+								DelayTime,
+								DelayCategory,
+								DelayReason,
+								MessagePublic,
+								MessagePrivate,
+								IsClosed,
+								DateExpired,
+								DateClosed,
+								DateCreated,
+								TimeCreated,
+								DateModified)
+							values (
+								@FinalAlertID,
+								@Alerts_mode,
+								@Alerts_route,
+								@Alerts_delay,
+								@Alerts_priority,
+								@Alerts_timeofdelay,
+								@Alerts_delaytime,
+								@Alerts_delaycategory,
+								@Alerts_delayreason,
+								@Alerts_messagepublic,
+								'',
+								@IsClosed,
+								@Alerts_expiredate,
+								@Alerts_dateclosed,
+								@Alerts_datecreated,
+								@Alerts_timecreated,
+								GetDate())
+					end
+			end
+
+*/
+
+	If @Alerts_isclosed = 'Y'
+	  Begin
+		Set @IsClosed = 1
+		If @Alerts_originalid = '0'
+		  Begin
+			Set @FinalAlertID = @Alerts_talertid
+			If @Alerts_mode='Elevator' 
+				Set @CloseElavatorEscalator = 1
+			If @Alerts_mode='Escalator'
+				Set @CloseElavatorEscalator = 1
+			If @Alerts_mode='HP'
+				Set @CloseElavatorEscalator = 1
+		  End
+		Else
+			Set @FinalAlertID = @Alerts_originalid
+	  End
+	Else
+	  Begin
+		Set @IsClosed = 0
+		If @Alerts_originalid = '0'
+			Set @FinalAlertID = @Alerts_talertid
+		Else
+			Set @FinalAlertID = @Alerts_originalid
+		end
+
+		if exists (Select ServiceAlertID from ServiceAlerts Where ServiceAlertID=@FinalAlertID and Route=@Alerts_route)
+			begin
+				update ServiceAlerts Set
+					Mode = @Alerts_mode,
+					Route = @Alerts_route,
+					[Delay] = @Alerts_delay,
+					Priority =@Alerts_priority ,
+					TimeOfDelay = @Alerts_timeofdelay,
+					DelayTime = @Alerts_delaytime,
+					DelayCategory = @Alerts_delaycategory,
+					DelayReason = @Alerts_delayreason,
+					MessagePublic = @Alerts_messagepublic,
+					MessagePrivate = '',
+					IsClosed = @IsClosed,
+					DateExpired = @Alerts_expiredate,
+					DateClosed = @Alerts_dateclosed,
+					DateCreated = @Alerts_datecreated,
+					TimeCreated = @Alerts_timecreated,
+					DateModified = GetDate()
+				where ServiceAlertID = @FinalAlertID and Route=@Alerts_route
+			end
+		else 
+			begin
+				insert into ServiceAlerts (
+				ServiceAlertID,
+				Mode,
+				Route,
+				[Delay],
+				Priority,
+				TimeOfDelay,
+				DelayTime,
+				DelayCategory,
+				DelayReason,
+				MessagePublic,
+				MessagePrivate,
+				IsClosed,
+				DateExpired,
+				DateClosed,
+				DateCreated,
+				TimeCreated,
+				DateModified)
+			values (
+				@FinalAlertID,
+				@Alerts_mode,
+				@Alerts_route,
+				@Alerts_delay,
+				@Alerts_priority,
+				@Alerts_timeofdelay,
+				@Alerts_delaytime,
+				@Alerts_delaycategory,
+				@Alerts_delayreason,
+				@Alerts_messagepublic,
+				'',
+				@IsClosed,
+				@Alerts_expiredate,
+				@Alerts_dateclosed,
+				@Alerts_datecreated,
+				@Alerts_timecreated,
+				GetDate())
+			end
+
+	if @CloseElavatorEscalator = 1
+	  Begin
+		Update ServiceAlerts Set IsClosed = 1, DateClosed = @Alerts_dateclosed Where Route=@Alerts_route
+	  End
+
+
+END
+
+
+
+
+

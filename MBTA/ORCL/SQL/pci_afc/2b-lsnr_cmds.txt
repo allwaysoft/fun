@@ -1,0 +1,4 @@
+set current_listener LISTENER
+change_password
+set password
+save_config

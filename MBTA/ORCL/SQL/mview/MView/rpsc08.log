@@ -1,0 +1,270 @@
+SQL> 
+SQL> connect mbta/hallo@mvdb;
+Connected.
+SQL> 
+SQL> create materialized view ACCESSLEVEL refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.ACCESSLEVEL@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ALARMACTION refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.ALARMACTION@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ALARMEVENT refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.ALARMEVENT@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ALARMSERVERCONFIG refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.ALARMSERVERCONFIG@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ALARMSERVERGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.ALARMSERVERGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ALARMSERVERGROUP_ALARMEVENT refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.ALARMSERVERGROUP_ALARMEVENT@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ARTICLE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.ARTICLE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ARTICLE_RELEASE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.ARTICLE_RELEASE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view BALANCEGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.BALANCEGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view CASHTYPE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.CASHTYPE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view COMPANY refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.COMPANY@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view CURRENCIES refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.CURRENCIES@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view DBCONNECTPARAMETER refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.DBCONNECTPARAMETER@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view DEFAULTSTATIONGROUP refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.DEFAULTSTATIONGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view DEVICECLASS refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.DEVICECLASS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view DEVICECLASS_VERSIONS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.DEVICECLASS_VERSIONS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view DEVICECONFIG refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.DEVICECONFIG@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view EVENT refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.EVENT@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view EVENTGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.EVENTGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view FEPDATA refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.FEPDATA@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view FUNCTION refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.FUNCTION@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view FUNCTIONGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.FUNCTIONGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view GRAPHICMAP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.GRAPHICMAP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view GRAPHICPROPERTY refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.GRAPHICPROPERTY@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view HARDWARECOMPONENTS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.HARDWARECOMPONENTS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view JOBTABLE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.JOBTABLE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view LOCKDEPENDENCIES refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.LOCKDEPENDENCIES@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view MASTERASSEMBLY refresh fast  start with sysdate next sysdate + 1	with primary key as select * from MBTA.MASTERASSEMBLY@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view MENUTREE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.MENUTREE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view MULTIMEDIAGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.MULTIMEDIAGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ORAERR refresh fast  start with sysdate next sysdate + 1	with primary key as select * from MBTA.ORAERR@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view PAYMENTCASHTYPE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.PAYMENTCASHTYPE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view PAYMENTOPDATA refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.PAYMENTOPDATA@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view PERMDETAIL refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.PERMDETAIL@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view PERMISSION refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.PERMISSION@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view PREVIOUSPASSWORD refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.PREVIOUSPASSWORD@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view PREVIOUSPIN refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.PREVIOUSPIN@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view RELEASE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.RELEASE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view RELEASE_VERSIONS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.RELEASE_VERSIONS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view ROUTES refresh fast  start with sysdate next sysdate + 1	with primary key as select * from MBTA.ROUTES@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view SCHEDULEELEMENT refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.SCHEDULEELEMENT@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view SCHEDULEGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.SCHEDULEGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view SCHEDULEGROUPELEMENTS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.SCHEDULEGROUPELEMENTS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view SCTVMRELATION refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.SCTVMRELATION@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view SDRELEASE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.SDRELEASE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view SDRELEASE_RELEASE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.SDRELEASE_RELEASE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view STATIONCONTROLLER refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.STATIONCONTROLLER@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view STATUSOPTIONS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.STATUSOPTIONS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TABLEINFO refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TABLEINFO@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TARIFFVERSIONS refresh fast  start with sysdate next sysdate + 1	with primary key as select * from MBTA.TARIFFVERSIONS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMFEPGROUP refresh fast	start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMFEPGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMNETCONFGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMNETCONFGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMSCHEDULEGROUPELEMENT refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMSCHEDULEGROUPELEMENT@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMSCHEDULEGROUPELEMENTS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMSCHEDULEGROUPELEMENTS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMSTATION refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMSTATION@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMTABLE refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMTABLE@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view TVMVERSIONGROUP refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.TVMVERSIONGROUP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view UNIQUENUMBERS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.UNIQUENUMBERS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view USERDATA refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.USERDATA@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view USERGROUPS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.USERGROUPS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view VERSIONGROUPLIST refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.VERSIONGROUPLIST@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view VERSIONS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.VERSIONS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view WORKSTATIONGRP refresh fast  start with sysdate next sysdate + 1	with primary key as select * from MBTA.WORKSTATIONGRP@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view WORKSTATIONS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.WORKSTATIONS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> create materialized view WSGRPCONTENTS refresh fast  start with sysdate next sysdate + 1  with primary key as select * from MBTA.WSGRPCONTENTS@nwcd.mbta.com;
+
+Materialized view created.
+
+SQL> 
+SQL> spool off

@@ -1,0 +1,154 @@
+PLAN_TABLE_OUTPUT
+-------------------------------------------------------------------------------------------------------------------------
+Plan hash value: 1530760782
+
+----------------------------------------------------------------------------------------------------------------
+| Id  | Operation                         | Name               | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+----------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT                  |                    |     1 |   513 |       |    33M  (1)|110:12:39 |
+|   1 |  SORT UNIQUE                      |                    |     1 |   513 |       |    33M  (1)|110:12:39 |
+|*  2 |   FILTER                          |                    |       |       |       |            |          |
+|*  3 |    HASH JOIN                      |                    |    12M|  5884M|       | 28610   (2)| 00:05:44 |
+|*  4 |     TABLE ACCESS FULL             | PS_JOBCODE_TBL     |  5686 |   416K|       |   103   (1)| 00:00:02 |
+|*  5 |     HASH JOIN                     |                    |  5369K|  2242M|       | 28391   (2)| 00:05:41 |
+|   6 |      TABLE ACCESS FULL            | PS_UNION_TBL       |    91 |  1547 |       |     3   (0)| 00:00:01 |
+|*  7 |      HASH JOIN                    |                    |  3717K|  1492M|       | 28336   (1)| 00:05:41 |
+|   8 |       TABLE ACCESS FULL           | PS_SAL_GRADE_TBL   |  2348 | 79832 |       |    17   (0)| 00:00:01 |
+|*  9 |       HASH JOIN                   |                    |  3717K|  1371M|  1264K| 28283   (1)| 00:05:40 |
+|  10 |        TABLE ACCESS FULL          | PS_POSITION_DATA   | 11150 |  1132K|       |   173   (2)| 00:00:03 |
+|* 11 |        HASH JOIN                  |                    |   878K|   236M|  1832K| 15750   (1)| 00:03:09 |
+|  12 |         TABLE ACCESS FULL         | PS_BEN_PROG_PARTIC | 50561 |  1234K|       |    70   (3)| 00:00:01 |
+|* 13 |         HASH JOIN                 |                    |   406K|   100M|  6560K| 10385   (2)| 00:02:05 |
+|* 14 |          TABLE ACCESS FULL        | PS_JOB             | 61576 |  5832K|       |  3319   (1)| 00:00:40 |
+|* 15 |          HASH JOIN                |                    |   155K|    23M|  1248K|  5472   (2)| 00:01:06 |
+|* 16 |           INDEX FAST FULL SCAN    | PS0NAMES           | 26498 |   931K|       |    52   (2)| 00:00:01 |
+|* 17 |           HASH JOIN               |                    |   149K|    17M|       |  4385   (2)| 00:00:53 |
+|  18 |            INDEX FAST FULL SCAN   | PS_DIVERS_ETHNIC   | 21390 |   292K|       |    25   (0)| 00:00:01 |
+|* 19 |            HASH JOIN              |                    |   164K|    17M|  1632K|  4358   (2)| 00:00:53 |
+|  20 |             TABLE ACCESS FULL     | PS_PERSONAL_DATA   | 23486 |  1353K|       |   382   (2)| 00:00:05 |
+|* 21 |             HASH JOIN             |                    |   164K|  8343K|       |  3395   (2)| 00:00:41 |
+|  22 |              INDEX FAST FULL SCAN | PS_PER_ORG_INST    | 23509 |   229K|       |    20   (0)| 00:00:01 |
+|* 23 |              HASH JOIN            |                    |   164K|  6738K|       |  3372   (2)| 00:00:41 |
+|  24 |               INDEX FAST FULL SCAN| PS1PER_ORG_ASGN    | 23509 |   298K|       |    22   (0)| 00:00:01 |
+|  25 |               TABLE ACCESS FULL   | PS_JOB             |   164K|  4653K|       |  3348   (2)| 00:00:41 |
+|  26 |    SORT AGGREGATE                 |                    |     1 |    18 |       |            |          |
+|* 27 |     INDEX RANGE SCAN              | PSAJOB             |     3 |    54 |       |     3   (0)| 00:00:01 |
+|  28 |    SORT AGGREGATE                 |                    |     1 |    18 |       |            |          |
+|* 29 |     FILTER                        |                    |       |       |       |            |          |
+|* 30 |      INDEX RANGE SCAN             | PSAJOB             |     4 |    72 |       |     3   (0)| 00:00:01 |
+|  31 |      SORT AGGREGATE               |                    |     1 |    18 |       |            |          |
+|* 32 |       INDEX RANGE SCAN            | PSAJOB             |     4 |    72 |       |     3   (0)| 00:00:01 |
+|  33 |    SORT AGGREGATE                 |                    |     1 |    21 |       |            |          |
+|* 34 |     INDEX RANGE SCAN              | PS_BEN_PROG_PARTIC |     1 |    21 |       |     2   (0)| 00:00:01 |
+|  35 |    SORT AGGREGATE                 |                    |     1 |    19 |       |            |          |
+|* 36 |     INDEX RANGE SCAN              | PS_NAMES           |     1 |    19 |       |     2   (0)| 00:00:01 |
+|  37 |    SORT AGGREGATE                 |                    |     1 |    17 |       |            |          |
+|* 38 |     INDEX RANGE SCAN              | PS_POSITION_DATA   |     4 |    68 |       |     2   (0)| 00:00:01 |
+|  39 |    SORT AGGREGATE                 |                    |     1 |    21 |       |            |          |
+|* 40 |     INDEX RANGE SCAN              | PS_JOBCODE_TBL     |     1 |    21 |       |     2   (0)| 00:00:01 |
+|  41 |    SORT AGGREGATE                 |                    |     1 |    22 |       |            |          |
+|* 42 |     INDEX RANGE SCAN              | PS_SAL_GRADE_TBL   |     1 |    22 |       |     2   (0)| 00:00:01 |
+|  43 |    SORT AGGREGATE                 |                    |     1 |    21 |       |            |          |
+|* 44 |     INDEX RANGE SCAN              | PSAJOB             |     1 |    21 |       |     3   (0)| 00:00:01 |
+|  45 |    SORT AGGREGATE                 |                    |     1 |    21 |       |            |          |
+|* 46 |     INDEX RANGE SCAN              | PSAJOB             |     1 |    21 |       |     3   (0)| 00:00:01 |
+|  47 |    SORT AGGREGATE                 |                    |     1 |    12 |       |            |          |
+|* 48 |     INDEX RANGE SCAN              | PS_UNION_TBL       |     1 |    12 |       |     1   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------------------
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - filter("SYS_ALIAS_13"."EFFDT"= (SELECT MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM
+              SYSADM."PS_JOB" "A" WHERE SYS_OP_DESCEND("EFFDT") IS NOT NULL AND
+              SYS_OP_DESCEND("EFFDT")>=HEXTORAW('878FF8FEF8FEF8FF')  AND "A"."EMPL_RCD"=:B1 AND "A"."EMPLID"=:B2 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(' 2012-07-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+              AND "SYS_ALIAS_22"."EFFDT"= (SELECT MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM SYSADM."PS_JOB"
+              "JOB2" WHERE (SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-M
+              M-DD') AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')
+              ) OR TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')<:B3 AND  (SELECT
+              MIN(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM SYSADM."PS_JOB" "J2" WHERE "J2"."EMPL_RCD"=:B4 AND
+              "J2"."EMPLID"=:B5)>TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')) AND "JOB2"."EMPL_RCD"=:B6 AND
+              "JOB2"."EMPLID"=:B7) AND "SYS_ALIAS_18"."EFFDT"= (SELECT MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT")))
+              FROM "PS_BEN_PROG_PARTIC" "H_ED" WHERE SYS_OP_DESCEND("EFFDT") IS NOT NULL AND
+              SYS_OP_DESCEND("EFFDT")>=HEXTORAW('878FF8FEF8FEF8FF')  AND "H_ED"."COBRA_EVENT_ID"=:B8 AND
+              "H_ED"."EMPL_RCD"=:B9 AND "H_ED"."EMPLID"=:B10 AND SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE('
+              2012-07-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss')) AND SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))= (SELECT
+              MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM SYSADM."PS_NAMES" "B" WHERE SYS_OP_DESCEND("EFFDT")
+              IS NOT NULL AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM
+              -DD')) AND "B"."NAME_TYPE"=:B11 AND "B"."EMPLID"=:B12 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')) AND
+              "SYS_ALIAS_15"."EFFDT"= (SELECT MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM "PS_POSITION_DATA"
+              "B_ED" WHERE SYS_OP_DESCEND("EFFDT") IS NOT NULL AND
+              SYS_OP_DESCEND("EFFDT")>=HEXTORAW('878FF8FEF8FEF8FF')  AND "B_ED"."POSITION_NBR"=:B13 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(' 2012-07-01 00:00:00', 'syyyy-mm-dd hh24:mi:ss'))
+              AND "SYS_ALIAS_8"."EFFDT"= (SELECT MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM "PS_JOBCODE_TBL"
+              "E_ED" WHERE SYS_OP_DESCEND("EFFDT") IS NOT NULL AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(:B14) AND
+              "E_ED"."JOBCODE"=:B15 AND "E_ED"."SETID"=:B16 AND SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=:B17) AND
+              "SYS_ALIAS_12"."EFFDT"= (SELECT MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM "PS_SAL_GRADE_TBL"
+              "F_ED" WHERE SYS_OP_DESCEND("EFFDT") IS NOT NULL AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(:B18) AND
+              "F_ED"."GRADE"=:B19 AND "F_ED"."SAL_ADMIN_PLAN"=:B20 AND "F_ED"."SETID"=:B21 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=:B22) AND "SYS_ALIAS_13"."EFFSEQ"= (SELECT
+              MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFSEQ"))) FROM SYSADM."PS_JOB" "A" WHERE
+              SYS_OP_DESCEND("EFFDT")=SYS_OP_DESCEND(:B23) AND "A"."EMPL_RCD"=:B24 AND "A"."EMPLID"=:B25 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))=:B26) AND "SYS_ALIAS_22"."EFFSEQ"= (SELECT
+              MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFSEQ"))) FROM SYSADM."PS_JOB" "JOB3" WHERE
+              SYS_OP_DESCEND("EFFDT")=SYS_OP_DESCEND(:B27) AND "JOB3"."EMPL_RCD"=:B28 AND "JOB3"."EMPLID"=:B29 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))=:B30) AND "SYS_ALIAS_14"."EFFDT"= (SELECT
+              MAX(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM "PS_UNION_TBL" "G_ED" WHERE SYS_OP_DESCEND("EFFDT")
+              IS NOT NULL AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(:B31) AND "G_ED"."UNION_CD"=:B32 AND
+              SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=:B33))
+   3 - access("SYS_ALIAS_13"."JOBCODE"="SYS_ALIAS_8"."JOBCODE")
+   4 - filter("SYS_ALIAS_8"."JOBCODE"<>'200300')
+   5 - access("SYS_ALIAS_14"."UNION_CD"="SYS_ALIAS_15"."UNION_CD")
+   7 - access("SYS_ALIAS_12"."GRADE"="SYS_ALIAS_13"."GRADE" AND
+              "SYS_ALIAS_12"."SAL_ADMIN_PLAN"="SYS_ALIAS_13"."SAL_ADMIN_PLAN")
+   9 - access("SYS_ALIAS_13"."POSITION_NBR"="SYS_ALIAS_15"."POSITION_NBR")
+  11 - access("SYS_ALIAS_13"."EMPLID"="SYS_ALIAS_18"."EMPLID")
+  13 - access("SYS_ALIAS_13"."EMPLID"="A"."EMPLID")
+  14 - filter(("SYS_ALIAS_13"."EMPL_STATUS"='A' OR "SYS_ALIAS_13"."EMPL_STATUS"='L' OR
+              "SYS_ALIAS_13"."EMPL_STATUS"='P') AND "SYS_ALIAS_13"."JOBCODE"<>'200300')
+  15 - access("A"."EMPLID"="SYS_ALIAS_24"."EMPLID")
+  16 - filter("SYS_ALIAS_24"."NAME_TYPE"='PRI')
+  17 - access("A"."EMPLID"="J"."EMPLID")
+  19 - access("A"."EMPLID"="A"."EMPLID")
+  21 - access("A"."EMPLID"="C"."EMPLID" AND "A"."ORG_INSTANCE_ERN"="C"."ORG_INSTANCE_ERN")
+  23 - access("A"."EMPLID"="SYS_ALIAS_22"."EMPLID" AND "A"."EMPL_RCD"="SYS_ALIAS_22"."EMPL_RCD")
+  27 - access("A"."EMPLID"=:B1 AND "A"."EMPL_RCD"=:B2 AND
+              SYS_OP_DESCEND("EFFDT")>=HEXTORAW('878FF8FEF8FEF8FF')  AND SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(' 2012-07-01 00:00:00', 'syyyy-mm-dd
+              hh24:mi:ss'))
+  29 - filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-M
+              M-DD') AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')
+              ) OR TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')<:B1 AND  (SELECT
+              MIN(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))) FROM SYSADM."PS_JOB" "J2" WHERE "J2"."EMPL_RCD"=:B2 AND
+              "J2"."EMPLID"=:B3)>TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD'))
+  30 - access("JOB2"."EMPLID"=:B1 AND "JOB2"."EMPL_RCD"=:B2)
+  32 - access("J2"."EMPLID"=:B1 AND "J2"."EMPL_RCD"=:B2)
+  34 - access("H_ED"."EMPLID"=:B1 AND "H_ED"."EMPL_RCD"=:B2 AND "H_ED"."COBRA_EVENT_ID"=:B3 AND
+              SYS_OP_DESCEND("EFFDT")>=HEXTORAW('878FF8FEF8FEF8FF')  AND SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(' 2012-07-01 00:00:00', 'syyyy-mm-dd
+              hh24:mi:ss'))
+  36 - access("B"."EMPLID"=:B1 AND "B"."NAME_TYPE"=:B2 AND
+              SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-MM-DD')) AND
+              SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(TO_CHAR(SYSDATE@!,'YYYY-MM-DD'),'YYYY-M
+              M-DD'))
+  38 - access("B_ED"."POSITION_NBR"=:B1 AND SYS_OP_DESCEND("EFFDT")>=HEXTORAW('878FF8FEF8FEF8FF')  AND
+              SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=TO_DATE(' 2012-07-01 00:00:00', 'syyyy-mm-dd
+              hh24:mi:ss'))
+  40 - access("E_ED"."SETID"=:B1 AND "E_ED"."JOBCODE"=:B2 AND
+              SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(:B3) AND SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=:B1)
+  42 - access("F_ED"."SETID"=:B1 AND "F_ED"."SAL_ADMIN_PLAN"=:B2 AND "F_ED"."GRADE"=:B3 AND
+              SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(:B4) AND SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=:B1)
+  44 - access("A"."EMPLID"=:B1 AND "A"."EMPL_RCD"=:B2 AND SYS_OP_DESCEND("EFFDT")=SYS_OP_DESCEND(:B3))
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))=:B1)
+  46 - access("JOB3"."EMPLID"=:B1 AND "JOB3"."EMPL_RCD"=:B2 AND
+              SYS_OP_DESCEND("EFFDT")=SYS_OP_DESCEND(:B3))
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))=:B1)
+  48 - access("G_ED"."UNION_CD"=:B1 AND SYS_OP_DESCEND("EFFDT")>=SYS_OP_DESCEND(:B2) AND
+              SYS_OP_DESCEND("EFFDT") IS NOT NULL)
+       filter(SYS_OP_UNDESCEND(SYS_OP_DESCEND("EFFDT"))<=:B1)

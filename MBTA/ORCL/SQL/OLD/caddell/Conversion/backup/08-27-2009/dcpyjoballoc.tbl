@@ -1,0 +1,12 @@
+
+PROMPT ==============================================================
+PROMPT CREATE TABLE DA.DC_PYJOBALLOC
+PROMPT ==============================================================
+
+create table DA.DC_PYJOBALLOC ( DC_ROWNUM NUMBER, 
+PYJA_COMP_CODE                            VARCHAR2(2)
+,PYJA_JOB_CODE                            VARCHAR2(10)
+,PYJA_TYPE_CODE                           VARCHAR2(2)
+,PYJA_CODE                                VARCHAR2(4)
+,PYJA_CAT_CODE                            VARCHAR2(4)
+,PYJA_PHS_CODE  			  VARCHAR2(16)) ; 

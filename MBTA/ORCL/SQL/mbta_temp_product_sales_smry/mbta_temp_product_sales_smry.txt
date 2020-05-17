@@ -1,0 +1,5 @@
+cd C:\MISC\SQL\mbta_temp_product_sales_smry
+
+sqlldr userid=mbta@nwcdprod control= "C:\MISC\SQL\mbta_temp_product_sales_smry\mbta_temp_product_sales_smry.ctl"
+
+LOGFILE 'C:\MISC\SQL\police_report\police_id_log.txt'

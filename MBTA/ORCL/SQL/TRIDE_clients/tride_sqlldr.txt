@@ -1,0 +1,5 @@
+cd C:\MISC\SQL\tride_clients
+
+sqlldr userid=mbta@nwcdprod control= "C:\MISC\SQL\tride_clients\tride.ctl
+
+Check the log file if all the data is imported into table.

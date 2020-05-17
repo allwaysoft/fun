@@ -1,0 +1,3 @@
+sqlldr userid=mbta@nwcdprod control= "C:\MISC\ORACLE\SQL\police_report\police_id_numbers.ctl"
+
+LOGFILE 'C:\MISC\ORACLE\SQL\police_report\police_id_numbers.log'

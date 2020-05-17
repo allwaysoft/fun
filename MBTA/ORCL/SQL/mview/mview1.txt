@@ -1,0 +1,67 @@
+  select * from dba_registered_mviews a, dba_base_table_mviews b
+  where b.MVIEW_LAST_REFRESH_TIME <  sysdate - 15/(60*24)
+  and a.mview_id=b.mview_id
+  
+ select * from dba_registered_mviews a, dba_base_table_mviews b--,  b.MVIEW_LAST_REFRESH_TIME
+  where  1=1
+  and b.MVIEW_LAST_REFRESH_TIME <  sysdate - 15/(60*24)
+  and a.mview_id=b.mview_id
+  and mview_site = 'NWCD.STA999'
+  
+  select * from dba_registered_mview_groups
+  
+  select count(1) from accesslevel
+  
+  select count(1) from multimediagroup
+  
+  9931
+  
+  BEGIN                          --add the master table to the master group, on which the mv whould be create at the mv site.
+   DBMS_REPCAT.CREATE_MASTER_REPOBJECT (
+      gname => 'MBTA_REPG1',
+      type => 'TABLE',
+      oname => 'APPLTYPE',
+      sname => 'MBTA',
+      use_existing_object => TRUE,
+      copy_rows => FALSE);
+END;
+/
+  
+  select * from DBA_MVIEW_DETAIL_RELATIONS
+  
+  select * from dba_base_table_mviews
+  
+  select * from DBA_REGISTERED_MVIEWS where mview_site = 'NWCD.STA1118'
+  
+  select * from dba_registered_mview_groups
+  
+ -- exec DBMS_REPCAT.REGISTER_MVIEW_REPGROUP (gname => 'MBTA_REPG1', mviewsite => 'NWCD.STA1118');
+ 
+ 
+ CREATE MATERIALIZED VIEW LOG ON "MBTA"."FUNDSPOOL" 
+ 
+CREATE MATERIALIZED VIEW LOG ON "MBTA"."FUNDSPOOLTVMRELATION" 
+
+select * from MBTA.TVMSCHEDULEGROUPELEMENTS
+
+EXEC DBMS_REPCAT.SUSPEND_MASTER_ACTIVITY('MBTA_REPG1'); 
+
+Exec DBMS_REPCAT.RESUME_MASTER_ACTIVITY('MBTA_REPG1',false); 
+ 
+ commit
+ 
+EXEC DBMS_MVIEW.REGISTER_MVIEW (MVIEWOWNER => 'MBTA', MVIEWNAME => 'ACCESSLEVEL', MVIEWSITE =>'NWCD.STA1118'--,
+                                                        --rep_type => dbms_repcat.reg_v8_group
+                                                        );
+                                                        
+                                                        
+   mview_id    IN   DATE | BINARY_INTEGER,
+   flag        IN   BINARY_INTEGER,
+   qry_txt     IN   VARCHAR2,
+   rep_type    IN   BINARY_INTEGER := DBMS_MVIEW.REG_V8_SNAPSHOT);
+  
+                             commit        
+                                     
+exec DBMS_REPCAT.UNREGISTER_MVIEW_REPGROUP (gname => 'MBTA_REPG1', mviewsite => 'NWCD.STA1118');         
+
+exec DBMS_REPCAT.REGISTER_MVIEW_REPGROUP (gname => 'MBTA_REPG1', mviewsite => 'NWCD.STA1118', rep_type => dbms_repcat.reg_v8_group);

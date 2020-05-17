@@ -1,0 +1,50 @@
+Create Procedure SQL_ShowLOCKS as
+Set NOCOUNT ON
+------------------------------------------------
+-- Auhtor: Saleem Hakani (WWW.SQLCOMMUNITY.COM)
+-- Date: June 24th 2007 @ 7:12 PM PST
+-- Description: This procedure helps you detect realtime deaclocks and blocks
+-- Compatibility: SQL Server 2005 only
+-- Disclaimer: This script, is provided for informational purposes only and SQL Server Community (aka: WWW.SQLCOMMUNITY.COM) or the author of this script makes no warranties, 
+-- either express or implied. This script, scenarios and other external web site references, is subject to change without notice. 
+-- The entire risk of the use or the results of the use of this script remains with the user.
+-------------------------------------------------
+If Exists (Select Name from TempDB..SysObjects Where Name = '##Tmp_SQL_Locks')
+Begin
+	Drop Table ##Tmp_SQL_Locks
+End
+
+Select t1.resource_type as [Lock_Type]
+	,db_name(resource_database_id) as [DB_Name]
+	,t1.resource_associated_entity_id as [Victim]
+	,t1.request_mode as [Requested_by]			-- lock requested
+	,t1.request_session_id as [Waiter_SPID]  -- spid of waiter
+	,t2.wait_duration_ms as [Wait_Time]	
+	,(select text from sys.dm_exec_requests as r  --- get sql for waiter
+	cross apply sys.dm_exec_sql_text(r.sql_handle) 
+	where r.session_id = t1.request_session_id) as Waiter_Batch
+	,(select substring(qt.text,r.statement_start_offset/2, 
+	(case when r.statement_end_offset = -1 
+	then len(convert(nvarchar(max), qt.text)) * 2 
+	else r.statement_end_offset end - r.statement_start_offset)/2) 
+	from sys.dm_exec_requests as r
+	cross apply sys.dm_exec_sql_text(r.sql_handle) as qt
+	where r.session_id = t1.request_session_id) as Waiter_STMT    --- this is the statement executing right now
+	,t2.blocking_session_id as [Blocker_SPID] -- spid of blocker
+    ,(select text from sys.sysprocesses as p		--- get sql for blocker
+	cross apply sys.dm_exec_sql_text(p.sql_handle) 
+	where p.spid = t2.blocking_session_id) as Blocker_STMT
+	into ##Tmp_SQL_Locks from 
+	sys.dm_tran_locks as t1, 
+	sys.dm_os_waiting_tasks as t2
+	where 
+	t1.lock_owner_address = t2.resource_address
+
+If (Select count(*) from ##Tmp_SQL_Locks) = 0
+Begin
+	Print 'No locks found'
+End
+If (Select count(*) from ##Tmp_SQL_Locks) > 0
+Begin
+	Select * from ##Tmp_SQL_Locks
+End

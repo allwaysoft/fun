@@ -1,0 +1,19 @@
+https://forums.oracle.com/forums/thread.jspa?threadID=2290440
+ 
+http://www.google.com/#sclient=psy-ab&hl=en&source=hp&q=restore+database+on+different+server+oracle&pbx=1&oq=restore+database+on+different+server+oracle&aq=f&aqi=g-v1&aql=&gs_sm=e&gs_upl=4937l7187l2l7547l7l2l0l5l5l0l250l469l2-2l8l0&bav=on.2,or.r_gc.r_pw.,cf.osb&fp=aa712503257bd70e&biw=1280&bih=581
+ 
+https://forums.oracle.com/forums/thread.jspa?threadID=2136728
+ 
+https://forums.oracle.com/forums/thread.jspa?threadID=1115472&start=0&tstart=0
+ 
+http://kamranagayev.com/2010/03/29/rman-video-tutorial-series-performing-disaster-recovery-with-rman/
+
+http://docs.oracle.com/cd/B28359_01/backup.111/b28270/rcmvalid.htm  --rman backup validate
+
+http://www.oracle11ggotchas.com/articles/Using%20RMAN%20to%20restore%20a%20database%20to%20another%20server%20in%20an%20ASM%20environment.pdf
+
+http://dbaforums.org/oracle/index.php?showtopic=17210
+
+http://www.akadia.com/services/ora_duplicate_database_rman.html
+
+http://blog.ronnyegner-consulting.de/2009/11/04/oracle-11g-release-2-rman-compression-comparison/         --various compressions and statistics.

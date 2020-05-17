@@ -1,0 +1,243 @@
+CREATE Procedure [dbo].[SQL_SmartINDEX] (@DBName Varchar(100)=NULL,@Command Varchar(50)=NULL) as
+Set NOCOUNT ON
+
+----------------------------------------------------
+-- Author: Saleem Hakani (WWW.SQLCOMMUNITY.COM)
+-- Date: Sunday, Jun 24th 2007 @ 7:40 PM PST
+-- Description: This procedure allows you to obtain fragmentation information from tables and indexes of your local SQL Server.'
+-- Description: It also provides you with recommendation based on the amount of fragmentation detected in tables/indexes'
+-- Description: It also has a feature that lets you generate a script for rebuilding or re-organizing all the indexes'
+-- Compatibility: SQL Server 2005 only.
+-- Disclaimer: This script, is provided for informational purposes only and SQL Server Community (aka: WWW.SQLCOMMUNITY.COM) or the author of this script makes no warranties, 
+-- either express or implied. This script, scenarios and other external web site references, is subject to change without notice. 
+-- The entire risk of the use or the results of the use of this script remains with the user.
+----------------------------------------------------
+
+If (@DBName is null or @DBName='HELP')
+Begin
+	Print 'HELP for SQL_SmartINDEX'
+	Print '======================='
+	Print ''
+	Print 'This procedure allows you to obtain fragmentation information from tables and indexes of your local SQL Server.'
+	Print 'It also provides you with recommendation based on the amount of fragmentation detected in tables/indexes'
+	Print 'It also has a feature that lets you generate a script for rebuilding or re-organizing all the indexes'
+	Print ''
+	Print 'It provides you with the following information:'
+	Print '1) Database Name'
+	Print '2) Object Name'
+	Print '3) Index ID'
+	Print '4) Index Name'
+	Print '5) Index Type'
+	Print '6) Avg Fragmentation in Percentage'
+	Print '7) Recommendation on how to fix detected fragmentation'
+	Print ''
+	Print 'SYNTAX: Exec SQL_SmartINDEX <@DBName>,<@Command>'
+	Print '@DBName = Can be any valid and online database (Cannot be a mirror instance)'
+	Print '@Command = Can be ''Script'' to generate script for objects that were detected with fragmentation'
+	Print ''
+	Print 'EXAMPLE: How to obtain help?'
+	Print 'Exec SQL_SmartINDEX (or) Exec OpsDB..SQL_SmartINDEX ''HELP'''
+	Print ''
+	Print 'EXAMPLE: How to run SQL_SmartINDEX for a single database (Ex: SQLTips)and also generate script to fix them?'
+	Print 'Exec SQL_SmartINDEX ''SQLTips'',''SCRIPT'''
+	Print ''
+	Print 'EXAMPLE: How to run SQL_SmartINDEX for all the databases and also generate script to fix them?'
+	Print 'Exec SQL_SmartINDEX ''*'',''SCRIPT'''
+End
+
+
+Declare @a Varchar(100),@Str Varchar(8000),@id int
+Declare @DBNVar1 Varchar(255),
+		@ObjIDVar1 Int, 
+		@ObjNameVar1 Varchar(255),
+		@IndIDVar1 Varchar(10),
+		@IndNAMEVar1 Varchar(255),
+		@IndexTypeVar Varchar(30),
+		@RecommendationVar Varchar(255) 
+
+Declare @Str1 Varchar(8000)
+
+If exists (Select name from TempDB..SysObjects where Name = '##IndNAME')
+Begin
+	Drop Table ##IndNAME 
+End
+
+Create Table ##IndNAME 
+(
+	IndNAME Varchar(255)
+)
+
+Set @Str='' 
+
+If exists (Select name from TempDB..SysObjects where Name = '##SQL_FragINFO')
+Begin
+	Drop Table ##SQL_FragINFO
+End
+
+If exists (Select name from TempDB..SysObjects where Name = '##SQL_FragLIST')
+Begin
+	Drop Table ##SQL_FragLIST
+End
+
+
+Create Table ##SQL_FragINFO 
+(
+	DatabaseName Varchar(255),
+	ObjectID Int,
+	ObjectName Varchar(255),
+	Index_ID Int,
+	Index_Type_DESC Varchar(255),
+	Avg_Fragmentation_In_Percent Varchar(26)
+)
+
+If (@DBName <> '*')
+Begin
+
+Select @Str='Use ['+Ltrim(@DBName)+'] SELECT Distinct DB_Name(Database_id) as ''DatabaseName'',
+	Object_id,
+	Object_Name(Object_id),
+	Index_ID,
+	Index_Type_Desc,
+	Convert(Varchar,round(Avg_Fragmentation_In_Percent,3)) as ''Avg_Fragmentation_In_Percent''
+	FROM sys.dm_db_index_physical_stats ('+Ltrim(db_id(@DBName))+', NULL, NULL, NULL, NULL) 
+	Where Object_id is not null and Avg_Fragmentation_In_Percent <> 0'
+	Insert into ##SQL_FragINFO Exec (@Str)
+End
+
+If (@DBName='*')
+Begin
+
+Declare CheckTab cursor for Select Database_ID,Name from Sys.Databases where State_Desc='Online' and Database_ID > 4 Order by 1
+Open CheckTab
+Fetch Next from CheckTab into @id,@a
+While (@@Fetch_Status=0)
+Begin
+	Select @Str='Use ['+Ltrim(@a)+'] SELECT Distinct DB_Name(Database_id) as ''DatabaseName'',
+	Object_ID,
+	Object_Name(Object_id),
+	Index_ID,
+	Index_Type_Desc,
+	Convert(Varchar,round(Avg_Fragmentation_In_Percent,3)) as ''Avg_Fragmentation_In_Percent''
+		FROM sys.dm_db_index_physical_stats ('+Ltrim(str(@id))+', NULL, NULL, NULL, NULL) 
+		Where Object_id is not null and Avg_Fragmentation_In_Percent <> 0'
+	Insert into ##SQL_FragINFO Exec (@Str)
+	Fetch Next from CheckTab into @id,@a
+End
+Close CheckTab
+Deallocate Checktab
+End
+
+
+Select DatabaseName,
+	ObjectID,
+	ObjectName,
+	Index_ID,
+	'******************NOT-AVAILABLE*********************' as IndexNAME,
+	Index_Type_Desc,
+	Avg_Fragmentation_In_Percent +' %' as 'Avg_Fragmentation_In_Percent',
+	'Recommendation'= 
+	Case
+		When (Avg_Fragmentation_In_Percent > 30.00 and Index_Type_Desc ='NONCLUSTERED INDEX') then 'REBUILD THIS INDEX'
+		When (Avg_Fragmentation_In_Percent <= 30.00 and Index_Type_Desc ='NONCLUSTERED INDEX') then 'DEFRAG THIS INDEX'
+		When (Avg_Fragmentation_In_Percent > 30.00 and Index_Type_Desc ='CLUSTERED INDEX') then 'REBUILD THIS INDEX'
+		When (Avg_Fragmentation_In_Percent <= 30.00 and Index_Type_Desc ='CLUSTERED INDEX') then 'DEFRAG THIS INDEX'
+		When (Avg_Fragmentation_In_Percent > 10.00 and Index_Type_Desc ='HEAP') then 'CREATE A CLUSTERED INDEX THEN DROP IT'
+		When (Avg_Fragmentation_In_Percent <= 10.00 and Index_Type_Desc ='HEAP') then 'NO ACTION REQUIRED'
+	End 
+	Into ##SQL_FragLIST from ##SQL_FragINFO order by 1,2 desc
+
+Declare CheckFrag Cursor For 
+	Select 
+		DatabaseName,
+		ObjectID,
+		ObjectName,
+		Index_ID,
+		Index_Type_Desc,
+		Recommendation 
+	from ##SQL_FragLIST 
+	Open CheckFrag
+	Fetch Next from CheckFrag Into 
+		@DBNVar1,
+		@ObjIDVar1,
+		@ObjNameVar1,
+		@IndIDVar1,
+		@IndexTypeVar,
+		@RecommendationVar    
+
+	While (@@Fetch_Status=0)
+	Begin
+		Truncate Table ##IndName
+		Exec('Insert into ##IndNAME Select Name from ['+@DBNVar1+']..SysIndeXes 
+		where IndID = '+@IndIDVar1+' and ID='+@ObjIDVar1)
+		
+		Select @Str1=IndNAME from ##IndNAME
+
+	Update ##SQL_FragLIST
+		Set IndexNAME = ISNULL(@Str1,'NOT-AVAILABLE')
+		Where ObjectID=@ObjIDVar1 and 
+		DatabaseName=@DBNVar1 
+
+	Fetch Next from CheckFrag into 
+		@DBNVar1,
+		@ObjIDVar1,
+		@ObjNameVar1,
+		@IndIDVar1,
+		@IndexTypeVar,
+		@RecommendationVar    
+End
+Close CheckFrag
+Deallocate CheckFrag
+
+If (Select count(*) from ##SQL_FragLIST) >=1
+Begin
+Select DatabaseName,
+		ObjectName,
+		Index_ID,
+		IndexNAME,
+		Index_Type_DESC,
+		Avg_Fragmentation_In_Percent, 
+		Recommendation 
+	from ##SQL_FragLIST
+End
+
+If (@Command='Script' or @Command='EXECUTE')
+Begin
+Declare ScriptGEN Cursor For 
+Select DatabaseName, 
+	ObjectName, 
+	Index_ID,
+	IndexNAME,
+	Index_Type_DESC,Recommendation from ##SQL_FragLIST
+Open ScriptGEN
+Fetch Next from ScriptGEN into 
+		@DBNVar1,
+		@ObjNameVar1,
+		@IndIDVar1,
+		@IndNAMEVar1,
+		@IndexTypeVar,
+		@RecommendationVar    
+
+While (@@FETCH_STATUS=0)
+
+Begin
+If (@IndexTypeVar <> 'HEAP' and @RecommendationVar='REBUILD THIS INDEX')
+Begin
+		Print 'Use ['+Ltrim(@DBNVar1)+'] Alter Index ALL ON '+Ltrim(@ObjNameVar1)+' REBUILD WITH (ONLINE = ON)' 
+End
+
+If (@IndexTypeVar <> 'HEAP' and @RecommendationVar='DEFRAG THIS INDEX')
+Begin
+		Print 'Use ['+Ltrim(@DBNVar1)+'] Alter Index ALL ON '+Ltrim(@ObjNameVar1)+' REORGANIZE' 
+End
+
+Fetch Next from ScriptGEN into 
+		@DBNVar1,
+		@ObjNameVar1,
+		@IndIDVar1,
+		@IndNAMEVar1,
+		@IndexTypeVar,
+		@RecommendationVar    
+End
+Close ScriptGEN
+Deallocate ScriptGEN
+End

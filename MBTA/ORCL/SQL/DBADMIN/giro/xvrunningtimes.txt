@@ -1,0 +1,12 @@
+SELECT     GIRO.HASTUS_rvariant.rtever_id, GIRO.HASTUS_rvariant.route_id, GIRO.HASTUS_rvariant.direction, GIRO.HASTUS_rvlinkrt.sched_type, GIRO.HASTUS_rvariant.rvariant_id, 
+                      GIRO.HASTUS_rvtp.tp_rank, GIRO.HASTUS_rvlinkrt.start_place, GIRO.HASTUS_rvlinkrt.end_place, GIRO.HASTUS_rvlinkrt.period_start, GIRO.HASTUS_rvlinkrt.period_end, GIRO.HASTUS_rvlinkrt.run_time, 
+                      GIRO.HASTUS_rtever.rte_ver
+FROM         GIRO.HASTUS_rvariant INNER JOIN
+                      GIRO.HASTUS_rvtp ON GIRO.HASTUS_rvariant.route_id = GIRO.HASTUS_rvtp.route_id AND (GIRO.HASTUS_rvariant.rvariant_id = GIRO.HASTUS_rvtp.rvariant_id OR
+                      GIRO.HASTUS_rvariant.rvariant_id IS NULL AND GIRO.HASTUS_rvtp.rvariant_id IS NULL) AND GIRO.HASTUS_rvariant.rtever_id = GIRO.HASTUS_rvtp.rtever_id INNER JOIN
+                      GIRO.HASTUS_rvlinkrt ON GIRO.HASTUS_rvariant.rtever_id = GIRO.HASTUS_rvlinkrt.rtever_id AND GIRO.HASTUS_rvariant.route_id = GIRO.HASTUS_rvlinkrt.route_id AND 
+                      (GIRO.HASTUS_rvariant.rvariant_id = GIRO.HASTUS_rvlinkrt.rvariant_id OR
+                      GIRO.HASTUS_rvariant.rvariant_id IS NULL AND GIRO.HASTUS_rvlinkrt.rvariant_id IS NULL) AND GIRO.HASTUS_rvtp.place_id = GIRO.HASTUS_rvlinkrt.start_place INNER JOIN
+                      GIRO.HASTUS_rtever ON GIRO.HASTUS_rvariant.rtever_id = GIRO.HASTUS_rtever.rtever_id
+WHERE     (GIRO.HASTUS_rtever.rte_ver = '113')
+ORDER BY GIRO.HASTUS_rvariant.rtever_id, GIRO.HASTUS_rvariant.route_id, GIRO.HASTUS_rvariant.direction, GIRO.HASTUS_rvlinkrt.sched_type, GIRO.HASTUS_rvariant.rvariant_id, GIRO.HASTUS_rvtp.tp_rank

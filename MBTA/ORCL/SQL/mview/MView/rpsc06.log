@@ -1,0 +1,12 @@
+SQL> 
+SQL> 
+SQL> CONNECT SYSTEM/manager@mvdb
+Connected.
+SQL> 
+SQL> CREATE PUBLIC DATABASE LINK nwcd.mbta.com USING 'masterdb';
+
+Database link created.
+
+SQL> 
+SQL> 
+SQL> spool off

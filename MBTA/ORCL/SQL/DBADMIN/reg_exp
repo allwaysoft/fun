@@ -1,0 +1,8 @@
+https://forums.oracle.com/forums/thread.jspa?threadID=703154
+
+with t as (
+select 'Tachyon QX4 - HBA' col from dual
+union select 'Tachyon QX4 ¿ HBA' from dual
+union select 'Tachyon QX4 – HBA' from dual
+)
+select t.col, regexp_replace(t.col, '[^[:alnum:] -]') from t
