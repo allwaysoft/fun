@@ -1,0 +1,17 @@
+Brew install redis
+Redis is installed on local, just use ‘redis’ command to start redis server. Once the server is started, just use command ‘redis-cli’ to connect to local.
+
+Connect to staging Redis
+redis-cli -h redis-prod.t7ihoe.ng.0001.use1.cache.amazonaws.com —Get prod name from config if needed.
+redis-cli -h pingupapistage.t7ihoe.0001.use1.cache.amazonaws.com
+
+redis-prod.t7ihoe.ng.0001.use1.cache.amazonaws.com:6379
+pingupapistage.t7ihoe.0001.use1.cache.amazonaws.com:6379
+
+Keys * —This command gives all the businesses keys by id and unique id, might take a while to get the list.
+get BIZ_ID_3644577 —get business info
+get BIZ_UNIQUE_pMJE7y —Get a business by unique id
+DEL BIZ_ID_364457b7 —Instant delete
+expire BIZ_ID_3644577 1 —delete a business in 1 second (Time based delete)
+INFO KEYSPACE —Lists all the databases in Redis
+FLUSHDB —Delete from Redis current DB. BE CAREFUL

@@ -1,0 +1,36 @@
+JAVA
+——-
+/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home
+
+
+Class Object Reference
+————————————
+SomeClass g1 = new SomeClass();
+// g1 is a reference to an object of SomeClass class.
+
+SomeClass g2;
+// g2 is a reference that can point to an object of SomeClass class
+// but currently not pointing to any.
+
+
+Run a SBT Java program with SBT
+——————————————
+Use similar command on the terminal in the root directory of the project you want to run. Where 9996 is the debug port and 9003 is run port. We can use different ports for different project simultaniously.
+sbt8e -jvm-debug 9996 "run 9003"
+
+Now that SBT is running, in intelliJ, on the top right, from the drop down edit the config to debug that project at port 9003 as above. This is required only if we want to debug something. Else, this point is not required.
+
+Now, we can go to the browser and hit a route of the project as below where 9003 is the port mentioned in point 1 above.
+http://localhost:9003/businesses/:businessId
+
+
+Run a Spring program
+——————————-
+We need to have Redis running on local for spring project. Issue the below command in biZdeduplication folder, that is the only spring project at pingup
+kranthiPabba1:/Users/kranthipingup/misc/repos/bizDeduplication redis
+
+Then in intellij, we need to either run OR debug the server at below location.
+/Users/kranthipingup/misc/repos/bizDeduplication/backendServer/src/main/java/com/pingup/backend/server/Server.java
+
+And then run the test client with appropriate jobId, each project in bizDeduplication has a jobId.
+/Users/kranthipingup/misc/repos/bizDeduplication/backendServer/src/main/java/com/pingup/backend/testClient/TestClient.java

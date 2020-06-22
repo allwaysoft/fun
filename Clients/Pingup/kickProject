@@ -1,0 +1,23 @@
+To test in local.
+
+Run API on local:
+/Users/kranthipingup/misc/repos/provider-api/pingup-provider-api sbt8e -jvm-debug 9996 "run 9003"
+
+Run Kick on local:
+Enable below in kranthi.conf with the above port number and localhost as below.
+// LOCAL
+api {
+    baseUrl = "http://localhost:9003/"
+    adminEncKey = "ad2e19n3qlwr5ksd"
+}
+app {
+    widgetEndpointsBaseUrl = "http://localhost:9003/"
+    devMode = true
+    grubhubIframeEnabled = true
+}
+
+Run below at command line.
+/Users/kranthipingup/misc/repos/kikPlay sbt8e -jvm-debug 9997 "run 9002"
+
+On the browser, hit the below endpoint with a unique Id.
+http://bookit.local.pingup.co:9002/Be3jO

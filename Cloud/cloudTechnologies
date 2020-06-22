@@ -1,0 +1,52 @@
+/*-----------------------------------------------------------------------------------------------------------------------------------------------------
+AWS -CLI commands
+-----------------------------------------------------------------------------------------------------------------------------------------------------*/
+--RUN powershell as ADMIN. IMPORTANT IMPORTANT IMPORTANT, else we get weired error that okta-aws is not recognized
+okta-aws <Name Of AVM to be connected to> sts get-caller-identity--Below shows engines versions available for a RDS and also upgrade paths and if they are auto eligible minor versions so AWS can automatically upgrade them
+aws rds describe-db-engine-versions --engine aurora postgresql
+
+
+/*-----------------------------------------------------------------------------------------------------------------------------------------------------
+VAULT
+Only Infra Ops can write to QA and prod manually. Else it could be written programatically
+-----------------------------------------------------------------------------------------------------------------------------------------------------*/
+--Vault Docs
+https://acadian-asset.atlassian.net/wiki/spaces/IAD/pages/387973773/Create+Vault+Users
+https://acadian-asset.atlassian.net/wiki/spaces/TIS/pages/440502981/AWS+DB+Support+User+Creation+RDS+Postgres --Expire passowrd after use and create new in vault for next use
+--LOGIN$env:VAULT_ADDR='https://vault.service.dev.acadian-asset.com'
+$env:VAULT_ADDR='https://vault.service.qa.acadian-asset.com'
+$env:VAULT_ADDR='https://vault.service.prod.acadian-asset.com'
+vault login -method=okta username=kpabba --First set the VAULT_ADDR env vairable to connect to. When prompted for password, use ADvault kv put secret/acadian/services/operations/account-finalization/db-creds/core id="sql_devaccountfinalization" secret="Password@1"--Example commands after loginvault read secret/acadian/services/marketing-audit/cicd/database-pgaurora
+vault write secret/acadian/services/marketing-audit/cicd/database-pgaurora build-password="Computer1" build-user="sa"--Find role ant the permissions granted to that role
+vault read database/roles/marketingaudit_dba
+vault read database/roles/marketingaudit_read_only--Generate user creds for the role
+vault read database/creds/marketingaudit_dba
+vault read database/creds/marketingaudit_read_only--Once the above login is done, depending on what access one has the user can issue the below commands in the environment the user is logged into.
+vault list secret/acadian/services/acct-perf-master/appsettingsvault list database/config
+vault list database/roles --only works in devvault read secret/acadian/services/acct-perf-master/appsettings/sql-user-passwordvault write auth/userpass/users/bob password="long-password"vault policy read <my-policy>
+
+
+/*-----------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------DOCKER ARCTIFACTORY
+-----------------------------------------------------------------------------------------------------------------------------------------------------------*/
+--Below command could be obtained from the jfrog home page and based on the jfrog repository, the below command needs to be changed
+https://aam.jfrog.io/aam/webapp/#/home https://git.acadian-asset.com/devops/ci/database-mssql1. Make sure docker desktop is in running state
+--Run all the below from command window/vss code as admin
+Net stop com.docker.service
+Net start com.docker.servicedocker login aam-docker.jfrog.io --user: use acadian email. password: use token from jform website account preferences.docker pull aam-docker-production.jfrog.io/aam-mssql-deploy:1.0.8docker image ls --Show all the avaialble docker imagesdocker create 407eabbd96a0 bash --Start a container for an image. ImageId here can be obtained from above commanddocker ps -a --Shows avaialble containers to run and their current statedocker start -a -i 8de195ae6e5bacc --Start a container using the first few charecters of the container Iddocker exec -t -i aa2b1e6d7ac2 --To enter into a container already running with a container IdThen the files in the image could be browsed or use Visual Studio Code docker extension to see docker files in workspace-v /host/directory:/container/directory  image_name command_to_run
+{
+    "auths": {
+        "https://aam-docker-production.jfrog.io": {
+            "auth": "<USERNAME>:<PASSWORD> (converted to base 64)",
+            "email": "youremail@email.com"
+        }
+    }
+}docker tag <IMAGE_ID> aam-docker-production.jfrog.io/<DOCKER_REPOSITORY>:<DOCKER_TAG>docker push aam-docker-production.jfrog.io/<DOCKER_REPOSITORY>:<DOCKER_TAG>docker pull aam-docker-production.jfrog.io/aam-mssql-deploy:1.0.8
+
+
+/*-----------------------------------------------------------------------------------------------------------------------------------------------------------
+--CONSUL
+Similar to Vault but less secure?
+Only Infra Ops can write to QA and prod manually. Else it could be written programatically. 
+Look for https://git.acadian-asset.com/performance/reporting/config-api on how to write programatically
+-----------------------------------------------------------------------------------------------------------------------------------------------------------*/https://consul.service.dev.acadian-asset.com/ui/bos/services

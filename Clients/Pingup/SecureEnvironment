@@ -1,0 +1,21 @@
+Below is the hierarchy of how a request for a CC payment from widget hits payment system. I don’t have access to this environment
+
+DNS
+Load Balancer for HA Proxy
+HA Proxy
+Load Balancer for secure API
+Secure API
+
+Last time when we had the issue, we checked below and succeeded finally.
+
+We checked if rout53 was directing the request to HA proxy load balancer
+We tried to check if the above load balancer was getting any requests but couldn’t setup logs for the LB
+We SSHd into the HA Proxy box for logs but were not able to see any requests coming in except for health check ones from LB
+Accidentally found that only httpS requests were not going in but http were fine. See below
+We redeployed the project, rebooted the boxes but nothing fixed the issue (When redeploying/rebooting load balancer names might change since AWS removes old and adds new, so change them accordingly)
+https://www.pingup.cc/session —Was not working
+http://www.pingup.cc/session —Was working
+So, that made us think that there was an issue with SSL certificate, though it said active, we created a new one but that didn’t fix the issue either
+Then Eric, looked at the security group of the HA Proxy Load balancer and it was not allowing any https connections (443) and was only allowing http(80). Not sure who or how it got changed.
+
+Some times nginx on the secure API needs to be restarted as it get’s stopped for some unknown reason.

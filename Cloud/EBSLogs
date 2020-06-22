@@ -1,0 +1,29 @@
+EBS LOGS
+
+Look at the below link and look for  Cronie sub header to understand how log rotation works.
+https://wiki.archlinux.org/index.php/cron
+
+AWS has a specific way of handling the rotate logs. So, not sure if above link is relevant to EBS machines. Below is the link specific to AWS EBS
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.logging.html
+
+
+/etc/cron.hourly/cron.logrotate.elasticbeanstalk.web-1-stderr.conf -> /etc/logrotate.elasticbeanstalk.hourly/logrotate.elasticbeanstalk.web-1-stderr.conf -> will rotate the log hourly
+
+
+Below are the directories
+
+Cron.d cron.daily cron.hourly cron.weekly cron.monthly
+
+Logrotate.d log rotate.elasticbeanstalk.hourly
+
+
+
+ Log rotate.conf -> 
+
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+HOME=/
+01 01 01 * * root run-parts /etc/cron.monthly
+
+Finally: Just changed the setting on EBS to send logs to S3 and changed the deployment style on MD to get the logs onto S3. Even after deployments, logs are still sent to S3 because of the new deployment policy. For more details, see EBS for MD.

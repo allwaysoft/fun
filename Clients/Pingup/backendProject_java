@@ -1,0 +1,31 @@
+cd /pingup/backend
+./reRelease.sh
+
+scp -i ~/.ssh/getabl_vpc_prod.pem ubuntu@10.150.112.121:/pingup/backend/backendService.jar /Users/kranthipingup/misc
+
+
+bizDeduplication
+
+Spring Framework
+
+Run the Server 1st
+com/pingup/backend/server/Server.java
+
+Run the Test client later
+com/pingup/backend/testClient/TestClient.java
+
+Change the backend.properties to add the values from stage or prod properties, depending where you want to run it. 
+
+PATHS
+/Users/kranthipingup/misc/git/bizDeduplication/backendServer/src/main/resources/backend.staging.properties
+
+
+
+Deleting the whole backend project from local and reclone from github had the below issues
+——————————————————————————————————————————————
+
+Jfrog access denied issue when I tried mvn clean install after cloning the project.
+I copied /Users/kranthipingup/.m2/settings.xml to desktop and removed .m2 directory
+Closed backend project from intellij and Xed it out from intellij list and reopened the project.
+ran mvn clean install and it all looked good but then the PublisherDataManipulationBingImpl had red for ‘import generated.Businesses;’ then had to do cmd+shift+A and do ‘reimport all maven projects’.
+All was fixed then

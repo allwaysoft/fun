@@ -1,0 +1,119 @@
+Elastic Search
+
+/Applications/elasticsearch-2.3.0/bin/elasticsearch
+
+curl -XGET 'http://10.50.111.52:9200/_cluster/health?pretty=true'
+
+— Some of the commands executed on 10.50.111.52
+
+sudo vi /etc/elasticsearch/elasticsearch.yml
+
+sudo service elasticsearch stop
+
+sudo service elasticsearch start
+
+sudo update-rc.d elasticsearch defaults
+
+URL to search for a specific business in the Index
+
+http://10.50.111.52:9200/business_locations_2/_search?q=id:3644547
+http://10.50.111.52:9200/business_locations_1/_search?q=id:3644547
+
+
+Prod
+
+curl -XGET http://10.150.112.120:9200/_cat/shards?h=index,shard,prirep,state,unassigned.reason| grep UNASSIGNED
+curl -XGET http://10.150.112.101:9200/_cat/shards?h=index,shard,prirep,state,unassigned.reason| grep UNASSIGNED
+
+curl -XDELETE 'http://10.150.112.120:9200/baldedup/'
+curl -XDELETE 'http://10.150.112.101:9200/baldedup/'
+
+
+curl -XGET 'http://10.150.112.120:9200/_cluster/health?pretty=true'
+curl -XGET 'http://10.150.112.101:9200/_cluster/health?pretty=true'
+
+
+curl -XGET 'http://10.150.112.120:9200/business_locations_1/_settings?pretty'
+curl -XGET 'http://10.150.112.101:9200/business_locations_1/_settings?pretty'
+
+
+
+curl -XGET 'http://10.150.112.120:9200/_nodes?pretty=true'
+curl -XGET 'http://10.150.112.120:9200/_nodes?pretty=true'
+
+
+curl -XGET 'http://10.150.112.120:9200/_cat/health?pretty'
+curl -XGET 'http://10.150.112.101:9200/_cat/health?pretty'
+
+
+curl -XGET 'http://10.150.112.120:9200/_cat/shards/business_locations_1'
+curl -XGET 'http://10.150.112.101:9200/_cat/shards/business_locations_1'
+
+
+
+curl -XPUT 'http://10.150.112.101:9200/_cluster/settings' -d '{
+    "transient" : {        
+        "cluster.routing.allocation.enable" : “none”      
+    }
+}' 
+
+curl -XPUT 'http://10.150.112.120:9200/_cluster/settings' -d '{
+    "transient" : {        
+        "cluster.routing.allocation.enable" : “none”
+    }
+}' 
+
+
+
+curl -XPUT 'http://10.150.112.101:9200/_cluster/settings' -d '{
+    "transient" : {        
+        "cluster.routing.allocation.enable" : "all"      
+    }
+}' 
+
+curl -XPUT 'http://10.150.112.120:9200/_cluster/settings' -d '{
+    "transient" : {        
+        "cluster.routing.allocation.enable" : "all"
+    }
+}' 
+
+— Delete something from an Index
+curl -XDELETE 'http://10.50.111.52:9200/business_locations_2/business_info/AWTxBV0cFGCtvuT4_zca?pretty' 
+— Above deletes a doc with _id AWIpk7Fp8FPIMsHr5CAl
+
+curl -XDELETE 'http://10.50.111.52:9200/business_locations_1/business_info/AWIqOKNM8FPIMsHrEDK5?pretty'
+
+
+curl -XPOST 'localhost:9200/twitter/_delete_by_query?pretty' -H 'Content-Type: application/json' -d'
+{
+  "query": { 
+    "match": {
+      "message": "some message"
+    }
+  }
+}
+'
+
+If an index is missing from the index config, it can be added back with the below curl statement. When indexer job was run on staging, it errored out as below and ran the below curl command to fix it.
+
+— Error
+2018-07-09 20:02:22 INFO  IndexerJob:72 - Starting reindex
+2018-07-09 20:02:22 INFO  IndexerJob:73 - Re-configuring index
+2018-07-09 20:02:22 INFO  Indexer:97 - Online index is set to: business_locations_1
+2018-07-09 20:02:22 INFO  IndexerJob:79 - Current Live Index: business_locations_1
+2018-07-09 20:02:22 INFO  IndexerJob:80 - Current Offline Index: null
+2018-07-09 20:02:22 INFO  IndexerJob:81 - Reconfiguring index: null
+2018-07-09 20:02:22 INFO  Indexer:141 - Truncating(Delete / Re-add) index
+2018-07-09 20:02:22 ERROR IndexerJob:138 - Error while running indexer job
+java.lang.NullPointerException
+2018-07-09 20:02:22 INFO  IndexerJob:67 - done
+— Error
+
+curl -X POST "http://10.50.111.52:9200/_aliases" -H 'Content-Type: application/json' -d'
+                                        {
+                                            "actions" : [
+                                                { "add" : { "index" : "business_locations_2", "alias" : "business_alias_offline" } }
+                                            ]
+                                        }
+                                        '
+

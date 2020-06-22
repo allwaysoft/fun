@@ -1,0 +1,18 @@
+Use below command to start mongo db on local
+mongod --dbpath /Users/kranthipingup/misc/projs/MongoDB/data
+
+
+Run the below command on the Mac command line to install mongo shell.
+brew install -y mongodb
+
+Below is the reference for mongo shell commands.
+https://docs.mongodb.com/manual/reference/mongo-shell/#command-helpers
+
+At the command line on the Mac, run below to connect to the mongo DB
+mongo accelerator.pingup.pushbuild.com/sandbox_maserver     — Testing
+mongo accelerator.production.pingup.com/maserver — Production
+
+If needed, get one of the below GUI tools, not sure if we have a free tool, you can get a trial version and have to buy at some point.
+https://scalegrid.io/blog/which-is-the-best-mongodb-gui/
+
+db.copyDatabase(getabl_prod, getabl_prod, 10.150.122.22);

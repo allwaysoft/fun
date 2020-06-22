@@ -1,0 +1,11 @@
+Integrations Instances
+
+service --status-all
+ALWAYS stop and start a service don’t just restart OR just start it’s not going to work.
+tcpdump port <portNumber>
+free -m
+
+
+2 ways of starting a provider service on a box
+service play-bc-CL02 stop
+sudo /etc/init.d/play-bc-BO02 stop

@@ -1,0 +1,9 @@
+--HOW IBM snap works. Acaidan is using IBM FlashCopy SE, where target vaolumes are space effecient. If below link doesn't work, look for pdf doc 'IBMFlasCopySE' in downloads of the machine.
+http://www.redbooks.ibm.com/redpapers/pdfs/redp4368.pdf
+
+-- Below parameters come from hardocdes values from Snap.bat or passed to it via AB.
+
+-- svc_svccopy in the below command is the user to connect to the machine and svcinfo lsflsfcconsistgrp are commands
+C:\Users\SQldev>C:\DBA\dbcore01\plink.exe -ssh -batch -i C:\DBA\dbcore01\IBM-Prod-SVC-PrivKey.ppk svc_svccopy@10.3.50.113 svcinfo lsfcconsistgrp
+
+--run above with sqldev login in to hcpms server

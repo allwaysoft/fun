@@ -1,0 +1,95 @@
+{
+    "Environments": {
+        "DEV": {
+            "Hosts": {
+                "CORE"      : "DBCORE-DEV01",
+                "BOS-DB02"  : "DB02-DEV01",
+                "DBWH02"    : "BOS-DBDEVWH02",
+                "SSIS"      : "DB02-DEV01",
+                "SSRS"      : "BOS-DBDEVRS02"
+            },
+            "DataSources" : {
+                "CORE": "/Data Sources/BOS-DBCORE01",
+                "WEBSERVICE": "/Data Sources/AttributionService"
+            }
+        },        "QA": {
+            "Hosts": {
+                "CORE"      : "DBCORE-QA01",
+                "BOS-DB02"  : "DB02-QA01",
+                "DBWH02"    : "BOS-DBQAWH02",
+                "SSIS"      : "DB02-QA01",
+                "SSRS"      : "BOS-DBQARS02"
+            },
+            "DataSources" : {
+                "CORE": "/Data Sources/DBCORE-QA01",
+                "WEBSERVICE": "/Data Sources/AttributionService"
+            }
+        },        "UAT": {
+            "Hosts": {
+                "CORE"      : "DBCORE-UAT01",
+                "BOS-DB02"  : "DB02-UAT01",
+                "DBWH02"    : "BOS-DBUATWH02",
+                "SSIS"      : "DB02-UAT01",
+                "SSRS"      : "BOS-DBUATRS02"
+            },
+            "DataSources" : {
+                "CORE": "/Data Sources/BOS-DBCORE01",
+                "WEBSERVICE": "/Data Sources/AttributionService"
+            }
+        },        "PROD": {
+            "Hosts": {
+                "CORE"      : "BOS-DBCORE01",
+                "BOS-DB02"  : "BOS-DB02",
+                "DBWH02"    : "BOS-DBWH02",
+                "SSIS"      : "BOS-DBSSIS01",
+                "SSRS"      : "BOS-DBRS02"
+            },
+            "DataSources" : {
+                "CORE": "/Data Sources/BOS-DBCORE01",
+                "WEBSERVICE": "/Data Sources/AttributionService"
+            }
+        }
+    },    "Application": {
+        "Name" : "/operations/database-mssql",
+   
+        "Deployment": {
+            "Order": [
+                "/Principals/Roles/*",
+                "/Principals/Users/*",
+                "/Rules/*",
+                "/Partition Functions/*",
+                "/Partition Schemes/*",
+                "/Schema/*",
+                "/Scripts/PreDeployment/*",
+                "/Sequences/*",
+                "/User Defined Data Types/*",
+                "/User Defined Table Types/*",
+                "/Triggers/*",
+                "/User Defined Functions/*",
+                "/Views/*",
+                "/Stored Procedures/*",
+                "/Synonyms/*",
+                "/Scripts/PostDeployment/*"
+            ],
+            "ReRunnable": [
+                "/Views/*",
+                "/User Defined Functions/*",
+                "/Stored Procedures/*"
+            ],
+            "Exclude": [
+                "/Tables/*",
+                "*/Manual/*",
+                "*/Archive/*"
+            ]
+        },        "SSRS" : {
+            "RootFolders": [ "/SSRS" ],
+            "DataSourceMapping": {
+                "CORE" : ["Core", "DEV3", "dsDev03", "DataSource1", "DSPerformance", "dsPerformance", "DEV03", "dsDev"],
+                "WEBSERVICE" : ["AttributionService"]               
+            }
+        },
+        "SSIS" : {
+            "RootFolders": [ "/SSIS" ]
+        }
+    }
+}

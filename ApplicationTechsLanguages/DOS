@@ -1,0 +1,14 @@
+MS Dos Prompt
+------
+ROBOCOPY T:\PL\AFTER\PL C:\tst *.cfg *.pl /E     --This will copy all the directory tree under T:\PL\AFTER\PL along with only .cfg and .pl files in all the sub folders to c:\tst
+
+findstr /CMS "HOLDINGSRPT" *
+
+findstr /M /S /C:"SELECT SUM(NVL(TCAE.DIV_AMT,0)) FROM ESTAR_TEMP_CORP_ACT_ENT TCAE WHERE" *  -- This will search for string in double quotes irespcetive of whats present before and after the sting. You can test this command on directory c:\new folder. Aslo, this is case sensitive search
+
+Findstr /?
+FINDSTR [/B] [/E] [/L] [/R] [/S] [/I] [/X] [/V] [/N] [/M] [/O] [/P] [/F:file]
+        [/C:string] [/G:file] [/D:dir list] [/A:color attributes] [/OFF[LINE]]
+        ...
+        ...
+        ...

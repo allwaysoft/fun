@@ -1,0 +1,7 @@
+Detach Databases
+Offline Drives
+Snap IBM LUNS
+Online Drives
+Attach Databases
+Run Git Refresh Automation (RefreshServer.ps1)--Runs SQL files specific to service accts & mappings from prod to dev - This script is in this blog
+ReRun CICD Pipelines (ReRunJobs.ps1) --Runs all branches which were deployed in a lower db env after snap frm prd - This script is in this blog

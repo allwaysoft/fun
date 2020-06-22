@@ -1,0 +1,9 @@
+1. GET - If a url has query parameters, it is usually a GET
+For GET requests, direct browser: http://localhost:9000/accountPublisherStatuses
+
+
+2. POST - If a REST endpoint has a body that goes along with it, it is usually a POST
+For POST requests, use advanced REST http://localhost:9000/accountPublisherStatuses/77336
+For POST JSON 
+Content-Type: application/json
+and the JSON body

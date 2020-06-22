@@ -1,0 +1,30 @@
+Oracle Vs SQL Server
+--------------------
+Oracle, with primary key, doesn’t have table data sorted in the index order but SQL Server has data stored in PK index order
+No DML in functions in SQL Server but possible in Oracle
+Oracle you can drop a partition, Sql Server only truncate a partition
+Oracle has UNDO which makes it possible to read and write to a table at the same time but in SQL Server, by default, when reads are done, updating those rows is not possible because there is a shared lock on the data which is being read but this can be avoided by changing the isolation level of SQL Server to READ_COMMITTED_SNAPSHOT and ALLOW_SNAPSHOT_ISOLATION db options. By setting those options, sql server behaves as Oracle and reads and updates of the same rows is possible at the same time.
+SQL Server has If exists (Select 1) in TSQL but Oracle does not have it.
+
+MySql
+-----
+Cons:
+1. Field trimming with out notification. A varchar 2 filed will not fail when a string of 3 is tried and inserted. It will be trimmed to 2 and will be inserted silently
+2. The primary key and null constraints are not honored. Which means nulls could be inserted in to pk fields
+
+DynamoDB
+--------
+Cost and Throughpu with various features of DynamoDB
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadWriteCapacityMode.html
+
+On-Demand Mode
+DB uses Read request units (RRU) and Write request units (WRU) 
+Provisioned Mode
+DB uses Read Capacity Units (RCU) and Write Capacity Units (WCU) 
+
+Pricing high level
+https://aws.amazon.com/dynamodb/pricing/?nc2=type_a 
+
+Apart from point in time recovery of 35 days, and global table to set up a copy in a different region. DynamoDB also has manula backup and restore the provision
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/BackupRestore.html 
+DDB developers guide and api reference https://docs.aws.amazon.com/dynamodb/index.html

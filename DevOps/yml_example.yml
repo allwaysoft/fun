@@ -1,0 +1,79 @@
+stages:
+- deploy:Dev:Db
+- deploy:Qa:Db
+- deploy:Uat:Db
+- preview:Prod:Db
+- deploy:Prod:Db
+
+deploy db to dev:
+    only:
+    - branches
+    - master
+    except:
+    - tags
+    stage: deploy:Dev:Db
+    tags:
+    - dbcoreqa03
+    script:
+    - ".\\deploy.ps1 -Environment DEV"
+    environment:
+       name: dev
+       
+deploy db to qa:
+    only:
+    - branches
+    - master
+    stage: deploy:Qa:Db
+    when: manual
+    except:
+    - tags
+    tags:
+    - dbcoreqa03
+    script:
+    - ".\\deploy.ps1 -Environment QA"
+    environment:
+       name: qa
+    
+deploy db to uat:
+    only:
+    - branches
+    - master
+    - /^hotfix\/.*$/
+    stage: deploy:Uat:Db
+    when: manual
+    except:
+    - tags
+    tags:
+    - database-mssql-uat
+    script:
+    - ".\\deploy.ps1 -Environment UAT"
+    environment:
+       name: uat
+       
+prod-preview:
+    stage: preview:Prod:Db
+    when: manual
+    except:
+    - branches
+    only:
+    - /^v\d+\.\d+\.\d+$/
+    tags:
+    - database-mssql-prod
+    script:
+    - ".\\deploy.ps1 -Environment PROD -print"
+    environment:
+       name: prod
+
+prod-deploy:
+    stage: deploy:Prod:Db
+    when: manual
+    except:
+    - branches
+    only:
+    - /^v\d+\.\d+\.\d+$/
+    tags:
+    - database-mssql-prod
+    script:
+    - ".\\deploy.ps1 -Environment PROD"
+    environment:
+       name: prod

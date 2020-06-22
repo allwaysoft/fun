@@ -1,0 +1,1 @@
+If imports are red, go to build.sbt or pom.xml of the project, remove the newly added dependencies, let IntelliJ build the project, add the removed dependency again, let IntelliJ build again. This should resolve the red imports.

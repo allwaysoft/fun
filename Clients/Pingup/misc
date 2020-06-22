@@ -1,0 +1,50 @@
+GENERAL
+
+PLAY
+Run below in the java project directory to start set server
+sbt8e -jvm-debug 9999 "run 9000"
+
+IntelliJ -Scala
+Java8
+Elastic Search version 2.3
+Redis
+AWS
+Office 360
+
+Brew install redis
+
+Data injection process. 
+
+Provider: gives us data reach out and put the data in temp tables. Then do ETL
+
+Booker, Genbook is a provider
+
+Leads, Bens are third party APIs
+
+
+Injestion status of 100 in staging which can be moved
+
+Address, Website
+
+
+1Pass Key: A3-S7RFZB-EMWXWA-RPEVF-G27XG-7CPJE-LECYW
+
+~/Library/Python/2.7/bin
+
+JDBC adBatch
+
+Github
+Portalv2
+bizDeduplication
+Kikplay
+Provider-api
+
+Take a look at Mindbody injestion process
+Update business 
+
+
+NODEJS
+npm install — Similar to assembly reload compile….
+node server.js — Run the project
+
+10.50.5.77

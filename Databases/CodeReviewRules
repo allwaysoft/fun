@@ -1,0 +1,41 @@
+-> CTE vs TEMP Table
+CTE no stats but temp tables could have stats
+
+-> Separate the SQL in to two instead of using below    (where rs.AccountCode = @PortfolioOldCode or rs.AccountCode is null)
+
+-> Grants on objects
+
+->Avoid scalar UDFs. It forces row by row processing, for every row, sql server executes the UDF and optimizer has no scope to get a tuned plan.    
+-Below query gives all UDFs in an instance.    
+sp_msforeachdb ' IF ''?'' NOT IN (''msdb'',''master'',''tempdb'')     BEGIN USE [?]     
+SELECT top 100 DB_NAME() as [database], qs.total_worker_time /1000000 As TotalWorkerTime,     
+QS.total_elapsed_time/1000000 As TotalElapsedTime_Sec,     
+QS.total_elapsed_time/(1000000*qs.execution_count) AS [avg_elapsed_time_Sec],     QS.execution_count,    
+QS.total_logical_reads/QS.execution_count As Avg_logical_reads,     QS.max_logical_writes, ST.text AS ParentQueryText,
+SUBSTRING(ST.[text],QS.statement_start_offset/2+1,      
+(CASE WHEN QS.statement_end_offset = -1        THEN LEN(CONVERT(nvarchar(max), ST.[text])) * 2       ELSE QS.statement_end_offset       END - QS.statement_start_offset)/2) AS [Query Text] ,    
+QP.query_plan ,    O.type_desc    
+FROM sys.dm_exec_query_stats QS     
+CROSS APPLY sys.dm_exec_sql_text(QS.sql_handle) AS ST     
+CROSS APPLY sys.dm_exec_query_plan(qs.plan_handle) QP     
+LEFT JOIN Sys.objects O ON     O.object_id =St.objectid 
+Where O.type_desc like ''%Function%''     
+ORDER by qs.total_worker_time DESC ;    
+END' 
+
+->Make sure files have extensions and they are at proper locations
+No table drops, if exists do nothing, else create
+
+->check if dml is done in a transaction
+
+->No incremental modifications to the same pre and post deployment scripts as part of a different stories. In other words, these can not be modified as procedures
+    1. Make sure the scripts are not dropping any existing tables    
+    2. Make sure files are under the correct location    
+    3. Make sure the file extensions are correct for the scripts to be deployed if not the pipeline does not pick those files    
+    4. Check for comments section of the file and make sure they are updated
+
+    1. Order of files being executed is in the same order they are merged to master? Same procedure file two commits to master in diff stories scenario    
+    2. Sometimes diffs do not show up and file starts with a 'B'Discuss about some standards to be followed on database repo setting/permissions to others outside DBOps
+
+->SSIS    
+    Make sure SSIS packages have a target version of 2014    Note that the files paths of SSIS are usually passed through AB job

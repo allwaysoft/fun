@@ -1,0 +1,21 @@
+Snagit - for screen captures
+Mremote – to connect to multiple servers from one tool and have tabs for each server and save connections
+Puttyms for Unix (equivalent to mremote for windows) to have multiple sessions of Linux servers
+Xwinserver – for forwarding display from Unix machine to local machine. First, the X11 forwarding should be enabled in putty session setting for a particular server, then start the Xwinserver on the local machine and now the GUI will be displayed on the local machine from the server
+SQL developer
+SQL developer data modeler
+Toad
+Visual Studio Code
+notepad++ good tool for text document edits
+winscp for ftp files from local machine to a remote server
+keypass – password store and protection software
+perfmon for sql server performance statistics and use this data to make graphs in excel
+glance -f -adviser_only – running glance in the background to gather Unix server statistics
+http://www.unix.com/shell-programming-scripting/27032-glance-fatal-error.html
+ftp://ovweb.external.hp.com/pub/ovnsmdps/pdf/gp_dpm_10_10.00.pdf
+gpm - for gui version of glance but should have x11 forwarding for gui display.
+iTerm for mac, best terminal aggregator
+intellij IDE for java development
+Data Grip for DB development (Not extensive for PL/SQL but good for intellisense with tables)
+PostMan for REST calls
+Studio 3T for MongoDB

@@ -1,0 +1,6 @@
+Ip Addresses and CIDR: https://youtu.be/74gFh8-0rKc
+
+
+Internet Gateway: Facilitates inbound and outbount connection to instances with public ip and are on public subnet of the VPC(aws) or VCN(oracle cloud infrastructure)
+
+NAT Gateway: Facilitates outbound connections from instances with private ip and are on private subnets of a VPC/VCN. No requests initiated from outside the private subnet are satisfied using NAT gateway. In other words, requests should start from the private subnet, go to the internet and receive packets from internet but not vice-versa.

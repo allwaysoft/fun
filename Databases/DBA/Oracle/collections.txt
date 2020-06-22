@@ -1,0 +1,46 @@
+1. Associative Arrays (Index by Tables)
+Uses:
+Use it to hold a few thousand rows not more than 5000 maybe.
+This has to be declared as record, not object
+
+Advantages:
+No need to Extend
+
+Disadvantages:
+Can not be declared at schema level
+Cannot be manipulated with DML statements
+Passing collections to and from the database server
+Deletions not possible
+Associative arrays cannot be stored in DB column
+
+No direct interaction with SQL (Before 12C, form 12C, this is possible)
+
+2. Nested Tables
+Uses
+When used to hold data like a table row, this has to be declared as object when done in SQL (Schema level), as record when done at PL/SQL level
+a. Usage in SQL
+create type i_name is table of nvarchar2(512);
+i_itemname i_name; 
+
+Once created as above and populated with data, it can be used in SQL in the below form
+
+select count(*) into c from all_tables
+    where owner in (select * from table(i_itemname));
+
+OR
+
+select count(*) into c
+    from table(i_itemname) t
+    join all_tables at on at.owner = t.column_value;
+Advantages:
+Deletions and updates possible
+Nested table structure can be stored in a db database column, which means the data in nested tables can be stored in DB.
+
+Disadvantages
+
+3. Varrays (Rarely used)
+Advantages:
+
+
+Disadvantages:
+Need to know the upper boundary in advance

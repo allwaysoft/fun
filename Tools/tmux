@@ -1,0 +1,15 @@
+@reboot              tmux new -d -s maserver -c /home/ubuntu/maserver 'NODE_ENV=production nodemon -w ./lib ./lib/daemon.js;'
+*/5 * * * *          tmux new -d -s maserver -c /home/ubuntu/maserver 'NODE_ENV=production nodemon -w ./lib ./lib/daemon.js;'
+
+
+Ctl-a —> tmux initial command
+tmux ls —> Lists all existing tmux sessions
+tmux new -s iframes
+tmux attach-session -t 3 —> attach an existing session
+
+tmux> Ctl+b and then the command  —> Every time this command needs to be entered before putting in any other command.
+tmux> d     —> detach a session and leave it running
+
+tmux kill-session -t 0 —> Kill a session
+
+restart the app, just run command ‘node server.js’ under lib directory —> This was done on iframes project
