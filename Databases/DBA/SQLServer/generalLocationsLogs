@@ -1,0 +1,10 @@
+Windows Event Viewer - Can view by opening Event Viewer
+
+Failover Cluster Manager Logs - Can view by opening Failover Cluster Manager
+
+xp_readerrorlog 0,1,null,null,null,null,"desc"
+
+C:\Program Files\Microsoft SQL Server\MSSQLxx.MSSQLSERVER\MSSQL\Log - ERRORLOG file which is read by above command is also here and there are other agent logs and stuff
+
+
+Disk Management

@@ -1,0 +1,30 @@
+Scenario: Transaction Log is full and shrink from GUI doesn't do anything
+
+1. Check how much log space can be freed
+
+DBCC SQLPerf(logspace) 
+
+2. check if there is anything blocking the log from shrinking
+    
+SELECT name, log_reuse_wait_desc FROM sys.databases;
+    
+This spiffy little snippet will tell you why each database’s log file isn’t clearing out. Possible reasons include:
+Log backup needs to be run (or if you could lose a day’s worth of data, throw this little fella in simple recovery mode)
+Active backup running – because the full backup needs the transaction log to be able to restore to a specific point in time
+Active transaction – somebody typed BEGIN TRAN and locked their workstation for the weekend
+Database mirroring, replication, or AlwaysOn Availability Groups – because these features need to hang onto transaction log data to send to another replica
+3. If CDC is enabled, log file backup might have been success but the usage still shows at 100 and wait will be shown as Replication. To overcome this, enable the CDC capture agent job but if the space is very tight, even this capture job will fail with an error "Log file is 100%" can't capture. In that scenario, add an additional log file for some breathing room temporarily and enable CDC capture job and we should see the log file usage percentage go down, once this finishes, we can proceed to the next steps
+
+4. Backup log
+
+5. Once confirmed that nothing is blocking the logfile from shrinking and a backup is taken, issue below.
+
+
+DBCC SHRINKFILE (Adventureworks2008R2_Log, 5, TRUNCATEONLY) --It leaves 5% free space for log file to use and releases the rest to the OS
+
+
+Scenario: Temp DB doesn't shrink
+
+1. Clear cache and try again
+https://sqlsunday.com/2013/08/11/shrinking-tempdb-without-restarting-sql-server/
+https://www.brentozar.com/archive/2016/02/when-shrinking-tempdb-just-wont-shrink/

@@ -1,6 +1,4 @@
-/*
 rman backup either uses SGA or PGA for input buffers (used to hold data blocks when reading from data file )
 If using tape channels: SGA is used when BACKUP_TAPE_IO_SLAVES=TRUE, else PGA is used
 If using Disk channels: SGA is used when DBWR_IO_SLAVES <> 0, else PGA
 Based on the rman either using PGA or SGA… Use below to calc PGA or SGA usage during that time from AWR
-*/

@@ -1,0 +1,52 @@
+Virtual Box (ORACLE)
+
+Virtual Box Login: oracle S00cer,  root F00tball, kranthi Cr1cket, asm admin pass sysasmpass, sys pass sysdbapass
+
+Linux
+
+#IMPORTANT. Tried installing version 7 of Oracle Linux failed, had to do version 6.7 for success.
+#IMPORTANT. We will need at least 35GB to do this installation. This doesn’t include the asm disks space
+#IMPORTANT. Make sure to download proper ISO file from oracle edelivery. DO NOT use the boot ISO or Source DVD. Just use vanilla ISO
+#IMPORTANT. Internet connection is very important in guest machines and every time there’s an installation, internet never works for the 1st time. Please follow the below and it will work. DO NOT go with any other online links.
+#IMPORTANT. Have at least 2.5 GB of memory allocate to each vm guest
+
+http://www.oracle-base.com/articles/12c/oracle-db-12cr1-rac-installation-on-oracle-linux-6-using-virtualbox.php#vbox_network_setup  — Use this link for linux installation, except for eth0, eth1 and eth2. For those, use the following link, which is also part of above link but a different hyper link in the above link’s web page. https://oracle-base.com/articles/linux/oracle-linux-6-installation
+
+Right ctl + C to exit full screen/Scaled mode
+
+        Following above until adding SATA to VM, follow this link to attach SATA to VM. JUST ADD, DON’T DELETE ANY 
+http://www.sysprobs.com/add-sata-hard-disk-virtual-machine-virtualbox
+
+Make changes to “drag and drop” bidirectional and “shared clip board” bidirectional
+Guest additions is important because it enables copy paste and seamless mouse intigration between host and guest machines (No ctl required). Install the guest additions in the VM. In the virtual box guest machine MENU, go to Devices -> ‘Insert Guest Additions CD image’ that should run a program and install guest additions. If this doesn’t work, use this link to do alternative steps. http://www.virtualbox.org/manual/ch04.html#idp55744480
+VBoxManage is a tool on host machine not on guest machine.
+Had issue with SCAN on RAC2 machine which was cloned from RAC1. Fixed it by adding the RAC2 private ip from /etc/hosts value as nameserver parameter of /etc/resolv.conf.
+Make suer the HWADDR setting of RAC2 machine of eth0, eth1 and eth2 match with VM network setting’s MAC Address 
+Please do the below to set the display before starting the runInstaller
+a) log into console as root and open a terminal window within CDE 
+b) DISPLAY=:0.0
+c) export DISPLAY
+d) xhost +
+e) su - oracle
+f) DISPLAY=:0.0
+g) export DISPLAY
+h) /user/openwin/bin/xclock <launched xclock this way to ensure it was working, and it was>. yum install xorg-x11-apps.x86_64     to install xclock as root user.
+i) changed back to the directory where the runInstaller was and launched.
+Before running the runInstaller, make sure the initial login to the terminal is only with oracle user but not any other user so that the display of runInstaller works. If logged in to the terminal as other user and su to oracle, the display doesn’t work. THE INITIAL LOGIN HAS TO BE ORACLE USER
+
+
+https://dbserv1.localdomain:5500/em
+
+https://forums.virtualbox.org/viewtopic.php?f=8&t=19305
+https://www.virtualbox.org/ticket/10019
+VBoxManage modifyvm dbserv1 --nic1 bridged --bridgeadapter1 'en0: Wi-Fi'
+VBoxManage modifyhd dbserv2.vdi --resize 25000
+
+http://www.unix.com/shell-programming-scripting/27032-glance-fatal-error.html
+
+
+MULTITENANCY
+
+https://docs.oracle.com/database/121/CNCPT/cdbovrvw.htm#CNCPT89234
+https://oracle-base.com/articles/12c/multitenant-connecting-to-cdb-and-pdb-12cr1
+http://dba-blogs.blogspot.com/2013/10/12c-cdb-pdb-architecture-metadata-link.html
