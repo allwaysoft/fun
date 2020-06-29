@@ -15,6 +15,8 @@ Associative arrays cannot be stored in DB column
 
 No direct interaction with SQL (Before 12C, form 12C, this is possible)
 
+
+
 2. Nested Tables
 Uses
 When used to hold data like a table row, this has to be declared as object when done in SQL (Schema level), as record when done at PL/SQL level
@@ -38,9 +40,10 @@ Nested table structure can be stored in a db database column, which means the da
 
 Disadvantages
 
+
+
 3. Varrays (Rarely used)
 Advantages:
-
 
 Disadvantages:
 Need to know the upper boundary in advance
