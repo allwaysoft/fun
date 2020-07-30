@@ -1,6 +1,25 @@
+/******--css logs for node eviction *******/
+--1. css agent logs
+--2. css server logs
+--and some others
+
+
 https://forums.oracle.com/forums/thread.jspa?threadID=2354037&tstart=4798
 
 create view sys.mbta_alert_log as select  * from sys.x$dbgalertext;
+  
+  
+select inst_id, host_id, message_type, message_level, ORIGINATING_TIMESTAMP, message_text 
+from v$diag_alert_ext
+where 1=1
+--and (MESSAGE_TEXT like '%ORA-%' or upper(MESSAGE_TEXT) like '%ERROR%')
+  and cast(ORIGINATING_TIMESTAMP as DATE) > trunc(sysdate) - 1
+--message_type in (2,3,4) --Incident_Error, Error, Warning
+order by ORIGINATING_TIMESTAMP desc;
+
+
+select * from v$diag_info
+
 
 -- below solution might not work on Standby DB as it is open only in ready only mode and we cannot create or execute procedures in Standby read only DB.
 
@@ -10,14 +29,8 @@ select cast(ORIGINATING_TIMESTAMP as DATE) ddt, substr(MESSAGE_TEXT, 1, 300) mes
   and cast(ORIGINATING_TIMESTAMP as DATE) > trunc(sysdate) - 1
   group by substr(MESSAGE_TEXT, 1, 300), cast(ORIGINATING_TIMESTAMP as DATE)
   order by cast(ORIGINATING_TIMESTAMP as DATE);
-  
-  
-select inst_id, host_id, message_type, message_level, ORIGINATING_TIMESTAMP, message_text 
-from v$diag_alert_ext
-where 1=1
---message_type in (2,3,4) --Incident_Error, Error, Warning
-order by ORIGINATING_TIMESTAMP desc;
 
+select * from v$instance
 
 
 select * from DBA_THRESHOLDS;	--Lists the threshold settings defined for the instance
@@ -48,22 +61,13 @@ CREATE OR REPLACE procedure DBADMIN.mbta_sp_db_size_insert(P_SENDER IN VARCHAR2
 is
 --------------------------------------------------------------------------------
 -- Procedure: mbta_sp_alert_log_monitor
---
 -- Procedure to email the alert log errors
---
 -- Creation :    10-15-2012, Kranthi Pabba
---
 -- Purpose  :    Inserts data into mbta_db_size_hist table
---
---
 -- Input    :   
---
 -- Return   :    Data in mbta_db_size_hist table
---
 --------------------------------------------------------------------------------
---
 -- Change:
---
 --------------------------------------------------------------------------------
 TYPE CUR_REF IS  REF CURSOR;
 
@@ -89,9 +93,6 @@ V_SQLSTMT := 'select cast(ORIGINATING_TIMESTAMP as DATE) || ''     '' ||'
       ||' and cast(ORIGINATING_TIMESTAMP as DATE) > trunc(sysdate) - 1'
       ||' group by substr(MESSAGE_TEXT, 1, 300), cast(ORIGINATING_TIMESTAMP as DATE)'
       ||' order by cast(ORIGINATING_TIMESTAMP as DATE);'
-
-
-      
 TEXT := '';
 V_LOOP_CNT := 0;
 
@@ -145,4 +146,5 @@ EXCEPTION
   COMMIT;
 end;
 /  
+  
   

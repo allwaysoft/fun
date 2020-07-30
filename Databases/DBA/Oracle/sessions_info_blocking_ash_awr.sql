@@ -1,6 +1,4 @@
-BLOCKING Sessions info from Active session history and dba_hist_act_sess_history.
-
-
+--BLOCKING Sessions info from Active session history and dba_hist_act_sess_history.
 
 --ASH
 
@@ -14,8 +12,21 @@ AND ah.sql_id = s.sql_iD
 order by ah.sample_time
 ;
 
-If its too late to get info from ASH, got to dba_hist_Act_sess_history
+SELECT DISTINCT a.sql_id,
+                a.inst_id,
+                a.blocking_session         blocker_ses,
+                a.blocking_session_serial# blocker_ser,
+                a.user_id,
+                s.sql_text,
+                a.module,
+                a.sample_time
+  FROM GV$ACTIVE_SESSION_HISTORY a, gv$sql s
+ WHERE     a.sql_id = s.sql_id
+       AND blocking_session IS NOT NULL
+       AND a.user_id <> 0                                -- exclude SYS user
+       AND a.sample_time BETWEEN SYSDATE - 1 AND SYSDATE - 23 / 24
 
+--If its too late to get info from ASH, got to dba_hist_Act_sess_history
 SELECT sample_time, s.sql_text, u.user_id, u.username, session_id, session_State, event, h.blocking_session, blocking_session_status, wait_class,
 --   u.username,
    h.program

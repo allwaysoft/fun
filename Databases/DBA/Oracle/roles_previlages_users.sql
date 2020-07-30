@@ -4,6 +4,29 @@ http://www.adp-gmbh.ch/ora/concepts/profile.html   --profiles
 
 http://asktom.oracle.com/pls/asktom/f?p=100:11:0::::P11_QUESTION_ID:646423863863
 
+/*
+--*****SYSTEM PRIVILEGES 
+
+assigned to ROLE are trickey. the user assiigning this privilege to a user must have the GRANT ANY PRIVILEGE with "ADMIN OPTION " . If the ADMIN OPTION is missing for user granting thie privilege to a role whill not work directly. See below for more details.
+
+Prerequisites
+
+To grant a system privilege, one of the following conditions must be met:
+
+You must have been granted the GRANT ANY PRIVILEGE system privilege. In this case, if you grant the system privilege to a role, then a user to whom the role has been granted does not have the privilege unless the role is enabled in user's session.
+
+You must have been granted the system privilege with the ADMIN OPTION. In this case, if you grant the system privilege to a role, then a user to whom the role has been granted has the privilege regardless whether the role is enabled in the user's session.
+
+To grant a role, you must either have been granted the role with the ADMIN OPTION or have been granted the GRANT ANY ROLE system privilege, or you must have created the role.
+
+To grant an object privilege, you must own the object, or the owner of the object must have granted you the object privileges with the GRANT OPTION, or you must have been granted the GRANT ANY OBJECT PRIVILEGE system privilege. If you have the GRANT ANY OBJECT PRIVILEGE, then you can grant the object privilege only if the object owner could have granted the same object privilege. In this case, the GRANTOR column of the DBA_TAB_PRIVS view displays the object owner rather than the user who issued the GRANT statement.
+
+https://docs.oracle.com/cd/B28359_01/server.111/b28286/statements_9013.htm#
+
+--***** DROP privilege can't be provided at object level. Only thing available is DROP ANY TABLE
+
+*/
+
 --------------------------------------------------------------------------------------------------------------------------
 --Impersonate a different DB user
 ALTER USER BWONG002 GRANT CONNECT THROUGH digital_priv_user;
@@ -15,7 +38,8 @@ ALTER USER BWONG002 REVOKE CONNECT THROUGH digital_priv_user;
 --------------------------------------------------------------------------------------------------------------------------
 --Create new user
 create user vpande03 
-identified by ExpiredPassword 
+identified by ExpiredPassword
+default tablespace yyyy 
 password expire;
 grant CONNECT to vpande03;
 grant SELECT_CATALOG_ROLE to vpande03;
@@ -34,14 +58,20 @@ select * from ROLE_ROLE_PRIVS where (role = 'DEVELOPER' or granted_role = 'DEVEL
 -- ROLE is being granted to other (roles/users) or other roles granted to this ROLE. Different from above as this also includes users
 select * from DBA_ROLE_PRIVS where (grantee = 'MBTACON' or granted_role = 'MBTACON')
 
+grant create synonym to etluser
+
+--****************ROLES
+--Other roles assigned to a role
+select * from role_role_privs where role =  'PZNETLADMIN_READ_RL'   
 
 -- System privileges granted to roles
-select * from ROLE_SYS_PRIVS where role = 'PS_MB_FILEBOUND'     
-
+select * from ROLE_SYS_PRIVS where role = 'PZNETLADMIN_READ_RL'     
 
 -- Table privileges granted to role
-select * from ROLE_TAB_PRIVS where  role = 'PS_MB_FILEBOUND'   
+select * from ROLE_TAB_PRIVS where  role = 'PZNETLADMIN_READ_RL'   
 
+
+--***************USERS
 --Table privileges granted to user
 select * from dba_tab_privs where GRANTEE ='FILEBOUND' and privilege = 'SELECT';
 
@@ -58,30 +88,20 @@ select
 from
   (
   /* THE USERS */
-    select 
-      null     grantee, 
-      username granted_role
-    from 
-      dba_users
-    where
-      username like upper('%&enter_username%')
+    select null     grantee,  username granted_role
+    from dba_users
+    where username like upper('%&enter_username%')
   /* THE ROLES TO ROLES RELATIONS */ 
   union
-    select 
-      grantee,
-      granted_role
-    from
-      dba_role_privs
+    select grantee, granted_role from dba_role_privs
   /* THE ROLES TO PRIVILEGE RELATIONS */ 
   union
-    select
-      grantee,
-      privilege
-    from
-      dba_sys_privs
+    select grantee, privilege from dba_sys_privs
   )
 start with grantee is null
 connect by grantee = prior granted_role;
+
+select * from dba_roles where role = 'PZNETLADMIN_READ_RL'
 
 
 --Generate scripts to create roles, previs assigned to USER

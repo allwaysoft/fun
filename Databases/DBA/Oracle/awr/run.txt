@@ -1,4 +1,4 @@
-It is easier to create one or two AWR reports quickly using OEM. But, what if you have to create AWR reports for many snapshots? For example, your Oracle support analyst wants you to supply 10 1-hour AWR reports from 10AM to 8PM in a 8 node cluster? That’s about 80 AWR reports to create! Okay, okay, I may(!) be overselling it, but you get the point. It is useful to have a script to create AWR report for all instances for a given range of snapshot IDs. Following scripts are handy:
+It is easier to create one or two AWR reports quickly using OEM. But, what if you have to create AWR reports for many snapshots? For example, your Oracle support analyst wants you to supply 10 1-hour AWR reports from 10AM to 8PM in a 8 node cluster? That's about 80 AWR reports to create! Okay, okay, I may(!) be overselling it, but you get the point. It is useful to have a script to create AWR report for all instances for a given range of snapshot IDs. Following scripts are handy:
 
 1. awrrpt_all_gen.sql: To create one AWR report per instance, for the last snap duration	
 2. awrrpt_all_genhtml.sql: Same as (1) but in html format	

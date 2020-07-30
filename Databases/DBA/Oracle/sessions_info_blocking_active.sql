@@ -1,6 +1,41 @@
-SESSION LVEL info for current active sessions
+/************** ACTIVE SESSIONS and BLOCKING **************/ --This info also existis in ProductionIssues sql file
+Issue: ORACLE
+--OEM shows concurrency wait events and digging more in OEM by clicking on the graphs shows that it is caused by "Cursor: pin S wait on X"
 
-***CPU Usage by ACTIVE sessions***
+--First query and see what are the sessions which are waiting on that event.
+    select * from v$session where event='cursor: pin S wait on X';
+
+--Next check the final blocking session for all those waiting on the above event.
+    select distinct final_blocking_session from v$session where event='cursor: pin S wait on X';
+
+--Next check what the final_blocking_session-session is doing by issuing below query
+    select * from v$session where sid = 439
+    --In my case, it was waiting on "gc cr request" event which showed that there was an issue with RAC global cache sync
+    --and this session did not have any other final_blocking_session. So, the root cause of concurrency was this session.
+
+
+
+
+/************** Sessions processes general queries ***************/
+select 
+--*
+'ALTER SYSTEM KILL SESSION ''' || sid || ',' || serial# || ', @' || inst_id ||''';' 
+from gv$session 
+where 1=1
+and username like '%MSSTOOLUSER01%'-- '%PZN_TSTDATA_USER01%'	 ;
+--and osuser = 'hboddu01'
+;
+
+SELECT     s.username, p.program, p.spid
+FROM v$session s, v$process p
+WHERE s.paddr = p.addr
+and s.status = 'KILLED'
+
+
+
+/************** SESSION LEVEL info for current active sessions ***************/
+
+--***CPU Usage by ACTIVE sessions***
 select s.inst_id, s.sid sid, s.serial# serial#, to_char(s.logon_time,’dd-mon-yyy hh:mi:ss HH24′), lpad(s.status,9) session_status
 , lpad(s.username,12) oracle_username, lpad(s.osuser,9) os_username, lpad(p.spid,7) os_pid , s.client_info, s.program session_program, lpad(s.machine,8) session_machine
 , round(((sum(stm.value)/1000000)/(((sysdate-s.logon_time)*24*60*60)*(select value from gv$parameter gp where gp.inst_id = s.inst_id and upper(name) like ‘%CPU_COUNT%’)))*100, 2) sess_cpu_perc
@@ -46,7 +81,7 @@ ELSE 0
 END
 ) desc, inst_id, sid, serial#;
 
-*** CPU Usage By Session *** Old Style
+--*** CPU Usage By Session *** Old Style
 CPU USAGE BY SESSION NOTES:
 Username – Name of the user
 SID – Session id
@@ -64,7 +99,7 @@ and se.SID = ss.SID
 order by VALUE desc
 
 
-**PGA usage by ACTIVE sessions**
+--**PGA usage by ACTIVE sessions**
 SELECT s.sid sid, s.inst_id, s.serial# serial_id, lpad(s.status,9) session_status
 , lpad(s.username,12) oracle_username, lpad(s.osuser,9) os_username, lpad(p.spid,7) os_pid
 , s.program session_program, lpad(s.machine,8) session_machine, sstat1.value session_pga_memory
@@ -87,7 +122,7 @@ AND statname2.name = ‘session pga memory max’
 ORDER BY session_pga_memory DESC;
 
 
-***User Hit Ratios***
+--***User Hit Ratios***
 USER HIT RATIO NOTES:
 Username – Name of the user
 Consistent Gets – The number of accesses made to the block buffer to retrieve data in a consistent mode.
@@ -110,7 +145,7 @@ and USERNAME is not null
 order by ((CONSISTENT_GETS+BLOCK_GETS-PHYSICAL_READS) / (CONSISTENT_GETS+BLOCK_GETS))
 
 
-***Cursor Usage By Session***
+--***Cursor Usage By Session***
 CURSOR USAGE BY SESSION NOTES:
 Username – Name of the user
 Recursive Calls – Total number of recursive calls
@@ -141,7 +176,7 @@ orasnap_user_cursors
 order by USER_PROCESS,”Recursive Calls”
 
 
-***Session Stats By Session***
+--***Session Stats By Session***
 SESSION STAT NOTES:
 Username – Name of the user
 SID – Session ID
@@ -161,7 +196,7 @@ and se.VALUE > 0
 order by sn.NAME, se.SID, se.VALUE desc
 
 
-***Resource Usage By User***
+--***Resource Usage By User***
 RESOURCE USAGE BY USER NOTES:
 SID – Session ID
 Username – Name of the user
@@ -182,7 +217,7 @@ and sest.VALUE != 0
 order by ses.USERNAME, ses.SID, sn.NAME
 
 
-****Session I/O By User***
+--****Session I/O By User***
 SESSION I/O BY USER NOTES:
 Username – Name of the Oracle process user
 OS User – Name of the operating system user
@@ -269,7 +304,7 @@ AND h.sql_id = s.sql_iD (+)
 ORDER BY instance_number, sample_time desc, session_id, session_serial#;
 
 
-**History (ASH) of all the wait events on a machine**
+--**History (ASH) of all the wait events on a machine**
 select event, count(1)
 from v$active_session_history
 where machine = ‘&machine’
@@ -326,7 +361,7 @@ and s.inst_id = p.inst_id
 –and machine = ‘&machine’;
 
 
-**Now that there is enough info on the blocking session and objects from above query, use below to find more detailed row level info using below query**
+--**Now that there is enough info on the blocking session and objects from above query, use below to find more detailed row level info using below query**
 REM Filename: rowinfo.sql
 REM This shows the row from the table when the
 REM components of ROWID are passed. Pass the
@@ -350,7 +385,7 @@ row_number => &6
 );
 
 
-**Get object level info for Data Access waits such as “db file sequential reads”. Use this once a session is found to be waiting on Data access wait**
+--**Get object level info for Data Access waits such as “db file sequential reads”. Use this once a session is found to be waiting on Data access wait**
 select s.SID, s.inst_id, s.state, s.event, s.p1, s.p2, de.segment_name, de.SEGMENT_TYPE
 from gv$session s
 ,dba_extents de
@@ -361,7 +396,7 @@ and s.session_id = &sess_id
 and s.inst_id = &inst_id;
 
 
-**All the wait events info of Active sessions, not just current wait events, but all the events since session start time**
+--**All the wait events info of Active sessions, not just current wait events, but all the events since session start time**
 select se.sid, se.inst_id, se.event, se.total_waits, se.time_waited*10 TimeWaited_ms,
 se.average_wait*10 avgWait_ms, se.max_wait*10 MaxWait_ms
 from gv$session_event se
@@ -370,7 +405,7 @@ where se.sid = &sid
 order by se.inst_id, se.sid;
 
 
-**Stats and their values by an active session**
+--**Stats and their values by an active session**
 select s.sid, s.inst_id, n.name, s.value
 from gv$sesstat s, gv$statname n
 where s.sid = &sid

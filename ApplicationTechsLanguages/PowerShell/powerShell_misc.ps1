@@ -1,5 +1,7 @@
 #List all modules available on a machine
-Get-Module -ListAvailable --Will list all the modules installed on a machine#Get a list of sub directories under a directory and their sizes. Change the $startDirectory variable to evaluate the required directory
+Get-Module -ListAvailable #Will list all the modules installed on a machine
+    
+#Get a list of sub directories under a directory and their sizes. Change the $startDirectory variable to evaluate the required directory
     #gets the size of every directory under the $startDirectory directory
     #can sometimes be a little slow if a directory has a lot of folders in it
 $startDirectory = 'E:\MSSQL\Backups\'#gets a list of folders under the $startDirectory directory
