@@ -7,14 +7,11 @@ http://asktom.oracle.com/pls/asktom/f?p=100:11:0::::P11_QUESTION_ID:646423863863
 /*
 --*****SYSTEM PRIVILEGES 
 
-assigned to ROLE are trickey. the user assiigning this privilege to a user must have the GRANT ANY PRIVILEGE with "ADMIN OPTION " . If the ADMIN OPTION is missing for user granting thie privilege to a role whill not work directly. See below for more details.
+system privileges assigned to ROLE are trickey. the user assigning this privilege to a user must have the GRANT ANY PRIVILEGE with "ADMIN OPTION" . If the ADMIN OPTION is missing for user granting this privilege to a role then the grant will not work directly. See below for more details.
 
 Prerequisites
-
 To grant a system privilege, one of the following conditions must be met:
-
 You must have been granted the GRANT ANY PRIVILEGE system privilege. In this case, if you grant the system privilege to a role, then a user to whom the role has been granted does not have the privilege unless the role is enabled in user's session.
-
 You must have been granted the system privilege with the ADMIN OPTION. In this case, if you grant the system privilege to a role, then a user to whom the role has been granted has the privilege regardless whether the role is enabled in the user's session.
 
 To grant a role, you must either have been granted the role with the ADMIN OPTION or have been granted the GRANT ANY ROLE system privilege, or you must have created the role.
@@ -24,6 +21,9 @@ To grant an object privilege, you must own the object, or the owner of the objec
 https://docs.oracle.com/cd/B28359_01/server.111/b28286/statements_9013.htm#
 
 --***** DROP privilege can't be provided at object level. Only thing available is DROP ANY TABLE
+
+--***** Privs and Roles catalog tables
+http://www.dbaref.com/users-privs-and-roles
 
 */
 
@@ -62,46 +62,51 @@ grant create synonym to etluser
 
 --****************ROLES
 --Other roles assigned to a role
-select * from role_role_privs where role =  'PZNETLADMIN_READ_RL'   
+select * from DBA_role_privs where grantee =  'PZNETLADMIN_READ_RL'   --If can't access DBA use ROLE_ROLE_PRIVS
 
 -- System privileges granted to roles
-select * from ROLE_SYS_PRIVS where role = 'PZNETLADMIN_READ_RL'     
+select * from DBA_SYS_PRIVS where grantee = 'PZNETLADMIN_READ_RL'     --If can't access DBA use ROLE_SYS_PRIVS
 
--- Table privileges granted to role
-select * from ROLE_TAB_PRIVS where  role = 'PZNETLADMIN_READ_RL'   
+-- Object privileges granted to role
+select * from DBA_TAB_PRIVS where  grantee = 'PZNETLADMIN_READ_RL'   --If can't access DBA use ROLE_TAB_PRIVS
+
 
 
 --***************USERS
---Table privileges granted to user
-select * from dba_tab_privs where GRANTEE ='FILEBOUND' and privilege = 'SELECT';
-
-
---system privileges and roles assigned to user
-select grantee, privilege, admin_option, null default_role, 'PREV' Prev_or_role from dba_sys_privs where grantee = 'FILEBOUND'
-union all     
-select GRANTEE,GRANTED_ROLE,ADMIN_OPTION,DEFAULT_ROLE, 'ROLE' from DBA_ROLE_PRIVS where grantee = 'FILEBOUND'   
-
 
 --ALL privileges give to a user.
-select
-  lpad(' ', 2*level) || granted_role "User, his roles and privileges"
+select lpad(' ', 2*level) || granted_role "User, his roles and privileges"
 from
   (
   /* THE USERS */
-    select null     grantee,  username granted_role
-    from dba_users
+    select null     grantee,  username granted_role from dba_users
     where username like upper('%&enter_username%')
-  /* THE ROLES TO ROLES RELATIONS */ 
   union
+    /* THE ROLES TO ROLES RELATIONS */ 
     select grantee, granted_role from dba_role_privs
-  /* THE ROLES TO PRIVILEGE RELATIONS */ 
   union
+    /* THE ROLES TO PRIVILEGE RELATIONS */ 
     select grantee, privilege from dba_sys_privs
   )
-start with grantee is null
-connect by grantee = prior granted_role;
+  start with grantee is null
+  connect by grantee = prior granted_role
+  union all
+    /* DIRECT PRIVS TO USER */
+  select  privilege || ' on ' || owner || '.' ||table_name from dba_tab_privs where grantee = upper('&enter_username');
 
-select * from dba_roles where role = 'PZNETLADMIN_READ_RL'
+
+--Direct privileges granted to user
+select * 
+from dba_tab_privs where GRANTEE ='FILEBOUND' and privilege = 'SELECT';
+
+--system privileges and roles assigned to user
+select grantee, privilege, admin_option, null default_role, 'PREV' Prev_or_role 
+from dba_sys_privs where grantee = 'FILEBOUND'
+union all     
+select GRANTEE,GRANTED_ROLE,ADMIN_OPTION,DEFAULT_ROLE, 'ROLE' 
+from DBA_ROLE_PRIVS where grantee = 'FILEBOUND'   
+
+  
 
 
 --Generate scripts to create roles, previs assigned to USER
