@@ -3,9 +3,9 @@ https://www.sqlshack.com/techniques-to-bulk-copy-import-and-export-in-sql-server
 https://docs.microsoft.com/en-us/previous-versions/sql/sql-server-2008/dd537533(v=sql.100)?redirectedfrom=MSDN --Move 1TB data in 30 minutes
 --Bulk loading data
     --If log shipping is enabled, bulk insert operations could still benifit from bulk logging mode but the point in time recovery is lost for the duration of the bulk insert operation
-    --If there is a possibility to load data into a new database and keep them there in a sql server instance. Always doing that would be better because just keep that db in simple revovery model, do the load and then setup logshipping on it if required
+    --If there is a possibility to load data into a new database and keep them there in a different sql server instance. Always doing that would be better because just keep that db in simple revovery model, do the load and then setup logshipping on it if required
     --Try and insert the data sorted into table with a clustered index. Do not have any other indexes before the data load, those should be created after the load for better performance
-    --Always load data concurrently into multiple table partitions which are in multiple disk volumes for the best performanceDB in Bluk logging mode
+    --Always load data concurrently into multiple table partitions which are on multiple disk volumes for the best performanceDB in Bluk logging mode
 Clustered INDEX
 Bluk insert into different partitions
 Lock escalation set to partition instead of table

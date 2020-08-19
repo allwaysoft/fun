@@ -1,5 +1,12 @@
 Ip Addresses and CIDR: https://youtu.be/74gFh8-0rKc
 
+Amazon(AWS)                     Oracle(OracleCloud infrastructure)
+------------------------------------------------------------------
+Availability Zone               Availability Domain
+VPN                             Virtual Cloud Network
+                                VNIC(Virtual Network Interface Card)
+                                NFS(Network File Storage)
+                                DRG(Dynamic Routing Gateway) - Required from onprem to cloud connections
 
 Internet Gateway: Facilitates inbound and outbount connection to instances with public ip and are on public subnet of the VPC(aws) or VCN(oracle cloud infrastructure)
 

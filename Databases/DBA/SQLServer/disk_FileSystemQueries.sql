@@ -5,9 +5,9 @@ SERVERPROPERTY('MachineName') AS MachineName
      ,
 [Database] = db_name(f.database_id)
 , [File] = f.name
-,  vs.volume_mount_point [MountPoint]
-,  vs.logical_volume_name AS [Volume]
-,  vs.total_bytes/1024/1024/1024 AS [Drive Size GB]
+, vs.volume_mount_point [MountPoint]
+, vs.logical_volume_name AS [Volume]
+, vs.total_bytes/1024/1024/1024 AS [Drive Size GB]
 , vs.available_bytes/1024/1024/1024 AS [Drive Free Space GB] ,
  (select ((available_bytes/1048576* 1.0)/(total_bytes/1048576* 1.0) *100)) as FreePercentage 
 FROM sys.master_files AS f
@@ -64,6 +64,7 @@ ON i.[object_id] = o.[object_id] WHERE i.data_space_id = f.data_space_id
 AND i.data_space_id = 2 -- Filegroup
 GO
 ------------------------------------------------------------------------------------------------------------
+--Space used by tables
 use DataMart
 go
 SELECT 
@@ -96,39 +97,3 @@ GROUP BY
 ORDER BY 
     s.Name, t.Name;
 
---IO Disk Latency
---------------------------------------------------------------------------------------------------------------------------------------------------
-SELECT
-    [ReadLatency] =
-        CASE WHEN [num_of_reads] = 0
-            THEN 0 ELSE ([io_stall_read_ms] / [num_of_reads]) END,
-    [WriteLatency] =
-        CASE WHEN [num_of_writes] = 0
-            THEN 0 ELSE ([io_stall_write_ms] / [num_of_writes]) END,
-    [Latency] =
-        CASE WHEN ([num_of_reads] = 0 AND [num_of_writes] = 0)
-            THEN 0 ELSE ([io_stall] / ([num_of_reads] + [num_of_writes])) END,
-    [AvgBPerRead] =
-        CASE WHEN [num_of_reads] = 0
-            THEN 0 ELSE ([num_of_bytes_read] / [num_of_reads]) END,
-    [AvgBPerWrite] =
-        CASE WHEN [num_of_writes] = 0
-            THEN 0 ELSE ([num_of_bytes_written] / [num_of_writes]) END,
-    [AvgBPerTransfer] =
-        CASE WHEN ([num_of_reads] = 0 AND [num_of_writes] = 0)
-            THEN 0 ELSE
-                (([num_of_bytes_read] + [num_of_bytes_written]) /
-                ([num_of_reads] + [num_of_writes])) END,
-    LEFT ([mf].[physical_name], 2) AS [Drive],
-    DB_NAME ([vfs].[database_id]) AS [DB],
-    [mf].[physical_name]
-FROM
-    sys.dm_io_virtual_file_stats (NULL,NULL) AS [vfs]
-JOIN sys.master_files AS [mf]
-    ON [vfs].[database_id] = [mf].[database_id]
-    AND [vfs].[file_id] = [mf].[file_id]
--- WHERE [vfs].[file_id] = 2 -- log files
--- ORDER BY [Latency] DESC
--- ORDER BY [ReadLatency] DESC
-ORDER BY [WriteLatency] DESC;
-GO

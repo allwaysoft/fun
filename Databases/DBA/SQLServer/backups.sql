@@ -1,5 +1,6 @@
 --Backups at Acadian are trigger through Agent jobs on most servers----------------------------------------------------------------------------------------------------------------------------------------------
---When was a DB last restoredSELECT 
+--When was a DB last restored
+SELECT 
    [rs].[destination_database_name], 
    [rs].[restore_date], 
    [bs].[backup_start_date], 
@@ -113,7 +114,8 @@ WHERE r.command in ('BACKUP DATABASE','RESTORE DATABASE')
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------
---Backup location of a DB (physical_device_name is the column which has this info)SELECT  
+--Backup location of a DB (physical_device_name is the column which has this info)
+SELECT  
    distinct CONVERT(CHAR(100), SERVERPROPERTY('Servername')) AS Server, 
    msdb.dbo.backupset.database_name,  
    msdb.dbo.backupset.backup_start_date,  

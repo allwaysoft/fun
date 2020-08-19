@@ -1,9 +1,9 @@
 --https://social.technet.microsoft.com/wiki/contents/articles/31280.finding-and-extracting-deadlock-information-using-extended-events.aspx
 --Dead locks can be viewd from 
---Sentry1 deadlock tab
---SSMS Management -> health_check
---Querying the health_check but it's xml data. Use queries below
---or by SQL and ring buffer method (This might not be effecient as ring buffer is a moving target.)
+       --Sentry1 deadlock tab
+       --SSMS Management -> health_check
+       --Querying the health_check but it's xml data. Use queries below
+       --or by SQL and ring buffer method (This might not be effecient as ring buffer is a moving target.)
 --First, query the extended events dynamic management views to identify if the SYSTEM_HEALTH trace is on the server and that the xml_deadlock_report is included in the trace.
 SELECT s.name, se.event_name
 FROM sys.dm_xe_sessions s
