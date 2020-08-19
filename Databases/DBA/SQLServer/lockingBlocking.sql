@@ -1,5 +1,7 @@
 --Active Sessions
-sp_who3SELECT 
+sp_who3
+
+SELECT 
     r.session_id
     ,st.text AS batch_text
     ,SUBSTRING(st.text, statement_start_offset / 2 + 1, (
@@ -46,9 +48,9 @@ and rsc_objid = object_id(@tablename)
 --Good read on PAGELATCH_UP wait
 https://documentation.red-gate.com/sm4/working-with-overviews/using-performance-diagnostics/list-of-common-wait-types/pagelatch_up--Get the resource on which spid is locking.
 https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-os-waiting-tasks-transact-sql?view=sql-server-ver15 --This link shows what all possible values for resource_description field
-select * from sys.dm_os_waiting_tasks order by resource_description --resource_description is the key here. From this, one can get more info about the file and object--Get object information from the values of rescource_description filed above
+select * from sys.dm_os_waiting_tasks order by resource_description --resource_description is the key here. From this, one can get more info about the file and object --Get object information from the values of rescource_description filed above
 https://www.sqlskills.com/blogs/paul/finding-table-name-page-id/ --This doc shows the usage of DBCC PAGE
-https://www.sqlservercentral.com/forums/topic/object-id-99 --If object Id from dbcc comesup to be 99, it might bewriting to new pages, example a new index creation will show up as objectId 99 until the index is built and persists in DB as an object 
+https://www.sqlservercentral.com/forums/topic/object-id-99 --If object Id from dbcc comesup to be 99, it might be writing to new pages, example a new index creation will show up as objectId 99 until the index is built and persists in DB as an object 
 DBCC TRACEON (3604);
 DBCC PAGE (8, 7, 76245576, 0);  --DBID, fileId, pageId, print only page header are the parameters here.
 DBCC TRACEOFF (3604);select FILE_NAME(6)

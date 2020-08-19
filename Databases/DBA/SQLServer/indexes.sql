@@ -2,7 +2,10 @@
 --Show Indexes of a table
 --sp_help 'idxConstituentReturns';
 --Check percentage complete of an Index creation
-select percent_complete from sys.dm_exec_requests where session_id = 230--ORDECLARE @SPID INT = 63;;WITH agg AS
+select percent_complete from sys.dm_exec_requests where session_id = 230
+--OR
+DECLARE @SPID INT = 63;;
+WITH agg AS
 (
      SELECT SUM(qp.[row_count]) AS [RowsProcessed],
             SUM(qp.[estimate_row_count]) AS [TotalRows],

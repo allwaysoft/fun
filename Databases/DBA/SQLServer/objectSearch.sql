@@ -1,10 +1,14 @@
 /*
 --Some Acadian specific procedure
 accounting.dbo.sp_get_environment
-*/--Find an object in all the databases of an instance
+*/
+
+--Find an object in all the databases of an instance
     EXEC sp_MSforeachdb
     'if exists(select 1 from [?].sys.objects where name=''ChangeLog'') --Change here
-    select ''?'' as FoundInDatabase, * from [?].sys.objects where name=''ChangeLog''' --Change hereEXEC sp_MSforeachdb
+    select ''?'' as FoundInDatabase, * from [?].sys.objects where name=''ChangeLog''' --Change here
+    
+    EXEC sp_MSforeachdb
 'if exists(select 1 from [?].sys.objects where upper(name) like ''%PARTITION%'' ) --Change here
 select ''?'' as FoundInDatabase, * from [?].sys.objects where upper(name) like ''%PARTITION%'' ' --Change here
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -46,3 +50,17 @@ SELECT DISTINCT
                ROUTINE_NAME
     END
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--Find an object in all the databases of an instance
+EXEC sp_MSforeachdb
+'if exists(select 1 from [?].sys.objects where name=''ChangeLog'')
+select ''?'' as FoundInDatabase from [?].sys.objects where name=''ChangeLog'''
+
+--Find objects referencing an object, works only in a specific database
+SELECT DISTINCT o.name, schema_name(o.schema_id) schema_nm, o.type_desc, o.create_date, o.modify_date
+FROM sys.syscomments c --Works only in the DB run
+INNER JOIN sys.objects o ON c.id=o.object_id
+WHERE c.TEXT LIKE '%SPbsmextractNAV%'
+
+--At Acadian, use below for more effective results
+Sp_objectsearch 'search-test'Sp_helptext name-of-the-object --provide the text of an object

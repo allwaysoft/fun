@@ -1,4 +1,5 @@
-/* loop over who3 */ --Spwho3 is equivalent to who_is_active script available online
+/* loop over who3 */ 
+--Spwho3 is equivalent to who_is_active script available online
 DECLARE @OnCallMode bit = 1
 DECLARE @destination_table VARCHAR(4000) ;
 DECLARE @basetable varchar(2000);

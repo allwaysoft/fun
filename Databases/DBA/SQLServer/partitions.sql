@@ -2,8 +2,10 @@
 https://www.red-gate.com/simple-talk/sql/database-administration/gail-shaws-sql-server-howlers/ --partitioning and indexes
 https://dbafromthecold.com/2018/02/21/indexing-and-partitioning/https://www.mssqltips.com/sqlservertip/5296/implementation-of-sliding-window-partitioning-in-sql-server-to-purge-data/ --simple sliding window partitionning example
 http://blogs.microsoft.co.il/yaniv_etrogi/2016/08/15/automate-partitions-management-sliding-window/ --Extensive code base to automate partition maintenance for most partitions of a DB
+
 --Partitions with low and high range values of each partition and number of rows for each partition. 
--- This query can be used for multiple purposes, 1. find all tables using a partition scheme, finf all schemes using a partition function and so on....exec master.dbo.SPGetAllPartitions
+-- This query can be used for multiple purposes, 1. find all tables using a partition scheme, find all schemes using a partition function and so on....
+exec master.dbo.SPGetAllPartitions
 --OR
 use accounting
 go

@@ -1,3 +1,5 @@
 https://dbatools.io/
 
 Sentry1 one SQL Server monitoring. Very good
+
+ssms boost extension community version for ssms, very good

@@ -8,7 +8,7 @@ SQL Batch Complete is a group of statements executed with a GO at the end
 SQL Statement Complete is every single SQL statement completed
 
 
-When tracing always filter out ObjectType 20038 if there is UDF code in the code being traced.
+When tracing always filter out ObjectType 20038 if there is UDF in the code being traced.
 
 select * from sys.traces --Shows all the traces running on an instance
 select * from sys.dm_xe_sessions --Shows all the extended events running on an instance

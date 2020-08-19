@@ -13,9 +13,11 @@ all databases on the server:  exec master.[dbo].[SPdbaGetAllRoleMemberships] @Us
    Add this entry -> LsaLookupCacheMaxSize = 0
 5. Then drop and recreate the login and associated roles and user mappings on SQL Server
 6. Make sure the application works fine now
-7. Remove the LsaLookupCacheMaxSize entry from registry of database server so it starts cahcing again.https://sqlity.net/en/2344/create-login-with-hashed-password/ -- Recreate a login using hashed password from different environment
+7. Remove the LsaLookupCacheMaxSize entry from registry of database server so it starts cahcing again.
+https://sqlity.net/en/2344/create-login-with-hashed-password/ -- Recreate a login using hashed password from different environment
 https://stackoverflow.com/questions/19108331/how-grant-execute-and-cross-database-reference-works-in-sql-server --Access objects in different databases 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/xp_logininfo 'ACDN\nkrishnadas','all' --Get all the SQL Server principle groups a user is part of
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+xp_logininfo 'ACDN\nkrishnadas','all' --Get all the SQL Server principle groups a user is part of
 sp_helplogins 'ACDN\sqldev' --all databases - roles assigned to a login
 sp_helpuser 'ACDN\sqldev' --specific db level roles assigned to a user--syslogins contains the login account.
 SELECT * FROM sys.server_principals; --Superceded view
@@ -30,11 +32,16 @@ SELECT
     cam.LoginName --dev user
 FROM master.dbo.ServiceAccountMapping pam
 JOIN master.dbo.ServiceAccountMapping cam ON cam.ParentMappingId = pam.MappingIdmaster.dbo.sp_AAM_CreateNewAccountForAllDbmaster.dbo.sp_AAM_CreateAccountForSingleDbmaster.dbo.snapDatabases;
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------sp_helprotect [ [ @name = ] 'object_statement' ]   
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+sp_helprotect [ [ @name = ] 'object_statement' ]   
      [ , [ @username = ] 'security_account' ]   
      [ , [ @grantorname = ] 'grantor' ]   
      [ , [ @permissionarea = ] 'type' ]  sp_helprotect @username = 'db_executor'     
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------1. Get all roles and privs assigend to a user across all databasesexec master.[dbo].[SPdbaGetAllRoleMemberships] @UserName='ACDN\svc_actvbsqlusertst' --Roles assigned to a user across all DBsexec master.[dbo].[SPdbaGetAllRoleMemberships] @UserName='ACDN\svc_actvbsqlusertst', @DbName = 'ACDN' --Roles assigned to a user on ACDNexec master.[dbo].[SPdbaGetAllRoleMemberships] @RoleName='ActiveBatchRole' --Users assigned to a role across all DBs
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--1. Get all roles and privs assigend to a user across all databases
+exec master.[dbo].[SPdbaGetAllRoleMemberships] @UserName='ACDN\svc_actvbsqlusertst' --Roles assigned to a user across all DBs
+exec master.[dbo].[SPdbaGetAllRoleMemberships] @UserName='ACDN\svc_actvbsqlusertst', @DbName = 'ACDN' --Roles assigned to a user on ACDN
+exec master.[dbo].[SPdbaGetAllRoleMemberships] @RoleName='ActiveBatchRole' --Users assigned to a role across all DBs
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------2. Privileges assigned to a role but also be aware of the public role which any user has access to.
 use ACDN
 go
@@ -76,10 +83,13 @@ SELECT
         INNER JOIN sys.database_permissions       p ON o.OBJECT_ID=p.major_id
         LEFT OUTER JOIN sys.database_principals  dp ON p.grantee_principal_id = dp.principal_id
     WHERE o.NAME = 'SPGetPFAAllFactorsSnapshot'
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------Current DB user
-select CURRENT_USER;--Current windows user
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Current DB user
+select CURRENT_USER;
+--Current windows user
 select SYSTEM_USER;
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------Connections and users
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--Connections and users
 --Maximum connections allowed by SQL Server
 select * from sys.configurations
 where name ='user connections'

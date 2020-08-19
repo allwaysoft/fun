@@ -1,4 +1,5 @@
-use Loggo
+use Log
+go
 SELECT * FROM dbo.etlPackage where Name = 'ETL_CUST_HoldingFileCiti'
 select * from Log.dbo.etlPackage where Name = 'ETL_TRADING_ExportTomsExecutedFXForwardTradesToSSC';
 select * from Log.dbo.VWetlPackageExecutionLog;
