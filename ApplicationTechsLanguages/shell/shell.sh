@@ -1,3 +1,9 @@
+Shell basics and gotchas
+-------------
+variables passed to shell script are refered via $1...9. Starting from 10, they should be refered using ${10}
+$0 is the file name of the shell script
+
+
 Unix General
 ——————————————————————–
 External Links

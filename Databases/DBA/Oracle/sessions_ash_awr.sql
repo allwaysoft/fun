@@ -71,3 +71,26 @@ GROUP BY
     holder.p1raw ,
     holder.p2raw ,
     sql.hash_value;
+
+--Sessions Count
+select to_char(begin_time, 'mm/dd/yyyy hh:mi:ss am') snap_begin_time, snap_id, A.instance_number, metric_name, metric_unit, maxval, round(average)--, a.* 
+from dba_hist_sysmetric_summary a 
+where upper(metric_unit) like 'SESSIONS'
+and metric_name = 'Session Count'
+and snap_id in (
+select distinct snap_id from dba_hist_active_sess_history 
+where 1=1
+--and sample_time BETWEEN '06-SEP-20 07.45.00.000000000 AM' and '06-SEP-20 08.15.00.000000000 AM'
+and sample_time BETWEEN '06-SEP-20 12.45.00.000000000 PM' and '06-SEP-20 04.15.00.000000000 PM'
+)
+order by begin_time, instance_number
+;
+
+select * from DBA_HIST_METRIC_NAME where metric_name = 'Session Count' ;
+select * from DBA_HIST_SYSMETRIC_HISTORY;
+--where metric_id in (2143,18000);
+select * from DBA_HIST_SYSMETRIC_SUMMARY where metric_id in (2143,2147,2148,2137,2138);
+select * from DBA_HIST_SESSMETRIC_HISTORY;
+DBA_HIST_FILEMETRIC_HISTORY
+select * from DBA_HIST_CELL_METRIC_DESC;
+DBA_HIST_CELL_GLOBAL
